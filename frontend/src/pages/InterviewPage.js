@@ -4,6 +4,7 @@ import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Webcam from 'react-webcam';
+import ReactMarkdown from 'react-markdown'; // 导入ReactMarkdown
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -191,9 +192,10 @@ const InterviewPage = () => {
         />
 
         <Card title="面试问题" style={{ marginBottom: '20px' }}>
-          <Paragraph strong>
-            {currentQuestion}
-          </Paragraph>
+          {/* 使用ReactMarkdown替换原来的Paragraph组件来渲染Markdown格式的内容 */}
+          <div className="markdown-content">
+            <ReactMarkdown>{currentQuestion}</ReactMarkdown>
+          </div>
         </Card>
 
         {!isComplete ? (
@@ -218,9 +220,10 @@ const InterviewPage = () => {
           </Card>
         ) : (
           <Card title="面试评估" style={{ marginTop: '20px' }}>
-            <Paragraph>
-              {finalEvaluation || '正在生成最终评估...'}
-            </Paragraph>
+            {/* 同样使用ReactMarkdown渲染最终评估结果 */}
+            <div className="markdown-content">
+              <ReactMarkdown>{finalEvaluation || '正在生成最终评估...'}</ReactMarkdown>
+            </div>
             <Button 
               type="primary" 
               onClick={handleViewResults}
@@ -234,9 +237,10 @@ const InterviewPage = () => {
 
         {evaluation && (
           <Card title="上一问题的评估" style={{ marginTop: '20px' }}>
-            <Paragraph>
-              {evaluation}
-            </Paragraph>
+            {/* 同样使用ReactMarkdown渲染评估结果 */}
+            <div className="markdown-content">
+              <ReactMarkdown>{evaluation}</ReactMarkdown>
+            </div>
           </Card>
         )}
       </div>
