@@ -414,7 +414,7 @@ def get_interview_results(session_id):
         if session_id not in interview_sessions:
             return jsonify({"error": "无效的会话ID"}), 400
             
-        session = interview_sessions[session_id]
+        # session = interview_sessions[session_id]
         
         # 从数据库查询完整的面试记录
         conn = sqlite3.connect('interview_ai.db')
