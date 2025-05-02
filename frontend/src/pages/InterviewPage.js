@@ -15,7 +15,7 @@ const InterviewPage = () => {
   const [answer, setAnswer] = useState('');
   const [evaluation, setEvaluation] = useState(null);
   const [questionIndex, setQuestionIndex] = useState(0);
-  const [isRecording, setIsRecording] = useState(false);
+  // const [isRecording, setIsRecording] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [finalEvaluation, setFinalEvaluation] = useState(null);
   
