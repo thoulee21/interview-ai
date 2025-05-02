@@ -30,10 +30,15 @@ const InterviewSetupPage = () => {
         difficulty: values.difficulty
       });
       
-      // 获取会话ID并跳转到面试页面
+      // 获取会话ID和初始问题，并跳转到面试页面
       const sessionId = response.data.session_id;
+      const firstQuestion = response.data.question;
+      
       message.success('面试会话已创建，即将开始面试');
-      navigate(`/interview/${sessionId}`);
+      // 使用state参数将初始问题传递给InterviewPage
+      navigate(`/interview/${sessionId}`, { 
+        state: { initialQuestion: firstQuestion } 
+      });
     } catch (error) {
       console.error('创建面试会话失败:', error);
       message.error('创建面试会话失败，请稍后重试');

@@ -2,9 +2,9 @@ import { SendOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import { Button, Card, Divider, Input, Progress, Typography, message } from 'antd';
 import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import Webcam from 'react-webcam';
 import ReactMarkdown from 'react-markdown'; // 导入ReactMarkdown
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import Webcam from 'react-webcam';
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -15,7 +15,6 @@ const InterviewPage = () => {
   const [answer, setAnswer] = useState('');
   const [evaluation, setEvaluation] = useState(null);
   const [questionIndex, setQuestionIndex] = useState(0);
-  // const [isRecording, setIsRecording] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [finalEvaluation, setFinalEvaluation] = useState(null);
   
@@ -25,29 +24,38 @@ const InterviewPage = () => {
   const [recordedChunks, setRecordedChunks] = useState([]);
   
   const { sessionId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
   // 获取初始面试问题
   useEffect(() => {
-    const fetchFirstQuestion = async () => {
+    const initializeInterview = () => {
       try {
-        // 这里假设start_interview API会返回第一个问题
-        // 在实际应用中，你可能需要单独的API来获取当前问题
         setCurrentQuestion('正在加载面试问题...');
         
-        // 模拟API调用延迟
-        setTimeout(() => {
-          setCurrentQuestion('请简单介绍一下你自己以及你的专业背景。');
+        // 从导航时传递的state中获取初始问题
+        const initialQuestion = location.state?.initialQuestion;
+        
+        if (initialQuestion) {
+          // 如果state中有初始问题，直接使用
+          setCurrentQuestion(initialQuestion);
           setLoading(false);
-        }, 1500);
+        } else {
+          // 如果没有初始问题（例如用户直接访问URL），可以考虑重定向回设置页面
+          // 或者向后端请求当前会话的问题
+          message.warning('无法获取面试问题，请从设置页面开始面试');
+          setTimeout(() => {
+            navigate('/setup');
+          }, 2000);
+        }
       } catch (error) {
         console.error('获取面试问题失败:', error);
         message.error('获取面试问题失败，请刷新页面重试');
       }
     };
 
-    fetchFirstQuestion();
-  }, [sessionId]);
+    initializeInterview();
+  }, [sessionId, location.state, navigate]);
 
   // 处理视频录制
   const handleStartCapture = () => {
