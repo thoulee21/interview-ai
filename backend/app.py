@@ -24,6 +24,12 @@ CORS(app)  # 允许跨域请求
 # 初始化讯飞星火API客户端
 xunfei_api = XunFeiSparkAPI()
 
+# 数据库助手函数
+def get_db_connection():
+    conn = sqlite3.connect('interview_ai.db')
+    conn.row_factory = sqlite3.Row  # 使查询结果可通过列名访问
+    return conn
+
 # 初始化数据库
 def init_db():
     """初始化SQLite数据库"""
@@ -93,9 +99,6 @@ def init_db():
 # 初始化数据库
 init_db()
 
-# 存储模拟面试会话(内存中临时存储，实际应用中应该使用数据库)
-interview_sessions = {}
-
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """健康检查接口"""
@@ -121,7 +124,7 @@ def start_interview():
         first_question = question_response.get("question")
         
         # 保存会话信息到数据库
-        conn = sqlite3.connect('interview_ai.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         # 插入面试会话记录
@@ -138,16 +141,6 @@ def start_interview():
         
         conn.commit()
         conn.close()
-        
-        # 同时在内存中保存会话信息(用于快速访问)
-        interview_sessions[session_id] = {
-            "position_type": position_type,
-            "difficulty": difficulty,
-            "questions": [first_question],
-            "answers": [],
-            "evaluations": [],
-            "start_time": time.time()
-        }
         
         return jsonify({
             "session_id": session_id,
@@ -167,20 +160,25 @@ def answer_question():
     answer = data.get('answer', '')
     
     # 检查会话是否存在
-    if session_id not in interview_sessions:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM interview_sessions WHERE session_id = ?", (session_id,))
+    session = cursor.fetchone()
+    if not session:
         return jsonify({"error": "无效的会话ID"}), 400
     
     try:
-        session = interview_sessions[session_id]
-        session["answers"].append(answer)
-        
         # 获取当前问题
-        current_question = session["questions"][-1]
+        cursor.execute(
+            "SELECT * FROM interview_questions WHERE session_id = ? ORDER BY question_index DESC LIMIT 1",
+            (session_id,)
+        )
+        current_question = cursor.fetchone()
         position_type = session["position_type"]
         
         # 调用讯飞星火API评估回答
         evaluation_response = xunfei_api.evaluate_answer(
-            current_question, 
+            current_question["question"], 
             answer, 
             position_type
         )
@@ -189,34 +187,37 @@ def answer_question():
             return jsonify({"error": "评估回答失败"}), 500
             
         evaluation = evaluation_response.get("evaluation")
-        session["evaluations"].append(evaluation)
         
         # 更新数据库中的回答和评估
-        conn = sqlite3.connect('interview_ai.db')
-        cursor = conn.cursor()
-        
-        # 获取最后一个问题记录
-        cursor.execute(
-            "SELECT id FROM interview_questions WHERE session_id = ? ORDER BY question_index DESC LIMIT 1",
-            (session_id,)
-        )
-        question_id = cursor.fetchone()[0]
-        
-        # 更新回答和评估
         cursor.execute(
             "UPDATE interview_questions SET answer = ?, evaluation = ? WHERE id = ?",
-            (answer, evaluation, question_id)
+            (answer, evaluation, current_question["id"])
         )
         
         conn.commit()
         
         # 判断是否结束面试(假设5个问题后结束)
-        if len(session["questions"]) >= 5:
+        cursor.execute(
+            "SELECT COUNT(*) FROM interview_questions WHERE session_id = ?",
+            (session_id,)
+        )
+        question_count = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "SELECT question, answer FROM interview_questions WHERE session_id = ? ORDER BY question_index",
+            (session_id,)
+        )
+        questions_and_answers = cursor.fetchall()
+
+        if question_count >= 5:
             # 生成整体评估
+            questions = [qa["question"] for qa in questions_and_answers]
+            answers = [qa["answer"] for qa in questions_and_answers]
+            
             final_evaluation_response = xunfei_api.generate_final_evaluation(
                 position_type,
-                session["questions"],
-                session["answers"]
+                questions,
+                answers
             )
             
             if final_evaluation_response.get("status") != "success":
@@ -243,20 +244,19 @@ def answer_question():
         next_question_response = xunfei_api.generate_interview_question(
             position_type,
             session["difficulty"],
-            session["questions"],
-            session["answers"]
+            [q["question"] for q in questions_and_answers],
+            [q["answer"] for q in questions_and_answers]
         )
         
         if next_question_response.get("status") != "success":
             return jsonify({"error": "生成下一个问题失败"}), 500
             
         next_question = next_question_response.get("question")
-        session["questions"].append(next_question)
         
         # 在数据库中添加下一个问题
         cursor.execute(
             "INSERT INTO interview_questions (session_id, question, question_index, created_at) VALUES (?, ?, ?, ?)",
-            (session_id, next_question, len(session["questions"]) - 1, datetime.now())
+            (session_id, next_question, question_count, datetime.now())
         )
         
         conn.commit()
@@ -411,15 +411,15 @@ def get_interview_results(session_id):
     """获取面试结果的接口"""
     try:
         # 检查会话是否存在
-        if session_id not in interview_sessions:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM interview_sessions WHERE session_id = ?", (session_id,))
+        session = cursor.fetchone()
+        if not session:
             return jsonify({"error": "无效的会话ID"}), 400
-            
-        # session = interview_sessions[session_id]
         
         # 从数据库查询完整的面试记录
-        conn = sqlite3.connect('interview_ai.db')
         conn.row_factory = sqlite3.Row  # 启用行工厂，使结果可以通过列名访问
-        cursor = conn.cursor()
         
         # 获取会话基本信息
         cursor.execute(
