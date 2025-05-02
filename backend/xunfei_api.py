@@ -268,7 +268,9 @@ class XunFeiSparkAPI:
                 prompt += f"\n请根据候选人之前的回答，提供一个{difficulty}难度的后续面试问题。问题应该针对性强，能够深入考察候选人的专业能力和综合素质。"
             else:
                 prompt += f"\n请提供一个{difficulty}难度的第一个面试问题，问题应该专业且有针对性。"
-                
+
+            prompt += f"\n\n请给出问题的具体内容，不需要其他任何解释。"
+
             # 调用API
             response = self.chat(prompt)
             
