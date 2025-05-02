@@ -1,0 +1,31 @@
+[project]
+name = "interview-backend"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "thoulee",email = "thou_lee@outlook.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13,<4"
+dependencies = [
+    "flask (==2.2.3)",
+    "flask-cors (==3.0.10)",
+    "opencv-python (==4.7.0.72)",
+    "python-dotenv (==1.0.0)",
+    "sqlalchemy (==2.0.9)",
+    "pydub (==0.25.1)",
+    "librosa (==0.10.0)",
+    "speechrecognition (==3.10.0)",
+    "python-dateutil (==2.8.2)",
+    "gunicorn (==20.1.0)",
+    "pillow (>=11.2.1,<12.0.0)",
+    "werkzeug (==2.2.3)",
+    "websocket-client (>=1.8.0,<2.0.0)",
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
