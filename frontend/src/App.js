@@ -7,6 +7,8 @@ import InterviewSetupPage from "./pages/InterviewSetupPage";
 import InterviewPage from "./pages/InterviewPage";
 import ResultPage from "./pages/ResultPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import AdminPage from "./pages/AdminPage";
+import AdminSessionDetailPage from "./pages/AdminSessionDetailPage";
 import "./App.css";
 
 const { Content, Footer } = Layout;
@@ -22,6 +24,8 @@ function App() {
             <Route path="/setup" element={<InterviewSetupPage />} />
             <Route path="/interview/:sessionId" element={<InterviewPage />} />
             <Route path="/results/:sessionId" element={<ResultPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin/sessions/:sessionId" element={<AdminSessionDetailPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>

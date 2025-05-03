@@ -1,7 +1,7 @@
 import React from "react";
 import { Layout, Menu } from "antd";
 import { Link, useLocation } from "react-router-dom";
-import { HomeOutlined, SettingOutlined } from "@ant-design/icons";
+import { HomeOutlined, SettingOutlined, DashboardOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
 
@@ -27,6 +27,9 @@ const AppHeader = () => {
         </Menu.Item>
         <Menu.Item key="/setup" icon={<SettingOutlined />}>
           <Link to="/setup">开始面试</Link>
+        </Menu.Item>
+        <Menu.Item key="/admin" icon={<DashboardOutlined />}>
+          <Link to="/admin">管理后台</Link>
         </Menu.Item>
       </Menu>
     </Header>

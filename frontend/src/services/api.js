@@ -72,6 +72,22 @@ const interviewAPI = {
   getHealthStatus: () => {
     return apiClient.get("/health");
   },
+  
+  // 管理后台API
+  // 获取所有面试会话
+  getAllSessions: () => {
+    return apiClient.get("/admin/sessions");
+  },
+  
+  // 获取单个面试会话详情
+  getSessionDetails: (sessionId) => {
+    return apiClient.get(`/admin/sessions/${sessionId}`);
+  },
+  
+  // 删除面试会话
+  deleteSession: (sessionId) => {
+    return apiClient.delete(`/admin/sessions/${sessionId}`);
+  }
 };
 
 export default interviewAPI;
