@@ -238,26 +238,37 @@ const InterviewPage = () => {
         </Card>
 
         {!isComplete ? (
-          <Card title="你的回答">
-            <TextArea
-              rows={6}
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              placeholder="在此输入你的回答..."
-              style={{ marginBottom: "20px" }}
-              disabled={loading}
-            />
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              onClick={handleSubmitAnswer}
-              loading={loading}
-              block
-              disabled={loading || !answer.trim()}
-            >
-              提交回答
-            </Button>
-          </Card>
+          <>
+            <Card title="你的回答">
+              <TextArea
+                rows={6}
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                placeholder="在此输入你的回答..."
+                style={{ marginBottom: "20px" }}
+                disabled={loading}
+              />
+              <Button
+                type="primary"
+                icon={<SendOutlined />}
+                onClick={handleSubmitAnswer}
+                loading={loading}
+                block
+                disabled={loading || !answer.trim()}
+              >
+                提交回答
+              </Button>
+            </Card>
+
+            {evaluation && (
+              <Card title="上一问题的评估" style={{ marginTop: "20px" }}>
+                {/* 同样使用ReactMarkdown渲染评估结果 */}
+                <div className="markdown-content">
+                  <ReactMarkdown>{evaluation}</ReactMarkdown>
+                </div>
+              </Card>
+            )}
+          </>
         ) : (
           <Card title="面试评估结果" style={{ marginTop: "20px" }}>
             {loadingFinalEvaluation ? (
@@ -313,15 +324,6 @@ const InterviewPage = () => {
                 </Button>
               </>
             )}
-          </Card>
-        )}
-
-        {evaluation && (
-          <Card title="上一问题的评估" style={{ marginTop: "20px" }}>
-            {/* 同样使用ReactMarkdown渲染评估结果 */}
-            <div className="markdown-content">
-              <ReactMarkdown>{evaluation}</ReactMarkdown>
-            </div>
           </Card>
         )}
       </div>
