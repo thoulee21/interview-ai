@@ -225,7 +225,7 @@ const InterviewPage = () => {
         <Divider />
 
         <Progress
-          percent={questionIndex * 25}
+          percent={questionIndex * 20}
           status="active"
           style={{ marginBottom: "20px" }}
         />
