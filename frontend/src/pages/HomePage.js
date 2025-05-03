@@ -1,11 +1,12 @@
 import React from "react";
-import { Typography, Row, Col, Button, Card } from "antd";
+import { Typography, Row, Col, Button, Card, Divider, Tag } from "antd";
 import { useNavigate } from "react-router-dom";
 import {
   FileTextOutlined,
   VideoCameraOutlined,
   SoundOutlined,
   RobotOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 
 const { Title, Paragraph } = Typography;
@@ -113,6 +114,32 @@ const HomePage = () => {
             <Title level={4}>个性化建议</Title>
             <Paragraph>
               基于大模型分析，针对个人表现提供有针对性的改进建议，帮助持续提升面试技巧。
+            </Paragraph>
+          </Col>
+        </Row>
+      </div>
+
+      <Divider />
+
+      <div style={{ marginTop: "48px" }}>
+        <Row align="middle" gutter={[24, 24]}>
+          <Col xs={24} md={4} className="text-center">
+            <TrophyOutlined style={{ fontSize: "64px", color: "#faad14" }} />
+          </Col>
+          <Col xs={24} md={20}>
+            <Title level={2}>中国软件杯大赛项目</Title>
+            <Paragraph>
+              <Tag color="blue">A组赛题</Tag>
+              <Tag color="green">2025年度</Tag>
+              <Tag color="purple">科大讯飞出题</Tag>
+            </Paragraph>
+            <Paragraph>
+              本项目基于第十四届中国软件杯大赛"面向高校学生的多模态智能模拟面试评测智能体开发"赛题进行设计与实现。
+              旨在帮助高校学生提升面试能力，通过多模态技术实现对面试过程的全方位评测。
+            </Paragraph>
+            <Paragraph>
+              <strong>技术特点：</strong> 采用科大讯飞星火大模型作为核心AI引擎，结合文本、语音和视频多模态分析技术，
+              提供专业、全面的面试评测服务。
             </Paragraph>
           </Col>
         </Row>
