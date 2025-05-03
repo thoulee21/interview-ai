@@ -32,7 +32,18 @@ const ResultPage = () => {
     const fetchResults = async () => {
       try {
         const response = await interviewAPI.getInterviewResults(sessionId);
-        setResults(response.data);
+        let resultData = response.data;
+        
+        // 检查是否有原始评估文本，如有需要可以使用TypeChat进行结构化
+        // 如果后端已返回结构化数据，则无需此处理
+        if (resultData.rawEvaluation) {
+          const structuredData = interviewAPI.processEvaluation(resultData.rawEvaluation);
+          if (structuredData) {
+            resultData = { ...resultData, ...structuredData };
+          }
+        }
+        
+        setResults(resultData);
       } catch (error) {
         console.error("获取面试结果失败:", error);
       } finally {

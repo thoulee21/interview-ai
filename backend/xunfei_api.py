@@ -363,15 +363,38 @@ class XunFeiSparkAPI:
                 prompt += f"语调评分: {audio_analysis.get('tone', 'N/A')}/10\n"
                 prompt += f"填充词使用次数: {audio_analysis.get('filler_words_count', 'N/A')}\n"
                 
+            # TypeChat 输出格式指导
             prompt += """
-请提供以下内容的评估报告:
-1. 总体评分(1-100分)
-2. 内容评分(专业知识、逻辑思维等)
-3. 表达评分(语言组织、表达流畅性等)
-4. 非语言表现评分(肢体语言、面部表情等)
-5. 三个主要优势
-6. 三个需要改进的方面
-7. 针对性的改进建议
+请提供评估报告，严格按照以下JSON格式输出，不要添加额外的解释或文本:
+
+```json
+{
+  "overallScore": 数字(1-100),
+  "contentScore": 数字(1-100),
+  "deliveryScore": 数字(1-100),
+  "nonVerbalScore": 数字(1-100),
+  "strengths": [
+    "优势1",
+    "优势2",
+    "优势3"
+  ],
+  "improvements": [
+    "需改进1",
+    "需改进2",
+    "需改进3"
+  ],
+  "recommendations": "具体改进建议和总体评价...",
+  "questionScores": [
+    {
+      "question": "问题内容",
+      "score": 数字(1-100),
+      "feedback": "针对该问题的详细反馈"
+    }
+  ]
+}
+```
+
+请确保每个分数字段都是1-100的整数，问题得分应包含每个问题的评分和反馈。strengths和improvements必须各包含至少3个具体内容。
             """
             
             # 调用API

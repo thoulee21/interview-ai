@@ -1,13 +1,8 @@
 import axios from "axios";
+import { typeChatTransform, interviewEvaluationSchema } from '../utils/typeChat';
 
 // 从环境变量中获取API基础URL，如未设置则使用默认值
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-
-if (!API_BASE_URL) {
-  throw new Error(
-    "API_BASE_URL is not set. Please set it in your environment variables."
-  );
-}
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
 
 // 创建axios实例
 const apiClient = axios.create({
@@ -68,6 +63,12 @@ const interviewAPI = {
   // 获取面试结果
   getInterviewResults: (sessionId) => {
     return apiClient.get(`/interview_results/${sessionId}`);
+  },
+
+  // 处理评估结果并规范成TypeScript定义的结构
+  processEvaluation: (rawEvaluation) => {
+    // 使用TypeChat对原始评估文本进行处理
+    return typeChatTransform(rawEvaluation, interviewEvaluationSchema);
   },
 
   // 获取健康状态

@@ -171,7 +171,6 @@ const InterviewPage = () => {
   }, [sessionId, location.state, navigate, startRecording]);
 
   // 自动开始录制视频
-
   const handleDataAvailable = ({ data }) => {
     if (data.size > 0) {
       setRecordedChunks((prev) => [...prev, data]);
@@ -316,7 +315,6 @@ const InterviewPage = () => {
         />
 
         <Card title="面试问题" style={{ marginBottom: "20px" }}>
-          {/* 使用ReactMarkdown替换原来的Paragraph组件来渲染Markdown格式的内容 */}
           <div className="markdown-content">
             <ReactMarkdown>{currentQuestion}</ReactMarkdown>
           </div>
@@ -347,7 +345,6 @@ const InterviewPage = () => {
 
             {evaluation && (
               <Card title="上一问题的评估" style={{ marginTop: "20px" }}>
-                {/* 同样使用ReactMarkdown渲染评估结果 */}
                 <div className="markdown-content">
                   <ReactMarkdown>{evaluation}</ReactMarkdown>
                 </div>

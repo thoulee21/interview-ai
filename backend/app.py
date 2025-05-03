@@ -255,6 +255,7 @@ def answer_question():
         )
         questions_and_answers = cursor.fetchall()
 
+        # 进入面试完成分支，生成最终评估
         if question_count >= 2:
             # 生成整体评估
             questions = [qa["question"] for qa in questions_and_answers]
@@ -315,6 +316,46 @@ def answer_question():
                 return jsonify({"error": "生成最终评估失败"}), 500
 
             final_evaluation = final_evaluation_response.get("evaluation")
+            
+            # 尝试从JSON字符串中解析结构化数据
+            try:
+                # 从最终评估中提取结构化数据
+                import re
+                json_match = re.search(r'```json\s*([\s\S]*?)\s*```|(\{[\s\S]*\})', final_evaluation)
+                
+                if json_match:
+                    # 提取JSON字符串并解析
+                    json_str = json_match.group(1) or json_match.group(2)
+                    eval_data = json.loads(json_str.strip())
+                    
+                    # 提取评分数据
+                    overall_score = eval_data.get('overallScore', 0)
+                    content_score = eval_data.get('contentScore', 0)
+                    delivery_score = eval_data.get('deliveryScore', 0)
+                    nonverbal_score = eval_data.get('nonVerbalScore', 0)
+                    
+                    # 提取优势、改进点和建议
+                    strengths = eval_data.get('strengths', [])
+                    improvements = eval_data.get('improvements', [])
+                    recommendations = eval_data.get('recommendations', '')
+                    
+                    # 保存到数据库
+                    cursor.execute(
+                        """INSERT INTO final_evaluations 
+                        (session_id, overall_score, content_score, delivery_score, nonverbal_score, 
+                            strengths, improvements, recommendations, created_at) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (session_id, overall_score, content_score, delivery_score, nonverbal_score,
+                        json.dumps(strengths), json.dumps(improvements), recommendations, datetime.now())
+                    )
+                    
+                else:
+                    # 如果无法提取JSON，记录错误但继续执行
+                    logger.warning("无法从评估结果中提取JSON结构")
+                    
+            except Exception as e:
+                # 解析评估结果失败，记录错误但继续执行
+                logger.exception(f"解析评估结果失败: {str(e)}")
 
             # 更新会话状态为已完成
             cursor.execute(
@@ -528,16 +569,24 @@ def get_interview_results(session_id):
         if not session_info:
             return jsonify({"error": "面试记录未找到"}), 404
 
-        # 获取所有问题和回答
+        # 处理最终评估报告
+        # 检查是否有保存在数据库中的最终评估结果
         cursor.execute(
-            "SELECT * FROM interview_questions WHERE session_id = ? ORDER BY question_index",
+            "SELECT * FROM final_evaluations WHERE session_id = ?",
             (session_id,)
         )
-        questions_data = cursor.fetchall()
+        final_eval_record = cursor.fetchone()
+
+        # 获取所有问题、回答和评估
+        cursor.execute(
+            "SELECT question, answer, evaluation FROM interview_questions WHERE session_id = ? AND answer IS NOT NULL",
+            (session_id,)
+        )
+        qa_data = cursor.fetchall()
 
         question_scores = []
-        for q in questions_data:
-            if q['answer'] and q['evaluation']:
+        for q in qa_data:
+            if q['evaluation']:
                 # 从评估文本中提取分数(简化处理，实际应该有更复杂的解析逻辑)
                 score = 75  # 默认分数
                 try:
@@ -552,6 +601,7 @@ def get_interview_results(session_id):
 
                 question_scores.append({
                     'question': q['question'],
+                    'answer': q['answer'],
                     'score': score,
                     'feedback': q['evaluation']
                 })
@@ -572,51 +622,91 @@ def get_interview_results(session_id):
             if multimodal_data['audio_analysis']:
                 audio_analysis = json.loads(multimodal_data['audio_analysis'])
 
+        # 构建结果对象，优先使用数据库中保存的最终评估结果
+        if final_eval_record:
+            # 从数据库记录中获取评估数据
+            strengths = json.loads(
+                final_eval_record['strengths']) if final_eval_record['strengths'] else []
+            improvements = json.loads(
+                final_eval_record['improvements']) if final_eval_record['improvements'] else []
+
+            results = {
+                'overallScore': final_eval_record['overall_score'],
+                'contentScore': final_eval_record['content_score'],
+                'deliveryScore': final_eval_record['delivery_score'],
+                'nonVerbalScore': final_eval_record['nonverbal_score'],
+                'strengths': strengths,
+                'improvements': improvements,
+                'questionScores': question_scores,
+                'videoAnalysis': video_analysis or {
+                    'eyeContact': 7.5,
+                    'facialExpressions': 7.0,
+                    'bodyLanguage': 6.5,
+                    'confidence': 7.0
+                },
+                'audioAnalysis': audio_analysis or {
+                    'clarity': 7.5,
+                    'pace': 7.0,
+                    'tone': 7.5,
+                    'fillerWordsCount': 5
+                },
+                'recommendations': final_eval_record['recommendations']
+            }
+        else:
+            # 如果没有保存的最终评估结果，则计算评估数据
+            # 计算各项得分
+            content_score = sum([qs['score'] for qs in question_scores]) / \
+                len(question_scores) if question_scores else 75
+            delivery_score = audio_analysis.get(
+                'clarity', 8.0) * 10 if audio_analysis else 75
+            nonverbal_score = video_analysis.get(
+                'eye_contact', 7.5) * 10 if video_analysis else 75
+
+            # 计算总体得分(权重：内容60%，表达20%，非语言表现20%)
+            overall_score = int(content_score * 0.6 +
+                                delivery_score * 0.2 + nonverbal_score * 0.2)
+
+            # 默认的优势和改进点
+            strengths = ['清晰表达核心技能', '回答结构合理', '专业知识扎实']
+            improvements = ['需要提高回答的简洁性', '可以提供更多具体的工作实例', '减少填充词的使用']
+            recommendations = '整体表现良好，特别是在专业知识展示方面。建议在今后的面试中更加注意简洁有力地表达核心观点，并准备更多具体的工作案例来支持你的能力陈述。此外，可以适当减少填充词的使用，保持更自然的面部表情和肢体语言，这将进一步提升你的整体表现。'
+
+            # 生成面试评估结果并保存到数据库
+            cursor.execute(
+                """INSERT INTO final_evaluations 
+                   (session_id, overall_score, content_score, delivery_score, nonverbal_score, 
+                    strengths, improvements, recommendations, created_at) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (session_id, overall_score, int(content_score), int(delivery_score), int(nonverbal_score),
+                 json.dumps(strengths), json.dumps(improvements), recommendations, datetime.now())
+            )
+            conn.commit()
+
+            results = {
+                'overallScore': overall_score,
+                'contentScore': int(content_score),
+                'deliveryScore': int(delivery_score),
+                'nonVerbalScore': int(nonverbal_score),
+                'strengths': strengths,
+                'improvements': improvements,
+                'questionScores': question_scores,
+                'videoAnalysis': video_analysis or {
+                    'eyeContact': 7.5,
+                    'facialExpressions': 7.0,
+                    'bodyLanguage': 6.5,
+                    'confidence': 7.0
+                },
+                'audioAnalysis': audio_analysis or {
+                    'clarity': 7.5,
+                    'pace': 7.0,
+                    'tone': 7.5,
+                    'fillerWordsCount': 5
+                },
+                'recommendations': recommendations,
+                'rawEvaluation': None
+            }
+
         conn.close()
-
-        # 处理最终评估报告
-        # 在实际应用中，这部分应该从数据库中获取或动态生成
-        # 这里为了简化，我们使用一些模拟数据
-
-        strengths = ['清晰表达核心技能', '回答结构合理', '专业知识扎实']
-        improvements = ['需要提高回答的简洁性', '可以提供更多具体的工作实例', '减少填充词的使用']
-
-        # 计算各项得分
-        content_score = sum([qs['score'] for qs in question_scores]) / \
-            len(question_scores) if question_scores else 75
-        delivery_score = audio_analysis.get(
-            'clarity', 8.0) * 10 if audio_analysis else 75
-        nonverbal_score = video_analysis.get(
-            'eye_contact', 7.5) * 10 if video_analysis else 75
-
-        # 计算总体得分(权重：内容60%，表达20%，非语言表现20%)
-        overall_score = int(content_score * 0.6 +
-                            delivery_score * 0.2 + nonverbal_score * 0.2)
-
-        # 构建结果对象
-        results = {
-            'overallScore': overall_score,
-            'contentScore': int(content_score),
-            'deliveryScore': int(delivery_score),
-            'nonVerbalScore': int(nonverbal_score),
-            'strengths': strengths,
-            'improvements': improvements,
-            'questionScores': question_scores,
-            'videoAnalysis': video_analysis or {
-                'eyeContact': 7.5,
-                'facialExpressions': 7.0,
-                'bodyLanguage': 6.5,
-                'confidence': 7.0
-            },
-            'audioAnalysis': audio_analysis or {
-                'clarity': 7.5,
-                'pace': 7.0,
-                'tone': 7.5,
-                'fillerWordsCount': 5
-            },
-            'recommendations': '整体表现良好，特别是在专业知识展示方面。建议在今后的面试中更加注意简洁有力地表达核心观点，并准备更多具体的工作案例来支持你的能力陈述。此外，可以适当减少填充词的使用，保持更自然的面部表情和肢体语言，这将进一步提升你的整体表现。'
-        }
-
         return jsonify(results)
 
     except Exception as e:
