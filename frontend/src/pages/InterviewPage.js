@@ -5,7 +5,6 @@ import {
   Divider,
   Input,
   message,
-  Progress,
   Result,
   Space,
   Spin,
@@ -337,13 +336,10 @@ const InterviewPage = () => {
 
         <Divider />
 
-        <Progress
-          percent={questionIndex * 20}
-          status="active"
+        <Card
+          title={`面试问题 ${questionIndex + 1}`}
           style={{ marginBottom: "20px" }}
-        />
-
-        <Card title="面试问题" style={{ marginBottom: "20px" }}>
+        >
           <div className="markdown-content">
             <ReactMarkdown>{currentQuestion}</ReactMarkdown>
           </div>
