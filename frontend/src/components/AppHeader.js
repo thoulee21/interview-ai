@@ -11,8 +11,11 @@ const AppHeader = () => {
   return (
     <Header className="site-header">
       <div className="logo">
-        <h1>智能模拟面试系统</h1>
+        <Link to="/">
+          <h1>智能模拟面试系统</h1>
+        </Link>
       </div>
+
       <Menu
         theme="dark"
         mode="horizontal"
