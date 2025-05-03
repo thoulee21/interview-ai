@@ -3,7 +3,6 @@ import {
   EyeOutlined,
   FileTextOutlined,
   SearchOutlined,
-  SettingOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import {
@@ -209,9 +208,7 @@ const AdminPage = () => {
         <Breadcrumb.Item>管理后台</Breadcrumb.Item>
       </Breadcrumb>
 
-      <Title level={2}>
-        <SettingOutlined /> 面试会话管理
-      </Title>
+      <Title level={2}>面试会话管理</Title>
 
       <Card style={{ marginBottom: 20 }}>
         <div
