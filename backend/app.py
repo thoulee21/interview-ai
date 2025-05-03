@@ -522,5 +522,163 @@ def get_interview_results(session_id):
         logger.exception(f"获取面试结果失败: {str(e)}")
         return jsonify({"error": f"获取面试结果失败: {str(e)}"}), 500
 
+@app.route('/api/admin/sessions', methods=['GET'])
+def get_all_sessions():
+    """获取所有面试会话的管理接口"""
+    try:
+        # 从数据库查询所有面试会话
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 获取会话基本信息，包括相关统计数据
+        cursor.execute("""
+            SELECT 
+                s.session_id, 
+                s.position_type, 
+                s.difficulty, 
+                s.start_time, 
+                s.end_time, 
+                s.status,
+                COUNT(q.id) as question_count,
+                SUM(CASE WHEN q.answer IS NOT NULL THEN 1 ELSE 0 END) as answered_count
+            FROM 
+                interview_sessions s
+            LEFT JOIN 
+                interview_questions q ON s.session_id = q.session_id
+            GROUP BY 
+                s.session_id
+            ORDER BY 
+                s.start_time DESC
+        """)
+        
+        sessions = []
+        for row in cursor.fetchall():
+            # 计算会话持续时间
+            start_time = datetime.fromisoformat(row['start_time']) if row['start_time'] else None
+            end_time = datetime.fromisoformat(row['end_time']) if row['end_time'] else None
+            
+            duration = None
+            if start_time and end_time:
+                duration = (end_time - start_time).total_seconds() / 60  # 转换为分钟
+            
+            sessions.append({
+                'sessionId': row['session_id'],
+                'positionType': row['position_type'],
+                'difficulty': row['difficulty'],
+                'startTime': row['start_time'],
+                'endTime': row['end_time'],
+                'status': row['status'],
+                'questionCount': row['question_count'],
+                'answeredCount': row['answered_count'],
+                'duration': round(duration, 1) if duration else None
+            })
+        
+        conn.close()
+        return jsonify({
+            'sessions': sessions,
+            'total': len(sessions)
+        })
+        
+    except Exception as e:
+        logger.exception(f"获取面试会话列表失败: {str(e)}")
+        return jsonify({"error": f"获取面试会话列表失败: {str(e)}"}), 500
+
+@app.route('/api/admin/sessions/<session_id>', methods=['GET'])
+def get_session_details(session_id):
+    """获取单个面试会话详情的管理接口"""
+    try:
+        # 检查会话是否存在
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 获取会话基本信息
+        cursor.execute("""
+            SELECT * FROM interview_sessions WHERE session_id = ?
+        """, (session_id,))
+        
+        session_info = cursor.fetchone()
+        if not session_info:
+            return jsonify({"error": "面试会话不存在"}), 404
+        
+        # 获取所有问题和回答
+        cursor.execute("""
+            SELECT * FROM interview_questions 
+            WHERE session_id = ? 
+            ORDER BY question_index
+        """, (session_id,))
+        
+        questions = []
+        for q in cursor.fetchall():
+            questions.append({
+                'id': q['id'],
+                'question': q['question'],
+                'answer': q['answer'],
+                'evaluation': q['evaluation'],
+                'questionIndex': q['question_index'],
+                'createdAt': q['created_at']
+            })
+        
+        # 获取多模态分析数据
+        cursor.execute("""
+            SELECT * FROM multimodal_analysis 
+            WHERE session_id = ? 
+            ORDER BY created_at
+        """, (session_id,))
+        
+        analyses = []
+        for a in cursor.fetchall():
+            analyses.append({
+                'id': a['id'],
+                'questionId': a['question_id'],
+                'videoAnalysis': json.loads(a['video_analysis']) if a['video_analysis'] else None,
+                'audioAnalysis': json.loads(a['audio_analysis']) if a['audio_analysis'] else None,
+                'createdAt': a['created_at']
+            })
+        
+        # 构建会话详情对象
+        session_details = {
+            'sessionId': session_info['session_id'],
+            'positionType': session_info['position_type'],
+            'difficulty': session_info['difficulty'],
+            'startTime': session_info['start_time'],
+            'endTime': session_info['end_time'],
+            'status': session_info['status'],
+            'questions': questions,
+            'analyses': analyses
+        }
+        
+        conn.close()
+        return jsonify(session_details)
+        
+    except Exception as e:
+        logger.exception(f"获取面试会话详情失败: {str(e)}")
+        return jsonify({"error": f"获取面试会话详情失败: {str(e)}"}), 500
+
+@app.route('/api/admin/sessions/<session_id>', methods=['DELETE'])
+def delete_session(session_id):
+    """删除面试会话的管理接口"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 检查会话是否存在
+        cursor.execute("SELECT * FROM interview_sessions WHERE session_id = ?", (session_id,))
+        if not cursor.fetchone():
+            return jsonify({"error": "面试会话不存在"}), 404
+        
+        # 删除相关记录（先删除外键关联的表）
+        cursor.execute("DELETE FROM multimodal_analysis WHERE session_id = ?", (session_id,))
+        cursor.execute("DELETE FROM interview_questions WHERE session_id = ?", (session_id,))
+        cursor.execute("DELETE FROM interview_sessions WHERE session_id = ?", (session_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"message": "面试会话已删除"})
+        
+    except Exception as e:
+        logger.exception(f"删除面试会话失败: {str(e)}")
+        return jsonify({"error": f"删除面试会话失败: {str(e)}"}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
