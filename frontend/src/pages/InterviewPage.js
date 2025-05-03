@@ -1,12 +1,20 @@
-import { SendOutlined, VideoCameraOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  SendOutlined,
+  VideoCameraOutlined,
+} from "@ant-design/icons";
 import {
   Button,
   Card,
   Divider,
   Input,
-  Progress,
-  Typography,
   message,
+  Progress,
+  Result,
+  Space,
+  Spin,
+  Tag,
+  Typography,
 } from "antd";
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -25,6 +33,8 @@ const InterviewPage = () => {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [finalEvaluation, setFinalEvaluation] = useState(null);
+  const [loadingFinalEvaluation, setLoadingFinalEvaluation] = useState(false);
+  const [overallScore, setOverallScore] = useState(null);
 
   const webcamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -77,7 +87,7 @@ const InterviewPage = () => {
 
       mediaRecorderRef.current.addEventListener(
         "dataavailable",
-        handleDataAvailable,
+        handleDataAvailable
       );
       mediaRecorderRef.current.start();
     }
@@ -105,7 +115,7 @@ const InterviewPage = () => {
 
     try {
       const blob = new Blob(recordedChunks, { type: "video/webm" });
-      
+
       // 调用后端API分析视频，使用interviewAPI服务
       const response = await interviewAPI.evaluateVideo(blob, sessionId);
 
@@ -138,8 +148,25 @@ const InterviewPage = () => {
       if (response.data.is_complete) {
         // 面试结束
         setIsComplete(true);
-        setFinalEvaluation(response.data.final_evaluation);
-        message.success("面试已完成，正在生成最终评估");
+        setLoadingFinalEvaluation(true);
+
+        // 获取面试结果详情
+        try {
+          const resultResponse = await interviewAPI.getInterviewResults(
+            sessionId
+          );
+          setFinalEvaluation(
+            resultResponse.data.recommendations ||
+              response.data.final_evaluation
+          );
+          setOverallScore(resultResponse.data.overallScore);
+        } catch (error) {
+          console.error("获取详细评估结果失败:", error);
+          setFinalEvaluation(response.data.final_evaluation);
+        } finally {
+          setLoadingFinalEvaluation(false);
+        }
+        message.success("面试已完成，评估生成完毕");
       } else {
         // 继续面试
         setEvaluation(response.data.evaluation);
@@ -232,21 +259,60 @@ const InterviewPage = () => {
             </Button>
           </Card>
         ) : (
-          <Card title="面试评估" style={{ marginTop: "20px" }}>
-            {/* 同样使用ReactMarkdown渲染最终评估结果 */}
-            <div className="markdown-content">
-              <ReactMarkdown>
-                {finalEvaluation || "正在生成最终评估..."}
-              </ReactMarkdown>
-            </div>
-            <Button
-              type="primary"
-              onClick={handleViewResults}
-              style={{ marginTop: "16px" }}
-              block
-            >
-              查看详细结果
-            </Button>
+          <Card title="面试评估结果" style={{ marginTop: "20px" }}>
+            {loadingFinalEvaluation ? (
+              <div style={{ textAlign: "center", padding: "30px 0" }}>
+                <Spin size="large" />
+                <Paragraph style={{ marginTop: 16 }}>
+                  正在生成您的面试评估报告...
+                </Paragraph>
+              </div>
+            ) : (
+              <>
+                {overallScore !== null && (
+                  <div style={{ marginBottom: 16, textAlign: "center" }}>
+                    <Result
+                      icon={
+                        <CheckCircleOutlined style={{ color: "#52c41a" }} />
+                      }
+                      title="面试已完成"
+                      subTitle={
+                        <Space direction="vertical" size="small">
+                          <span>总体得分</span>
+                          <Tag
+                            color={
+                              overallScore >= 80
+                                ? "success"
+                                : overallScore >= 60
+                                ? "warning"
+                                : "error"
+                            }
+                            style={{ fontSize: 18, padding: "8px 16px" }}
+                          >
+                            {overallScore} / 100
+                          </Tag>
+                        </Space>
+                      }
+                    />
+                  </div>
+                )}
+                <Divider orientation="left">评估摘要</Divider>
+                <div className="markdown-content">
+                  <ReactMarkdown>
+                    {finalEvaluation || "暂无评估内容"}
+                  </ReactMarkdown>
+                </div>
+                <Button
+                  type="primary"
+                  onClick={handleViewResults}
+                  style={{ marginTop: 24 }}
+                  block
+                  size="large"
+                >
+                  查看详细分析报告
+                </Button>
+              </>
+            )}
           </Card>
         )}
 
