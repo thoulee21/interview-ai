@@ -25,11 +25,13 @@ const interviewAPI = {
     return apiClient.post("/start_interview", data);
   },
 
-  // 提交回答并获取下一个问题
-  answerQuestion: (sessionId, answer) => {
+  // 提交问题回答
+  answerQuestion: (sessionId, answer, videoAnalysis = null, audioAnalysis = null) => {
     return apiClient.post("/answer_question", {
       session_id: sessionId,
       answer: answer,
+      video_analysis: videoAnalysis,
+      audio_analysis: audioAnalysis
     });
   },
 

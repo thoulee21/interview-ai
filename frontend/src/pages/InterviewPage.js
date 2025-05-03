@@ -1,25 +1,18 @@
-import {
-  CheckCircleOutlined,
-  SendOutlined,
-  VideoCameraOutlined,
-  CloseOutlined
-} from "@ant-design/icons";
+import { CheckCircleOutlined, SendOutlined } from "@ant-design/icons";
 import {
   Button,
   Card,
-  Col,
   Divider,
   Input,
   message,
   Progress,
   Result,
-  Row,
   Space,
   Spin,
   Tag,
   Typography,
 } from "antd";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Webcam from "react-webcam";
@@ -39,20 +32,102 @@ const InterviewPage = () => {
   const [finalEvaluation, setFinalEvaluation] = useState(null);
   const [loadingFinalEvaluation, setLoadingFinalEvaluation] = useState(false);
   const [overallScore, setOverallScore] = useState(null);
-  
-  // 视频分析相关状态
+
+  // 视频分析和音频分析相关状态 (仅内部使用，不再向用户展示实时分析)
   const [videoAnalysis, setVideoAnalysis] = useState(null);
-  const [loadingVideoAnalysis, setLoadingVideoAnalysis] = useState(false);
-  const [showVideoAnalysis, setShowVideoAnalysis] = useState(false);
+  const [audioAnalysis, setAudioAnalysis] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
 
   const webcamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
-  const [capturing, setCapturing] = useState(false);
+  const recordingInterval = useRef(null);
   const [recordedChunks, setRecordedChunks] = useState([]);
 
   const { sessionId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const silentAnalysis = useCallback(async () => {
+    if (recordedChunks.length === 0) return;
+
+    try {
+      // 准备视频blob
+      const videoBlob = new Blob(recordedChunks, { type: "video/webm" });
+
+      // 后台分析视频
+      const videoResponse = await interviewAPI.evaluateVideo(
+        videoBlob,
+        sessionId
+      );
+      const videoData = videoResponse.data;
+
+      // 更新状态，但不展示给用户
+      const formattedVideoData = {
+        eyeContact: videoData.eye_contact || 0,
+        facialExpressions: videoData.facial_expressions || 0,
+        bodyLanguage: videoData.body_language || 0,
+        confidence: videoData.confidence || 0,
+        recommendations: videoData.recommendations || "",
+      };
+      setVideoAnalysis(formattedVideoData);
+
+      // 后台分析音频
+      const audioResponse = await interviewAPI.evaluateAudio(
+        videoBlob,
+        sessionId
+      );
+      const audioData = audioResponse.data;
+
+      // 更新状态，但不展示给用户
+      const formattedAudioData = {
+        clarity: audioData.clarity || 0,
+        pace: audioData.pace || 0,
+        tone: audioData.tone || 0,
+        fillerWordsCount: audioData.filler_words_count || 0,
+        recommendations: audioData.recommendations || "",
+      };
+      setAudioAnalysis(formattedAudioData);
+
+      // 清空录制内容，为下一次录制准备
+      setRecordedChunks([]);
+
+      // 如果需要，重新开始录制
+      if (isRecording && mediaRecorderRef.current.state === "inactive") {
+        mediaRecorderRef.current.start();
+      }
+    } catch (error) {
+      console.error("后台分析失败:", error);
+      // 静默失败，不打扰用户
+    }
+  }, [isRecording, recordedChunks, sessionId]);
+
+  const startRecording = useCallback(() => {
+    if (!webcamRef.current || !webcamRef.current.stream) return;
+
+    setIsRecording(true);
+
+    try {
+      mediaRecorderRef.current = new MediaRecorder(webcamRef.current.stream, {
+        mimeType: "video/webm",
+      });
+
+      mediaRecorderRef.current.addEventListener(
+        "dataavailable",
+        handleDataAvailable
+      );
+      mediaRecorderRef.current.start();
+
+      // 设置定期分析 - 每30秒分析一次（实际环境中可调整周期）
+      recordingInterval.current = setInterval(() => {
+        if (recordedChunks.length > 0 && !isComplete) {
+          // 不影响用户体验，静默分析
+          silentAnalysis();
+        }
+      }, 30000);
+    } catch (error) {
+      console.error("无法开始录制:", error);
+    }
+  }, [isComplete, recordedChunks.length, silentAnalysis]);
 
   // 获取初始面试问题
   useEffect(() => {
@@ -67,6 +142,9 @@ const InterviewPage = () => {
           // 如果state中有初始问题，直接使用
           setCurrentQuestion(initialQuestion);
           setLoading(false);
+
+          // 自动开始录制
+          startRecording();
         } else {
           // 如果没有初始问题（例如用户直接访问URL），可以考虑重定向回设置页面
           // 或者向后端请求当前会话的问题
@@ -82,25 +160,17 @@ const InterviewPage = () => {
     };
 
     initializeInterview();
-  }, [sessionId, location.state, navigate]);
 
-  // 处理视频录制
-  const handleStartCapture = () => {
-    setCapturing(true);
+    // 组件卸载时清理资源
+    return () => {
+      stopRecording();
+      if (recordingInterval.current) {
+        clearInterval(recordingInterval.current);
+      }
+    };
+  }, [sessionId, location.state, navigate, startRecording]);
 
-    // 使用MediaRecorder API录制视频
-    if (webcamRef.current && webcamRef.current.stream) {
-      mediaRecorderRef.current = new MediaRecorder(webcamRef.current.stream, {
-        mimeType: "video/webm",
-      });
-
-      mediaRecorderRef.current.addEventListener(
-        "dataavailable",
-        handleDataAvailable
-      );
-      mediaRecorderRef.current.start();
-    }
-  };
+  // 自动开始录制视频
 
   const handleDataAvailable = ({ data }) => {
     if (data.size > 0) {
@@ -108,50 +178,19 @@ const InterviewPage = () => {
     }
   };
 
-  const handleStopCapture = () => {
-    if (mediaRecorderRef.current) {
+  // 停止录制
+  const stopRecording = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
       mediaRecorderRef.current.stop();
     }
-    setCapturing(false);
-  };
+    setIsRecording(false);
 
-  // 提交视频进行分析
-  const handleAnalyzeVideo = async () => {
-    if (recordedChunks.length === 0) {
-      message.warning("没有录制视频，无法分析");
-      return;
-    }
-
-    try {
-      setLoadingVideoAnalysis(true);
-      setShowVideoAnalysis(true);
-      const blob = new Blob(recordedChunks, { type: "video/webm" });
-
-      // 调用后端API分析视频，使用interviewAPI服务
-      const response = await interviewAPI.evaluateVideo(blob, sessionId);
-
-      // 处理视频分析结果
-      const analysisData = response.data;
-      
-      // 转换后端数据为前端使用格式（与ResultPage保持一致）
-      const formattedData = {
-        eyeContact: analysisData.eye_contact || 0,
-        facialExpressions: analysisData.facial_expressions || 0,
-        bodyLanguage: analysisData.body_language || 0,
-        confidence: analysisData.confidence || 0,
-        recommendations: analysisData.recommendations || "视频分析完成，请继续回答问题。"
-      };
-      
-      setVideoAnalysis(formattedData);
-      message.success("视频分析完成");
-
-      // 清除录制的视频数据
-      setRecordedChunks([]);
-    } catch (error) {
-      console.error("视频分析失败:", error);
-      message.error("视频分析失败，请重试");
-    } finally {
-      setLoadingVideoAnalysis(false);
+    // 清理定时器
+    if (recordingInterval.current) {
+      clearInterval(recordingInterval.current);
     }
   };
 
@@ -165,12 +204,32 @@ const InterviewPage = () => {
     try {
       setLoading(true);
 
-      // 调用后端API提交答案，使用interviewAPI服务
-      const response = await interviewAPI.answerQuestion(sessionId, answer);
+      // 在提交前进行一次分析，确保获取最新数据
+      await silentAnalysis();
+
+      // 整合当前问题的多模态分析数据
+      const currentQuestionData = {
+        questionIndex: questionIndex,
+        question: currentQuestion,
+        answer: answer,
+        videoAnalysis: videoAnalysis || null,
+        audioAnalysis: audioAnalysis || null,
+      };
+
+      // 调用后端API提交答案，同时提交多模态分析数据
+      const response = await interviewAPI.answerQuestion(
+        sessionId,
+        answer,
+        currentQuestionData.videoAnalysis,
+        currentQuestionData.audioAnalysis
+      );
 
       // 处理回答评估
       if (response.data.is_complete) {
-        // 面试结束
+        // 面试结束，停止录制
+        stopRecording();
+
+        // 设置面试完成状态
         setIsComplete(true);
         setLoadingFinalEvaluation(true);
 
@@ -197,6 +256,14 @@ const InterviewPage = () => {
         setCurrentQuestion(response.data.next_question);
         setQuestionIndex(questionIndex + 1);
         setAnswer("");
+
+        // 清除当前分析数据，准备下一个问题
+        setVideoAnalysis(null);
+        setAudioAnalysis(null);
+
+        // 重置录制
+        setRecordedChunks([]);
+
         message.success("回答已提交，请继续回答下一个问题");
       }
     } catch (error) {
@@ -214,8 +281,8 @@ const InterviewPage = () => {
 
   return (
     <div>
-      <InterviewBreadcrumb 
-        currentStep="interview" 
+      <InterviewBreadcrumb
+        currentStep="interview"
         sessionId={sessionId}
         questionIndex={questionIndex}
         isComplete={isComplete}
@@ -232,24 +299,12 @@ const InterviewPage = () => {
       <div className="interview-container">
         <div className="video-container">
           <Webcam audio={true} ref={webcamRef} className="video-preview" />
-        </div>
-
-        <div className="controls-container">
-          <Button
-            type={capturing ? "danger" : "primary"}
-            icon={<VideoCameraOutlined />}
-            onClick={capturing ? handleStopCapture : handleStartCapture}
-          >
-            {capturing ? "停止录制" : "开始录制"}
-          </Button>
-
-          <Button
-            type="default"
-            disabled={recordedChunks.length === 0}
-            onClick={handleAnalyzeVideo}
-          >
-            分析视频
-          </Button>
+          {isRecording && (
+            <div className="recording-indicator">
+              <div className="recording-dot"></div>
+              <span>正在录制...</span>
+            </div>
+          )}
         </div>
 
         <Divider />
@@ -259,92 +314,6 @@ const InterviewPage = () => {
           status="active"
           style={{ marginBottom: "20px" }}
         />
-
-        {/* 视频分析结果展示 */}
-        {showVideoAnalysis && !isComplete && (
-          <Card 
-            title={
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>实时视频分析</span>
-                <Button 
-                  type="text" 
-                  icon={<CloseOutlined />} 
-                  onClick={() => setShowVideoAnalysis(false)}
-                  size="small"
-                />
-              </div>
-            } 
-            style={{ marginBottom: "20px" }}
-          >
-            {loadingVideoAnalysis ? (
-              <div style={{ textAlign: "center", padding: "20px 0" }}>
-                <Spin size="default" />
-                <Paragraph style={{ marginTop: 10 }}>正在分析视频行为表现...</Paragraph>
-              </div>
-            ) : (
-              <>
-                <Row gutter={16}>
-                  <Col xs={24} md={24}>
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span>眼神接触</span>
-                        <span><strong>{videoAnalysis?.eyeContact.toFixed(1)}</strong>/10</span>
-                      </div>
-                      <Progress 
-                        percent={videoAnalysis?.eyeContact * 10} 
-                        size="small"
-                        status={videoAnalysis?.eyeContact >= 7 ? "success" : "normal"}
-                      />
-                    </div>
-                    
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span>面部表情</span>
-                        <span><strong>{videoAnalysis?.facialExpressions.toFixed(1)}</strong>/10</span>
-                      </div>
-                      <Progress 
-                        percent={videoAnalysis?.facialExpressions * 10} 
-                        size="small"
-                        status={videoAnalysis?.facialExpressions >= 7 ? "success" : "normal"}
-                      />
-                    </div>
-                    
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span>肢体语言</span>
-                        <span><strong>{videoAnalysis?.bodyLanguage.toFixed(1)}</strong>/10</span>
-                      </div>
-                      <Progress 
-                        percent={videoAnalysis?.bodyLanguage * 10} 
-                        size="small"
-                        status={videoAnalysis?.bodyLanguage >= 7 ? "success" : "normal"}
-                      />
-                    </div>
-                    
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span>自信程度</span>
-                        <span><strong>{videoAnalysis?.confidence.toFixed(1)}</strong>/10</span>
-                      </div>
-                      <Progress 
-                        percent={videoAnalysis?.confidence * 10} 
-                        size="small"
-                        status={videoAnalysis?.confidence >= 7 ? "success" : "normal"}
-                      />
-                    </div>
-                  </Col>
-                </Row>
-                
-                <Divider style={{ margin: '12px 0' }}/>
-                
-                <div>
-                  <strong>分析建议：</strong>
-                  <Paragraph>{videoAnalysis?.recommendations}</Paragraph>
-                </div>
-              </>
-            )}
-          </Card>
-        )}
 
         <Card title="面试问题" style={{ marginBottom: "20px" }}>
           {/* 使用ReactMarkdown替换原来的Paragraph组件来渲染Markdown格式的内容 */}

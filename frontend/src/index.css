@@ -36,7 +36,9 @@ code {
 .video-container {
   position: relative;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .video-preview {
@@ -51,6 +53,41 @@ code {
   display: flex;
   justify-content: center;
   gap: 16px;
+}
+
+/* 录制状态指示器 */
+.recording-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.recording-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #f5222d;
+  border-radius: 50%;
+  margin-right: 6px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Landing Page动画效果 */
