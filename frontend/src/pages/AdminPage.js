@@ -1,5 +1,4 @@
 import {
-  ClockCircleOutlined,
   DeleteOutlined,
   EyeOutlined,
   FileTextOutlined,
@@ -256,6 +255,7 @@ const AdminPage = () => {
               ))}
             </Select>
           </Space>
+
           <Button type="primary" onClick={fetchSessions}>
             刷新数据
           </Button>
@@ -279,12 +279,6 @@ const AdminPage = () => {
             bordered
           />
         </Spin>
-        <div style={{ marginTop: 16, textAlign: "center" }}>
-          <Text type="secondary">
-            <ClockCircleOutlined /> 数据最后更新时间:{" "}
-            {new Date().toLocaleString()}
-          </Text>
-        </div>
       </Card>
     </div>
   );
