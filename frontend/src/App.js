@@ -1,23 +1,23 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
 import { Layout } from "antd";
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import "./App.css";
 import AppHeader from "./components/AppHeader";
-import HomePage from "./pages/HomePage";
-import InterviewSetupPage from "./pages/InterviewSetupPage";
-import InterviewPage from "./pages/InterviewPage";
-import ResultPage from "./pages/ResultPage";
-import NotFoundPage from "./pages/NotFoundPage";
 import AdminPage from "./pages/AdminPage";
 import AdminSessionDetailPage from "./pages/AdminSessionDetailPage";
-import "./App.css";
+import HomePage from "./pages/HomePage";
+import InterviewPage from "./pages/InterviewPage";
+import InterviewSetupPage from "./pages/InterviewSetupPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import ResultPage from "./pages/ResultPage";
 
-const { Content, Footer } = Layout;
+const { Footer } = Layout;
 
 function App() {
   return (
     <Layout className="layout">
       <AppHeader />
-      <Content className="site-content">
+      <div className="site-content">
         <div className="container">
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -25,11 +25,14 @@ function App() {
             <Route path="/interview/:sessionId" element={<InterviewPage />} />
             <Route path="/results/:sessionId" element={<ResultPage />} />
             <Route path="/admin" element={<AdminPage />} />
-            <Route path="/admin/sessions/:sessionId" element={<AdminSessionDetailPage />} />
+            <Route
+              path="/admin/sessions/:sessionId"
+              element={<AdminSessionDetailPage />}
+            />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
-      </Content>
+      </div>
       <Footer style={{ textAlign: "center" }}>
         智能模拟面试系统 ©{new Date().getFullYear()} 中国软件杯参赛作品
       </Footer>

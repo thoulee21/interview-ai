@@ -3,7 +3,7 @@
 }
 
 .site-content {
-  padding: 0;
+  padding-top: 0px;
   margin-top: 64px;
   min-height: calc(100vh - 64px - 70px);
 }
@@ -15,6 +15,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 64px;
 }
 
 .logo {
@@ -32,6 +33,48 @@
   line-height: 64px;
 }
 
+/* 美化导航菜单项 */
+.nav-menu .ant-menu-item {
+  padding: 0 20px;
+  transition: all 0.3s;
+}
+
+.nav-menu .ant-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.nav-menu .ant-menu-item-selected {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  font-weight: bold;
+}
+
+/* 桌面和移动端菜单响应式显示 */
+.desktop-menu {
+  display: flex;
+  align-items: center;
+}
+
+.mobile-menu {
+  display: none;
+}
+
+/* 媒体查询 - 平板和手机适配 */
+@media (max-width: 768px) {
+  .desktop-menu {
+    display: none;
+  }
+  
+  .mobile-menu {
+    display: flex;
+  }
+  
+  .site-header {
+    padding: 0 16px;
+  }
+}
+
+/* 页面通用样式 */
 .page-title {
   margin-bottom: 24px;
   text-align: center;
@@ -92,4 +135,9 @@
   color: #6a737d;
   border-left: 0.25em solid #dfe2e5;
   margin-bottom: 1em;
+}
+
+/* 页头动画效果 */
+.site-header.scrolled {
+  backdrop-filter: blur(10px);
 }

@@ -1,37 +1,114 @@
-import React from "react";
-import { Layout, Menu } from "antd";
+import {
+  DashboardOutlined,
+  HomeOutlined,
+  SettingOutlined,
+  UserOutlined
+} from "@ant-design/icons";
+import { Avatar, Layout, Menu } from "antd";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { HomeOutlined, SettingOutlined, DashboardOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
 
 const AppHeader = () => {
   const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 30) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // 根据页面滚动状态动态设置Header样式
+  const headerStyle = {
+    position: "fixed",
+    zIndex: 1000,
+    width: "100%",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 24px",
+    transition: "all 0.3s ease",
+    background: "linear-gradient(90deg, #1890ff 0%, #10239e 100%)",
+    boxShadow: scrolled ? "0 2px 8px rgba(0, 0, 0, 0.15)" : "none",
+  };
+
+  const logoStyle = {
+    display: "flex",
+    alignItems: "center",
+  };
+
+  const logoTextStyle = {
+    margin: "0 0 0 8px",
+    color: "white",
+    fontSize: "20px",
+    fontWeight: "bold",
+  };
+
+  const menuItems = [
+    {
+      key: "/",
+      icon: <HomeOutlined />,
+      label: <Link to="/">首页</Link>,
+    },
+    {
+      key: "/setup",
+      icon: <SettingOutlined />,
+      label: <Link to="/setup">开始面试</Link>,
+    },
+    {
+      key: "/admin",
+      icon: <DashboardOutlined />,
+      label: <Link to="/admin">管理后台</Link>,
+    },
+  ];
 
   return (
-    <Header className="site-header">
-      <div className="logo">
+    <Header
+      className={`site-header ${scrolled ? "scrolled" : ""}`}
+      style={headerStyle}
+    >
+      <div className="logo" style={logoStyle}>
         <Link to="/">
-          <h1>智能模拟面试系统</h1>
+          <Avatar
+            size={36}
+            icon={<UserOutlined />}
+            style={{
+              background: "white",
+              color: "#1890ff",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            }}
+          />
+          <span style={logoTextStyle}>智能模拟面试系统</span>
         </Link>
       </div>
 
-      <Menu
-        theme="dark"
-        mode="horizontal"
-        selectedKeys={[location.pathname]}
-        className="nav-menu"
+      {/* 桌面导航菜单 */}
+      <div
+        className="desktop-menu"
+        style={{ display: "flex", alignItems: "center" }}
       >
-        <Menu.Item key="/" icon={<HomeOutlined />}>
-          <Link to="/">首页</Link>
-        </Menu.Item>
-        <Menu.Item key="/setup" icon={<SettingOutlined />}>
-          <Link to="/setup">开始面试</Link>
-        </Menu.Item>
-        <Menu.Item key="/admin" icon={<DashboardOutlined />}>
-          <Link to="/admin">管理后台</Link>
-        </Menu.Item>
-      </Menu>
+        <Menu
+          theme="dark"
+          mode="horizontal"
+          selectedKeys={[location.pathname]}
+          className="nav-menu"
+          style={{
+            background: "transparent",
+            borderBottom: "none",
+            minWidth: "400px",
+          }}
+          items={menuItems}
+        />
+      </div>
     </Header>
   );
 };
