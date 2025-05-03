@@ -1,6 +1,13 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000/api";
+// 从环境变量中获取API基础URL，如未设置则使用默认值
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
+if (!API_BASE_URL) {
+  throw new Error(
+    "API_BASE_URL is not set. Please set it in your environment variables."
+  );
+}
 
 // 创建axios实例
 const apiClient = axios.create({
@@ -64,7 +71,7 @@ const interviewAPI = {
   // 获取健康状态
   getHealthStatus: () => {
     return apiClient.get("/health");
-  }
+  },
 };
 
 export default interviewAPI;
