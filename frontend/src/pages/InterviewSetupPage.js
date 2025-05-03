@@ -1,15 +1,16 @@
-import React, { useState } from "react";
 import {
-  Typography,
-  Form,
-  Select,
   Button,
   Card,
+  Form,
   Radio,
+  Select,
   Spin,
+  Typography,
   message,
 } from "antd";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import InterviewBreadcrumb from "../components/InterviewBreadcrumb";
 import interviewAPI from "../services/api";
 
 const { Title, Paragraph } = Typography;
@@ -58,6 +59,7 @@ const InterviewSetupPage = () => {
 
   return (
     <div>
+      <InterviewBreadcrumb currentStep="setup" />
       <Title level={2} className="text-center">
         设置你的模拟面试
       </Title>

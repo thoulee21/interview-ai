@@ -17,6 +17,7 @@ import {
 import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useParams } from "react-router-dom";
+import InterviewBreadcrumb from "../components/InterviewBreadcrumb";
 import interviewAPI from "../services/api";
 
 const { Title, Paragraph, Text } = Typography;
@@ -69,6 +70,7 @@ const ResultPage = () => {
 
   return (
     <div>
+      <InterviewBreadcrumb currentStep="results" sessionId={sessionId} />
       <Title level={2} className="text-center">
         面试评估结果
       </Title>

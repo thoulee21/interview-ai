@@ -20,6 +20,7 @@ import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Webcam from "react-webcam";
+import InterviewBreadcrumb from "../components/InterviewBreadcrumb";
 import interviewAPI from "../services/api";
 
 const { Title, Paragraph } = Typography;
@@ -190,6 +191,12 @@ const InterviewPage = () => {
 
   return (
     <div>
+      <InterviewBreadcrumb 
+        currentStep="interview" 
+        sessionId={sessionId}
+        questionIndex={questionIndex}
+        isComplete={isComplete}
+      />
       <Title level={2} className="text-center">
         智能模拟面试
       </Title>
