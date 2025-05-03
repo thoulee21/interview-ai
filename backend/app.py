@@ -8,6 +8,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+# 导入验证模块
+from schemas.validation import (fix_evaluation_data, validate_audio_analysis,
+                                validate_evaluation_result,
+                                validate_video_analysis)
 # 导入讯飞星火API模块
 from xunfei_api import XunFeiSparkAPI
 
@@ -187,6 +191,31 @@ def answer_question():
         current_question = cursor.fetchone()
         position_type = session["position_type"]
 
+        # 验证和修复多模态分析数据
+        if video_analysis:
+            is_valid, errors = validate_video_analysis(video_analysis)
+            if not is_valid:
+                logger.warning(f"视频分析数据验证失败: {errors}")
+                # 应用默认值或修正错误的数据
+                video_analysis = {
+                    "eye_contact": video_analysis.get("eyeContact", 7.5),
+                    "facial_expressions": video_analysis.get("facialExpressions", 7.0),
+                    "body_language": video_analysis.get("bodyLanguage", 6.5),
+                    "confidence": video_analysis.get("confidence", 7.0)
+                }
+
+        if audio_analysis:
+            is_valid, errors = validate_audio_analysis(audio_analysis)
+            if not is_valid:
+                logger.warning(f"音频分析数据验证失败: {errors}")
+                # 应用默认值或修正错误的数据
+                audio_analysis = {
+                    "clarity": audio_analysis.get("clarity", 7.5),
+                    "pace": audio_analysis.get("pace", 7.0),
+                    "tone": audio_analysis.get("tone", 7.5),
+                    "filler_words_count": audio_analysis.get("fillerWordsCount", 5)
+                }
+
         # 调用讯飞星火API评估回答
         evaluation_response = xunfei_api.evaluate_answer(
             current_question["question"],
@@ -246,7 +275,7 @@ def answer_question():
 
         conn.commit()
 
-        # 判断是否结束面试(假设5个问题后结束)
+        # 判断是否结束面试
         cursor.execute(
             "SELECT COUNT(*) FROM interview_questions WHERE session_id = ?",
             (session_id,)
@@ -321,46 +350,38 @@ def answer_question():
 
             final_evaluation = final_evaluation_response.get("evaluation")
 
-            # 尝试从JSON字符串中解析结构化数据
-            try:
-                # 从最终评估中提取结构化数据
-                import re
-                json_match = re.search(
-                    r'```json\s*([\s\S]*?)\s*```|(\{[\s\S]*\})', final_evaluation)
+            # 使用 JSON Schema 验证来提取和验证结构化数据
+            data, is_valid, errors = validate_evaluation_result(
+                final_evaluation)
 
-                if json_match:
-                    # 提取JSON字符串并解析
-                    json_str = json_match.group(1) or json_match.group(2)
-                    eval_data = json.loads(json_str.strip())
+            if not is_valid:
+                logger.warning(f"评估结果验证失败: {errors}")
+                # 尝试修复数据
+                data = fix_evaluation_data(data)
 
-                    # 提取评分数据
-                    overall_score = eval_data.get('overallScore', 0)
-                    content_score = eval_data.get('contentScore', 0)
-                    delivery_score = eval_data.get('deliveryScore', 0)
-                    nonverbal_score = eval_data.get('nonVerbalScore', 0)
+            if data:
+                # 从验证后的数据中获取评估信息
+                overall_score = data.get('overallScore', 75)
+                content_score = data.get('contentScore', 75)
+                delivery_score = data.get('deliveryScore', 75)
+                nonverbal_score = data.get('nonVerbalScore', 75)
+                strengths = data.get('strengths', ["回答条理清晰", "专业知识扎实", "表达流畅"])
+                improvements = data.get(
+                    'improvements', ["可以更加简洁", "需要更多具体案例", "注意减少填充词"])
+                recommendations = data.get(
+                    'recommendations', "整体表现良好，建议进一步提升回答的简洁性和具体性。")
 
-                    # 提取优势、改进点和建议
-                    strengths = eval_data.get('strengths', [])
-                    improvements = eval_data.get('improvements', [])
-                    recommendations = eval_data.get('recommendations', '')
-
-                    # 保存到数据库
-                    cursor.execute(
-                        """INSERT INTO final_evaluations 
-                        (session_id, overall_score, content_score, delivery_score, nonverbal_score, 
-                            strengths, improvements, recommendations, created_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                        (session_id, overall_score, content_score, delivery_score, nonverbal_score,
-                         json.dumps(strengths), json.dumps(improvements), recommendations, datetime.now())
-                    )
-
-                else:
-                    # 如果无法提取JSON，记录错误但继续执行
-                    logger.warning("无法从评估结果中提取JSON结构")
-
-            except Exception as e:
-                # 解析评估结果失败，记录错误但继续执行
-                logger.exception(f"解析评估结果失败: {str(e)}")
+                # 保存到数据库
+                cursor.execute(
+                    """INSERT INTO final_evaluations 
+                    (session_id, overall_score, content_score, delivery_score, nonverbal_score, 
+                        strengths, improvements, recommendations, created_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (session_id, overall_score, content_score, delivery_score, nonverbal_score,
+                        json.dumps(strengths), json.dumps(improvements), recommendations, datetime.now())
+                )
+            else:
+                logger.error("无法从评估结果中提取有效数据")
 
             # 更新会话状态为已完成
             cursor.execute(
