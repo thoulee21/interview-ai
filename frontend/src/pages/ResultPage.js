@@ -15,6 +15,7 @@ import {
   Typography,
 } from "antd";
 import React, { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { useParams } from "react-router-dom";
 import interviewAPI from "../services/api";
 
@@ -149,7 +150,7 @@ const ResultPage = () => {
         </Col>
       </Row>
 
-      {/* 各问题得分 */}
+      {/* 各问题评估 */}
       <Card title="各问题评估" style={{ marginBottom: 24 }}>
         <List
           itemLayout="vertical"
@@ -174,7 +175,9 @@ const ResultPage = () => {
                   {item.score}分
                 </Tag>
               </div>
-              <Text type="secondary">{item.feedback}</Text>
+              <div className="markdown-content">
+                <ReactMarkdown>{item.feedback}</ReactMarkdown>
+              </div>
             </List.Item>
           )}
         />
