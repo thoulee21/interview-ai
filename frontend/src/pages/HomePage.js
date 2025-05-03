@@ -1,7 +1,12 @@
-import React from 'react';
-import { Typography, Row, Col, Button, Card } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import { FileTextOutlined, VideoCameraOutlined, SoundOutlined, RobotOutlined } from '@ant-design/icons';
+import React from "react";
+import { Typography, Row, Col, Button, Card } from "antd";
+import { useNavigate } from "react-router-dom";
+import {
+  FileTextOutlined,
+  VideoCameraOutlined,
+  SoundOutlined,
+  RobotOutlined,
+} from "@ant-design/icons";
 
 const { Title, Paragraph } = Typography;
 
@@ -15,65 +20,83 @@ const HomePage = () => {
         <Paragraph className="page-description">
           基于多模态AI技术，为高校学生提供专业的模拟面试体验与评测
         </Paragraph>
-        <Button 
-          type="primary" 
-          size="large"
-          onClick={() => navigate('/setup')}
-        >
+        <Button type="primary" size="large" onClick={() => navigate("/setup")}>
           开始体验
         </Button>
       </div>
-      
-      <Row gutter={[24, 24]} style={{ marginTop: '48px' }}>
+
+      <Row gutter={[24, 24]} style={{ marginTop: "48px" }}>
         <Col xs={24} sm={12} lg={6}>
           <Card
             hoverable
-            cover={<div style={{ padding: '24px', textAlign: 'center' }}><FileTextOutlined style={{ fontSize: '64px', color: '#1890ff' }} /></div>}
+            cover={
+              <div style={{ padding: "24px", textAlign: "center" }}>
+                <FileTextOutlined
+                  style={{ fontSize: "64px", color: "#1890ff" }}
+                />
+              </div>
+            }
           >
-            <Card.Meta 
-              title="文本分析" 
-              description="智能分析回答内容，评估专业度和相关性" 
+            <Card.Meta
+              title="文本分析"
+              description="智能分析回答内容，评估专业度和相关性"
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card
             hoverable
-            cover={<div style={{ padding: '24px', textAlign: 'center' }}><VideoCameraOutlined style={{ fontSize: '64px', color: '#1890ff' }} /></div>}
+            cover={
+              <div style={{ padding: "24px", textAlign: "center" }}>
+                <VideoCameraOutlined
+                  style={{ fontSize: "64px", color: "#1890ff" }}
+                />
+              </div>
+            }
           >
-            <Card.Meta 
-              title="视频分析" 
-              description="分析面部表情和肢体语言，评估自信度" 
+            <Card.Meta
+              title="视频分析"
+              description="分析面部表情和肢体语言，评估自信度"
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card
             hoverable
-            cover={<div style={{ padding: '24px', textAlign: 'center' }}><SoundOutlined style={{ fontSize: '64px', color: '#1890ff' }} /></div>}
+            cover={
+              <div style={{ padding: "24px", textAlign: "center" }}>
+                <SoundOutlined style={{ fontSize: "64px", color: "#1890ff" }} />
+              </div>
+            }
           >
-            <Card.Meta 
-              title="语音分析" 
-              description="分析语速、语调和清晰度，提升表达能力" 
+            <Card.Meta
+              title="语音分析"
+              description="分析语速、语调和清晰度，提升表达能力"
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card
             hoverable
-            cover={<div style={{ padding: '24px', textAlign: 'center' }}><RobotOutlined style={{ fontSize: '64px', color: '#1890ff' }} /></div>}
+            cover={
+              <div style={{ padding: "24px", textAlign: "center" }}>
+                <RobotOutlined style={{ fontSize: "64px", color: "#1890ff" }} />
+              </div>
+            }
           >
-            <Card.Meta 
-              title="AI评测" 
-              description="基于讯飞星火大模型的全面智能评测与建议" 
+            <Card.Meta
+              title="AI评测"
+              description="基于讯飞星火大模型的全面智能评测与建议"
             />
           </Card>
         </Col>
       </Row>
-      
-      <div style={{ marginTop: '48px' }}>
-        <Title level={2} className="text-center">系统特点</Title>
-        <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
+
+      <div style={{ marginTop: "48px" }}>
+        <Title level={2} className="text-center">
+          系统特点
+        </Title>
+        <Row gutter={[24, 24]} style={{ marginTop: "24px" }}>
           <Col xs={24} md={8}>
             <Title level={4}>真实模拟</Title>
             <Paragraph>

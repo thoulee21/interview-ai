@@ -1,13 +1,13 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { Layout } from 'antd';
-import AppHeader from './components/AppHeader';
-import HomePage from './pages/HomePage';
-import InterviewSetupPage from './pages/InterviewSetupPage';
-import InterviewPage from './pages/InterviewPage';
-import ResultPage from './pages/ResultPage';
-import NotFoundPage from './pages/NotFoundPage';
-import './App.css';
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import { Layout } from "antd";
+import AppHeader from "./components/AppHeader";
+import HomePage from "./pages/HomePage";
+import InterviewSetupPage from "./pages/InterviewSetupPage";
+import InterviewPage from "./pages/InterviewPage";
+import ResultPage from "./pages/ResultPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import "./App.css";
 
 const { Content, Footer } = Layout;
 
@@ -26,7 +26,7 @@ function App() {
           </Routes>
         </div>
       </Content>
-      <Footer style={{ textAlign: 'center' }}>
+      <Footer style={{ textAlign: "center" }}>
         智能模拟面试系统 ©{new Date().getFullYear()} 中国软件杯参赛作品
       </Footer>
     </Layout>

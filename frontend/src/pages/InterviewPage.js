@@ -77,7 +77,7 @@ const InterviewPage = () => {
 
       mediaRecorderRef.current.addEventListener(
         "dataavailable",
-        handleDataAvailable
+        handleDataAvailable,
       );
       mediaRecorderRef.current.start();
     }
@@ -111,7 +111,7 @@ const InterviewPage = () => {
       // 调用后端API分析视频
       const response = await axios.post(
         "http://localhost:5000/api/evaluate_video",
-        formData
+        formData,
       );
 
       // 在实际项目中，这里应该处理视频分析的结果
@@ -142,7 +142,7 @@ const InterviewPage = () => {
         {
           session_id: sessionId,
           answer: answer,
-        }
+        },
       );
 
       // 处理回答评估

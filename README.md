@@ -5,6 +5,7 @@
 ## 项目概述
 
 这是一个面向高校学生的智能模拟面试系统，通过多模态（文本、语音、视频）分析，为用户提供专业的面试评测和建议。系统集成了讯飞星火大模型，能够：
+
 - 模拟真实面试场景与问题
 - 分析用户的回答内容、语音、表情和肢体语言
 - 提供专业的评测反馈和改进建议
@@ -13,7 +14,7 @@
 ## 技术栈
 
 - **前端**: React.js + Ant Design + WebRTC
-- **后端**: Python Flask + 讯飞星火大模型 
+- **后端**: Python Flask + 讯飞星火大模型
 - **数据库**: SQLite
 - **多模态处理**: OpenCV, 音频处理库
 
@@ -30,6 +31,7 @@
 ## 如何开始
 
 ### 环境要求
+
 - Node.js 16+
 - Python 3.8+
 - 讯飞星火大模型API访问凭证
@@ -37,6 +39,7 @@
 ### 后端设置
 
 1. 创建并激活Python虚拟环境（可选但建议）
+
 ```bash
 # 创建虚拟环境
 python -m venv venv
@@ -47,12 +50,14 @@ source venv/bin/activate
 ```
 
 2. 安装依赖
+
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
 3. 创建`.env`文件，配置讯飞星火API凭证
+
 ```
 XUNFEI_APP_ID=your_app_id_here
 XUNFEI_API_KEY=your_api_key_here
@@ -60,6 +65,7 @@ XUNFEI_API_SECRET=your_api_secret_here
 ```
 
 4. 启动后端服务
+
 ```bash
 python app.py
 ```
@@ -67,18 +73,20 @@ python app.py
 ### 前端设置
 
 1. 安装依赖
+
 ```bash
 cd frontend
 npm install
 ```
 
 2. 启动前端开发服务器
+
 ```bash
 npm start
 ```
 
 3. 访问应用
-打开浏览器，访问 http://localhost:3000 即可使用系统
+   打开浏览器，访问 http://localhost:3000 即可使用系统
 
 ## 项目结构
 

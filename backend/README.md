@@ -11,14 +11,16 @@
 ## 环境设置
 
 1. 安装依赖：
+
 ```bash
 poetry install
 ```
 
 2. 配置环境变量：
-复制`.env.example`为`.env`并填入讯飞星火API凭证
+   复制`.env.example`为`.env`并填入讯飞星火API凭证
 
 3. 运行服务：
+
 ```bash
 poetry run python app.py
 ```

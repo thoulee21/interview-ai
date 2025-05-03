@@ -30,7 +30,7 @@ const ResultPage = () => {
     const fetchResults = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/interview_results/${sessionId}`
+          `http://localhost:5000/api/interview_results/${sessionId}`,
         );
         setResults(response.data);
       } catch (error) {

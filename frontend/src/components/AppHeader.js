@@ -1,13 +1,13 @@
-import React from 'react';
-import { Layout, Menu } from 'antd';
-import { Link, useLocation } from 'react-router-dom';
-import { HomeOutlined, SettingOutlined } from '@ant-design/icons';
+import React from "react";
+import { Layout, Menu } from "antd";
+import { Link, useLocation } from "react-router-dom";
+import { HomeOutlined, SettingOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
 
 const AppHeader = () => {
   const location = useLocation();
-  
+
   return (
     <Header className="site-header">
       <div className="logo">
