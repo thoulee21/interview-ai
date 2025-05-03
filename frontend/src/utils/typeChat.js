@@ -3,6 +3,11 @@
  * 用于处理和规范大模型输出的结构
  */
 
+import Ajv from 'ajv';
+
+// 初始化 ajv 实例
+const ajv = new Ajv({ allErrors: true });
+
 /**
  * 将大模型原始文本输出解析为结构化的面试评估结果
  * 
@@ -52,13 +57,17 @@ export const parseModelOutput = (rawText, schema) => {
  * @returns {boolean} - 是否符合 schema
  */
 const isValidAgainstSchema = (obj, schema) => {
-  // 简化版验证，实际项目中可以使用 ajv 等库进行完整验证
-  // 这里仅做基本字段检查
   if (!obj || typeof obj !== 'object') return false;
   
-  // 检查必要字段是否存在
-  const requiredFields = schema.required || Object.keys(schema.properties || {});
-  return requiredFields.every(field => field in obj);
+  // 使用 ajv 进行完整的 JSON Schema 验证
+  const validate = ajv.compile(schema);
+  const valid = validate(obj);
+
+  if (!valid) {
+    console.debug('Schema 验证失败:', validate.errors);
+  }
+
+  return valid;
 };
 
 /**
