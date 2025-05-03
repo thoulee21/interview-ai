@@ -8,11 +8,11 @@ import {
   Typography,
   message,
 } from "antd";
-import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Webcam from "react-webcam";
+import interviewAPI from "../services/api";
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -105,14 +105,9 @@ const InterviewPage = () => {
 
     try {
       const blob = new Blob(recordedChunks, { type: "video/webm" });
-      const formData = new FormData();
-      formData.append("video", blob);
-
-      // 调用后端API分析视频
-      const response = await axios.post(
-        "http://localhost:5000/api/evaluate_video",
-        formData,
-      );
+      
+      // 调用后端API分析视频，使用interviewAPI服务
+      const response = await interviewAPI.evaluateVideo(blob, sessionId);
 
       // 在实际项目中，这里应该处理视频分析的结果
       message.success("视频分析完成");
@@ -136,14 +131,8 @@ const InterviewPage = () => {
     try {
       setLoading(true);
 
-      // 调用后端API提交答案
-      const response = await axios.post(
-        "http://localhost:5000/api/answer_question",
-        {
-          session_id: sessionId,
-          answer: answer,
-        },
-      );
+      // 调用后端API提交答案，使用interviewAPI服务
+      const response = await interviewAPI.answerQuestion(sessionId, answer);
 
       // 处理回答评估
       if (response.data.is_complete) {

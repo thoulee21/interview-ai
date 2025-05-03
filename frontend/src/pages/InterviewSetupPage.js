@@ -10,7 +10,7 @@ import {
   message,
 } from "antd";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import interviewAPI from "../services/api";
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
@@ -33,14 +33,11 @@ const InterviewSetupPage = () => {
     try {
       setLoading(true);
 
-      // 调用后端API开始面试会话
-      const response = await axios.post(
-        "http://localhost:5000/api/start_interview",
-        {
-          positionType: values.positionType,
-          difficulty: values.difficulty,
-        },
-      );
+      // 调用后端API开始面试会话，使用interviewAPI服务
+      const response = await interviewAPI.startInterview({
+        positionType: values.positionType,
+        difficulty: values.difficulty,
+      });
 
       // 获取会话ID和初始问题，并跳转到面试页面
       const sessionId = response.data.session_id;

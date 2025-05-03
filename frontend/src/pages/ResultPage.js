@@ -14,9 +14,9 @@ import {
   Tag,
   Typography,
 } from "antd";
-import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import interviewAPI from "../services/api";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -26,12 +26,10 @@ const ResultPage = () => {
   const [results, setResults] = useState(null);
 
   useEffect(() => {
-    // 模拟从API获取数据
+    // 使用interviewAPI服务获取面试结果
     const fetchResults = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:5000/api/interview_results/${sessionId}`,
-        );
+        const response = await interviewAPI.getInterviewResults(sessionId);
         setResults(response.data);
       } catch (error) {
         console.error("获取面试结果失败:", error);

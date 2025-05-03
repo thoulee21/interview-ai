@@ -5,7 +5,7 @@ const API_BASE_URL = "http://localhost:5000/api";
 // 创建axios实例
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 50000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -27,9 +27,12 @@ const interviewAPI = {
   },
 
   // 分析视频数据
-  evaluateVideo: (videoBlob) => {
+  evaluateVideo: (videoBlob, sessionId = null) => {
     const formData = new FormData();
     formData.append("video", videoBlob);
+    if (sessionId) {
+      formData.append("session_id", sessionId);
+    }
 
     return apiClient.post("/evaluate_video", formData, {
       headers: {
@@ -39,9 +42,12 @@ const interviewAPI = {
   },
 
   // 分析音频数据
-  evaluateAudio: (audioBlob) => {
+  evaluateAudio: (audioBlob, sessionId = null) => {
     const formData = new FormData();
     formData.append("audio", audioBlob);
+    if (sessionId) {
+      formData.append("session_id", sessionId);
+    }
 
     return apiClient.post("/evaluate_audio", formData, {
       headers: {
@@ -54,6 +60,11 @@ const interviewAPI = {
   getInterviewResults: (sessionId) => {
     return apiClient.get(`/interview_results/${sessionId}`);
   },
+
+  // 获取健康状态
+  getHealthStatus: () => {
+    return apiClient.get("/health");
+  }
 };
 
 export default interviewAPI;
