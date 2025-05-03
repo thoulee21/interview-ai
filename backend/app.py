@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import sqlite3
 import uuid
 from datetime import datetime
@@ -16,6 +17,9 @@ load_dotenv()
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# 获取面试问题数量的环境变量，默认为5个问题
+INTERVIEW_QUESTION_COUNT = int(os.getenv('INTERVIEW_QUESTION_COUNT', '5'))
 
 app = Flask(__name__)
 CORS(app)  # 允许跨域请求
@@ -256,7 +260,7 @@ def answer_question():
         questions_and_answers = cursor.fetchall()
 
         # 进入面试完成分支，生成最终评估
-        if question_count >= 2:
+        if question_count >= INTERVIEW_QUESTION_COUNT:
             # 生成整体评估
             questions = [qa["question"] for qa in questions_and_answers]
             answers = [qa["answer"] for qa in questions_and_answers]
@@ -316,29 +320,30 @@ def answer_question():
                 return jsonify({"error": "生成最终评估失败"}), 500
 
             final_evaluation = final_evaluation_response.get("evaluation")
-            
+
             # 尝试从JSON字符串中解析结构化数据
             try:
                 # 从最终评估中提取结构化数据
                 import re
-                json_match = re.search(r'```json\s*([\s\S]*?)\s*```|(\{[\s\S]*\})', final_evaluation)
-                
+                json_match = re.search(
+                    r'```json\s*([\s\S]*?)\s*```|(\{[\s\S]*\})', final_evaluation)
+
                 if json_match:
                     # 提取JSON字符串并解析
                     json_str = json_match.group(1) or json_match.group(2)
                     eval_data = json.loads(json_str.strip())
-                    
+
                     # 提取评分数据
                     overall_score = eval_data.get('overallScore', 0)
                     content_score = eval_data.get('contentScore', 0)
                     delivery_score = eval_data.get('deliveryScore', 0)
                     nonverbal_score = eval_data.get('nonVerbalScore', 0)
-                    
+
                     # 提取优势、改进点和建议
                     strengths = eval_data.get('strengths', [])
                     improvements = eval_data.get('improvements', [])
                     recommendations = eval_data.get('recommendations', '')
-                    
+
                     # 保存到数据库
                     cursor.execute(
                         """INSERT INTO final_evaluations 
@@ -346,13 +351,13 @@ def answer_question():
                             strengths, improvements, recommendations, created_at) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                         (session_id, overall_score, content_score, delivery_score, nonverbal_score,
-                        json.dumps(strengths), json.dumps(improvements), recommendations, datetime.now())
+                         json.dumps(strengths), json.dumps(improvements), recommendations, datetime.now())
                     )
-                    
+
                 else:
                     # 如果无法提取JSON，记录错误但继续执行
                     logger.warning("无法从评估结果中提取JSON结构")
-                    
+
             except Exception as e:
                 # 解析评估结果失败，记录错误但继续执行
                 logger.exception(f"解析评估结果失败: {str(e)}")
