@@ -33,7 +33,12 @@ function App() {
           </Routes>
         </div>
       </div>
-      <Footer style={{ textAlign: "center" }}>
+      <Footer
+        style={{
+          textAlign: "center",
+          marginTop: "6px",
+        }}
+      >
         智能模拟面试系统 ©{new Date().getFullYear()} 中国软件杯参赛作品
       </Footer>
     </Layout>
