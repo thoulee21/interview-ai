@@ -2,15 +2,18 @@ import {
   CheckCircleOutlined,
   SendOutlined,
   VideoCameraOutlined,
+  CloseOutlined
 } from "@ant-design/icons";
 import {
   Button,
   Card,
+  Col,
   Divider,
   Input,
   message,
   Progress,
   Result,
+  Row,
   Space,
   Spin,
   Tag,
@@ -36,6 +39,11 @@ const InterviewPage = () => {
   const [finalEvaluation, setFinalEvaluation] = useState(null);
   const [loadingFinalEvaluation, setLoadingFinalEvaluation] = useState(false);
   const [overallScore, setOverallScore] = useState(null);
+  
+  // 视频分析相关状态
+  const [videoAnalysis, setVideoAnalysis] = useState(null);
+  const [loadingVideoAnalysis, setLoadingVideoAnalysis] = useState(false);
+  const [showVideoAnalysis, setShowVideoAnalysis] = useState(false);
 
   const webcamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -115,20 +123,35 @@ const InterviewPage = () => {
     }
 
     try {
+      setLoadingVideoAnalysis(true);
+      setShowVideoAnalysis(true);
       const blob = new Blob(recordedChunks, { type: "video/webm" });
 
       // 调用后端API分析视频，使用interviewAPI服务
       const response = await interviewAPI.evaluateVideo(blob, sessionId);
 
-      // 在实际项目中，这里应该处理视频分析的结果
+      // 处理视频分析结果
+      const analysisData = response.data;
+      
+      // 转换后端数据为前端使用格式（与ResultPage保持一致）
+      const formattedData = {
+        eyeContact: analysisData.eye_contact || 0,
+        facialExpressions: analysisData.facial_expressions || 0,
+        bodyLanguage: analysisData.body_language || 0,
+        confidence: analysisData.confidence || 0,
+        recommendations: analysisData.recommendations || "视频分析完成，请继续回答问题。"
+      };
+      
+      setVideoAnalysis(formattedData);
       message.success("视频分析完成");
-      console.log("视频分析结果:", response.data);
 
       // 清除录制的视频数据
       setRecordedChunks([]);
     } catch (error) {
       console.error("视频分析失败:", error);
       message.error("视频分析失败，请重试");
+    } finally {
+      setLoadingVideoAnalysis(false);
     }
   };
 
@@ -236,6 +259,92 @@ const InterviewPage = () => {
           status="active"
           style={{ marginBottom: "20px" }}
         />
+
+        {/* 视频分析结果展示 */}
+        {showVideoAnalysis && !isComplete && (
+          <Card 
+            title={
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>实时视频分析</span>
+                <Button 
+                  type="text" 
+                  icon={<CloseOutlined />} 
+                  onClick={() => setShowVideoAnalysis(false)}
+                  size="small"
+                />
+              </div>
+            } 
+            style={{ marginBottom: "20px" }}
+          >
+            {loadingVideoAnalysis ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <Spin size="default" />
+                <Paragraph style={{ marginTop: 10 }}>正在分析视频行为表现...</Paragraph>
+              </div>
+            ) : (
+              <>
+                <Row gutter={16}>
+                  <Col xs={24} md={24}>
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span>眼神接触</span>
+                        <span><strong>{videoAnalysis?.eyeContact.toFixed(1)}</strong>/10</span>
+                      </div>
+                      <Progress 
+                        percent={videoAnalysis?.eyeContact * 10} 
+                        size="small"
+                        status={videoAnalysis?.eyeContact >= 7 ? "success" : "normal"}
+                      />
+                    </div>
+                    
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span>面部表情</span>
+                        <span><strong>{videoAnalysis?.facialExpressions.toFixed(1)}</strong>/10</span>
+                      </div>
+                      <Progress 
+                        percent={videoAnalysis?.facialExpressions * 10} 
+                        size="small"
+                        status={videoAnalysis?.facialExpressions >= 7 ? "success" : "normal"}
+                      />
+                    </div>
+                    
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span>肢体语言</span>
+                        <span><strong>{videoAnalysis?.bodyLanguage.toFixed(1)}</strong>/10</span>
+                      </div>
+                      <Progress 
+                        percent={videoAnalysis?.bodyLanguage * 10} 
+                        size="small"
+                        status={videoAnalysis?.bodyLanguage >= 7 ? "success" : "normal"}
+                      />
+                    </div>
+                    
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span>自信程度</span>
+                        <span><strong>{videoAnalysis?.confidence.toFixed(1)}</strong>/10</span>
+                      </div>
+                      <Progress 
+                        percent={videoAnalysis?.confidence * 10} 
+                        size="small"
+                        status={videoAnalysis?.confidence >= 7 ? "success" : "normal"}
+                      />
+                    </div>
+                  </Col>
+                </Row>
+                
+                <Divider style={{ margin: '12px 0' }}/>
+                
+                <div>
+                  <strong>分析建议：</strong>
+                  <Paragraph>{videoAnalysis?.recommendations}</Paragraph>
+                </div>
+              </>
+            )}
+          </Card>
+        )}
 
         <Card title="面试问题" style={{ marginBottom: "20px" }}>
           {/* 使用ReactMarkdown替换原来的Paragraph组件来渲染Markdown格式的内容 */}
