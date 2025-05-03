@@ -613,17 +613,21 @@ def get_interview_results(session_id):
         question_scores = []
         for q in qa_data:
             if q['evaluation']:
-                # 从评估文本中提取分数(简化处理，实际应该有更复杂的解析逻辑)
+                # 从评估文本中提取结构化 JSON 数据
                 score = 75  # 默认分数
                 try:
-                    # 尝试从评估文本中找到分数，格式如"分数：8/10"
-                    eval_text = q['evaluation']
-                    if '分数：' in eval_text and '/10' in eval_text:
-                        score_part = eval_text.split('分数：')[1].split('/10')[0]
-                        raw_score = float(score_part.strip())
-                        score = int(raw_score * 10)  # 转换为百分制
-                except:
-                    pass
+                    from schemas.validation import extract_evaluation_from_text
+                    # 尝试提取JSON数据
+                    eval_data = extract_evaluation_from_text(q['evaluation'])
+                    if eval_data and isinstance(eval_data, dict):
+                        # 如果成功提取到JSON数据，直接获取score字段
+                        if 'score' in eval_data and isinstance(eval_data['score'], (int, float)):
+                            raw_score = float(eval_data['score'])
+                            # 将1-10分转换为百分制
+                            score = int(raw_score * 10)
+                            
+                except Exception as e:
+                    logger.warning(f"提取评分失败: {str(e)}")
 
                 question_scores.append({
                     'question': q['question'],

@@ -17,6 +17,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Webcam from "react-webcam";
 import InterviewBreadcrumb from "../components/InterviewBreadcrumb";
 import interviewAPI from "../services/api";
+import formatEvaluationToMarkdown from "../utils/formatEvaluationToMarkdown";
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -279,7 +280,9 @@ const InterviewPage = () => {
         message.success("面试已完成，评估生成完毕");
       } else {
         // 继续面试
-        setEvaluation(response.data.evaluation);
+        // 格式化评估结果为可读性好的Markdown
+        const formattedEvaluation = formatEvaluationToMarkdown(response.data.evaluation);
+        setEvaluation(formattedEvaluation);
         setCurrentQuestion(response.data.next_question);
         setQuestionIndex(questionIndex + 1);
         setAnswer("");

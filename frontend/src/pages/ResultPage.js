@@ -19,6 +19,7 @@ import ReactMarkdown from "react-markdown";
 import { useParams } from "react-router-dom";
 import InterviewBreadcrumb from "../components/InterviewBreadcrumb";
 import interviewAPI from "../services/api";
+import formatEvaluationToMarkdown from "../utils/formatEvaluationToMarkdown";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -33,16 +34,45 @@ const ResultPage = () => {
       try {
         const response = await interviewAPI.getInterviewResults(sessionId);
         let resultData = response.data;
-        
+
         // 检查是否有原始评估文本，如有需要可以使用TypeChat进行结构化
         // 如果后端已返回结构化数据，则无需此处理
         if (resultData.rawEvaluation) {
-          const structuredData = interviewAPI.processEvaluation(resultData.rawEvaluation);
+          const structuredData = interviewAPI.processEvaluation(
+            resultData.rawEvaluation
+          );
           if (structuredData) {
             resultData = { ...resultData, ...structuredData };
           }
         }
-        
+
+        // 处理每个问题的评估内容，转换JSON为Markdown格式
+        if (
+          resultData.questionScores &&
+          Array.isArray(resultData.questionScores)
+        ) {
+          resultData.questionScores = resultData.questionScores.map((item) => {
+            if (item.feedback) {
+              try {
+                // 尝试检测JSON格式的反馈并进行格式化
+                if (
+                  (item.feedback.includes("{") &&
+                    item.feedback.includes("}")) ||
+                  item.feedback.includes("```json")
+                ) {
+                  return {
+                    ...item,
+                    feedback: formatEvaluationToMarkdown(item.feedback),
+                  };
+                }
+              } catch (error) {
+                console.warn("问题评估格式化失败:", error);
+              }
+            }
+            return item;
+          });
+        }
+
         setResults(resultData);
       } catch (error) {
         console.error("获取面试结果失败:", error);
@@ -185,7 +215,7 @@ const ResultPage = () => {
                   style={{ flex: 1, marginRight: 16 }}
                 />
                 <Tag color={getScoreLevel(item.score).color}>
-                  {item.score}分
+                  {item.score / 10} 分
                 </Tag>
               </div>
               <div className="markdown-content">
