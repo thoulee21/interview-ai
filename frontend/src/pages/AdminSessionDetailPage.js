@@ -368,9 +368,7 @@ const AdminSessionDetailPage = () => {
           marginBottom: 20,
         }}
       >
-        <Title level={2}>
-          <QuestionCircleOutlined /> 面试会话详情
-        </Title>
+        <Title level={2}>面试会话详情</Title>
         <Space>
           {sessionDetails.status === "completed" && (
             <Button
