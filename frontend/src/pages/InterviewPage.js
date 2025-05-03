@@ -47,6 +47,9 @@ const InterviewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // 添加一个ref来跟踪是否已经初始化
+  const isInitialized = useRef(false);
+
   const silentAnalysis = useCallback(async () => {
     if (recordedChunks.length === 0) return;
 
@@ -131,6 +134,9 @@ const InterviewPage = () => {
 
   // 获取初始面试问题
   useEffect(() => {
+    // 如果已经初始化过，则不再执行
+    if (isInitialized.current) return;
+
     const initializeInterview = () => {
       try {
         setCurrentQuestion("正在加载面试问题...");
@@ -146,12 +152,32 @@ const InterviewPage = () => {
           // 自动开始录制
           startRecording();
         } else {
-          // 如果没有初始问题（例如用户直接访问URL），可以考虑重定向回设置页面
-          // 或者向后端请求当前会话的问题
-          message.warning("无法获取面试问题，请从设置页面开始面试");
-          setTimeout(() => {
-            navigate("/setup");
-          }, 2000);
+          // 如果没有初始问题（例如用户直接访问URL），尝试从后端获取当前会话的问题
+          interviewAPI
+            .getSessionDetails(sessionId)
+            .then((response) => {
+              if (
+                response.data &&
+                response.data.questions &&
+                response.data.questions.length > 0
+              ) {
+                const lastQuestion =
+                  response.data.questions[response.data.questions.length - 1];
+                setCurrentQuestion(lastQuestion.question);
+                setQuestionIndex(lastQuestion.questionIndex);
+                setLoading(false);
+                startRecording();
+              } else {
+                throw new Error("无法获取会话问题");
+              }
+            })
+            .catch((error) => {
+              console.error("获取会话问题失败:", error);
+              message.warning("无法获取面试问题，请从设置页面开始面试");
+              setTimeout(() => {
+                navigate("/setup");
+              }, 2000);
+            });
         }
       } catch (error) {
         console.error("获取面试问题失败:", error);
@@ -160,6 +186,8 @@ const InterviewPage = () => {
     };
 
     initializeInterview();
+    // 标记已经初始化
+    isInitialized.current = true;
 
     // 组件卸载时清理资源
     return () => {
@@ -168,7 +196,8 @@ const InterviewPage = () => {
         clearInterval(recordingInterval.current);
       }
     };
-  }, [sessionId, location.state, navigate, startRecording]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]); // 仅依赖sessionId，确保只在sessionId变化或组件首次挂载时执行
 
   // 自动开始录制视频
   const handleDataAvailable = ({ data }) => {
