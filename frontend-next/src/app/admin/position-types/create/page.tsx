@@ -1,7 +1,11 @@
 "use client";
 
 import interviewAPI from "@/services/api";
-import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  SaveOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
 import {
   Breadcrumb,
   Button,
@@ -79,7 +83,10 @@ export default function CreatePositionTypePage() {
           marginBottom: "16px",
         }}
       >
-        <Title level={2}>添加职位类型</Title>
+        <Title level={2}>
+          <UserAddOutlined style={{ marginRight: 8 }} />
+          添加职位类型
+        </Title>
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => router.push("/admin/position-types")}

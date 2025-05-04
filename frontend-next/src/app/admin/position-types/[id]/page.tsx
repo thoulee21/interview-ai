@@ -1,7 +1,11 @@
 "use client";
 
 import interviewAPI from "@/services/api";
-import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  EditOutlined,
+  SaveOutlined,
+} from "@ant-design/icons";
 import {
   Breadcrumb,
   Button,
@@ -15,7 +19,7 @@ import {
 } from "antd";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -88,21 +92,21 @@ export default function PositionTypeDetailPage() {
 
   return (
     <div>
-      <Breadcrumb 
+      <Breadcrumb
         style={{ marginBottom: 16 }}
         items={[
           {
-            title: <Link href="/">首页</Link>
+            title: <Link href="/">首页</Link>,
           },
           {
-            title: <Link href="/admin">管理后台</Link>
+            title: <Link href="/admin">管理后台</Link>,
           },
           {
-            title: <Link href="/admin/position-types">职位类型管理</Link>
+            title: <Link href="/admin/position-types">职位类型管理</Link>,
           },
           {
-            title: "编辑职位类型"
-          }
+            title: "编辑职位类型",
+          },
         ]}
       />
 
@@ -114,7 +118,10 @@ export default function PositionTypeDetailPage() {
           marginBottom: "16px",
         }}
       >
-        <Title level={2}>编辑职位类型</Title>
+        <Title level={2}>
+          <EditOutlined style={{ marginRight: 8 }} />
+          编辑职位类型
+        </Title>
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => router.push("/admin/position-types")}

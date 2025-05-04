@@ -8,6 +8,7 @@ import {
   QuestionCircleOutlined,
   SoundOutlined,
   VideoCameraOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import {
   Breadcrumb,
@@ -422,7 +423,10 @@ export default function AdminSessionDetailPage() {
           marginBottom: 20,
         }}
       >
-        <Title level={2}>面试会话详情</Title>
+        <Title level={2}>
+          <EditOutlined style={{ marginRight: 8 }} />
+          面试会话详情
+        </Title>
         <Space>
           {sessionDetails.status === "completed" && (
             <Button
