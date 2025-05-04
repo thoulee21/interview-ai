@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 INTERVIEW_EVALUATION_SCHEMA = {
     "type": "object",
     "properties": {
-        "overallScore": {"type": "number", "minimum": 1, "maximum": 100},
-        "contentScore": {"type": "number", "minimum": 1, "maximum": 100},
-        "deliveryScore": {"type": "number", "minimum": 1, "maximum": 100},
-        "nonVerbalScore": {"type": "number", "minimum": 1, "maximum": 100},
+        "overallScore": {"type": "number", "minimum": 0, "maximum": 100},
+        "contentScore": {"type": "number", "minimum": 0, "maximum": 100},
+        "deliveryScore": {"type": "number", "minimum": 0, "maximum": 100},
+        "nonVerbalScore": {"type": "number", "minimum": 0, "maximum": 100},
         "strengths": {
             "type": "array",
             "items": {"type": "string"},
@@ -36,7 +36,7 @@ INTERVIEW_EVALUATION_SCHEMA = {
                 "type": "object",
                 "properties": {
                     "question": {"type": "string"},
-                    "score": {"type": "number", "minimum": 1, "maximum": 100},
+                    "score": {"type": "number", "minimum": 0, "maximum": 100},
                     "feedback": {"type": "string"}
                 },
                 "required": ["question", "score", "feedback"]
@@ -192,8 +192,8 @@ def fix_evaluation_data(data):
             elif field == "nonVerbalScore":
                 fixed_data[field] = 60
         else:
-            # 确保分数在1-100范围内
-            fixed_data[field] = max(1, min(100, int(fixed_data[field])))
+            # 确保分数在0-100范围内
+            fixed_data[field] = max(0, min(100, int(fixed_data[field])))
 
     # 确保strengths和improvements是非空数组
     for field in ["strengths", "improvements"]:
