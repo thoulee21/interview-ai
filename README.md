@@ -36,7 +36,50 @@
 - Python 3.8+
 - 讯飞星火大模型API访问凭证
 
-### 后端设置
+### 使用 Docker Compose 部署（推荐）
+
+1. 克隆此仓库到您的本地环境
+
+```bash
+git clone git@github.com:thoulee21/interview-ai.git
+cd interview-ai
+```
+
+2. 从模板创建环境变量文件并填入您的讯飞星火API凭证
+
+```bash
+cp .env.example .env
+# 使用您喜欢的编辑器编辑 .env 文件填入凭证
+```
+
+3. 使用 Docker Compose 构建并启动服务
+
+```bash
+docker-compose up -d --build
+```
+
+4. 访问应用
+   - 前端界面: http://localhost:3000
+   - 后端API: http://localhost:5000/api/health (健康检查接口)
+
+5. 查看日志（如果需要）
+
+```bash
+# 查看前端日志
+docker-compose logs -f frontend
+# 查看后端日志
+docker-compose logs -f backend
+```
+
+6. 停止服务
+
+```bash
+docker-compose down
+```
+
+### 手动部署
+
+#### 后端设置
 
 1. 创建并激活Python虚拟环境（可选但建议）
 
@@ -70,7 +113,7 @@ XUNFEI_API_SECRET=your_api_secret_here
 python app.py
 ```
 
-### 前端设置
+#### 前端设置
 
 1. 安装依赖
 

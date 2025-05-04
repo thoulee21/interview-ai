@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: interview-ai-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      # 讯飞星火API凭证，需要在实际部署时填入
+      - XUNFEI_APP_ID=${XUNFEI_APP_ID}
+      - XUNFEI_API_KEY=${XUNFEI_API_KEY}
+      - XUNFEI_API_SECRET=${XUNFEI_API_SECRET}
+    volumes:
+      - ./backend/interview_ai.db:/app/interview_ai.db
+
+  frontend:
+    build: ./frontend
+    container_name: interview-ai-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # 生产环境中应该使用实际的域名或IP
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+    depends_on:
+      - backend
