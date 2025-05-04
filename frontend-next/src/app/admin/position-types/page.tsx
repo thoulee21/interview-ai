@@ -2,6 +2,7 @@
 
 import interviewAPI from "@/services/api";
 import {
+  ApartmentOutlined,
   DeleteOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
@@ -22,7 +23,7 @@ import {
 } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -177,22 +178,25 @@ export default function PositionTypesPage() {
 
   return (
     <div>
-      <Breadcrumb 
+      <Breadcrumb
         style={{ marginBottom: 16 }}
         items={[
           {
-            title: <Link href="/">首页</Link>
+            title: <Link href="/">首页</Link>,
           },
           {
-            title: <Link href="/admin">管理后台</Link>
+            title: <Link href="/admin">管理后台</Link>,
           },
           {
-            title: "职位类型管理"
-          }
+            title: "职位类型管理",
+          },
         ]}
       />
 
-      <Title level={2}>职位类型管理</Title>
+      <Title level={2}>
+        <ApartmentOutlined style={{ marginRight: 8 }} />
+        职位类型管理
+      </Title>
       <Card style={{ marginBottom: "20px" }}>
         <div
           style={{
