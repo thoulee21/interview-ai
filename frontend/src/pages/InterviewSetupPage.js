@@ -8,7 +8,7 @@ import {
   Typography,
   message,
 } from "antd";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import InterviewBreadcrumb from "../components/InterviewBreadcrumb";
 import interviewAPI from "../services/api";
@@ -16,19 +16,38 @@ import interviewAPI from "../services/api";
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
 
-const positions = [
-  { value: "软件工程师", label: "软件工程师" },
-  { value: "产品经理", label: "产品经理" },
-  { value: "数据分析师", label: "数据分析师" },
-  { value: "人力资源专员", label: "人力资源专员" },
-  { value: "市场营销专员", label: "市场营销专员" },
-  { value: "运营专员", label: "运营专员" },
-];
-
 const InterviewSetupPage = () => {
   const [loading, setLoading] = useState(false);
+  const [positionTypes, setPositionTypes] = useState([]);
   const [form] = Form.useForm();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // 组件加载时从后端获取职位类型列表
+    const fetchPositionTypes = async () => {
+      try {
+        setLoading(true);
+        const response = await interviewAPI.getPositionTypes();
+        setPositionTypes(response.data.positionTypes || []);
+      } catch (error) {
+        console.error("获取职位类型列表失败:", error);
+        message.error("获取职位类型列表失败，使用默认列表");
+        // 加载失败时使用默认列表
+        setPositionTypes([
+          { value: "软件工程师", label: "软件工程师" },
+          { value: "产品经理", label: "产品经理" },
+          { value: "数据分析师", label: "数据分析师" },
+          { value: "人力资源专员", label: "人力资源专员" },
+          { value: "市场营销专员", label: "市场营销专员" },
+          { value: "运营专员", label: "运营专员" },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPositionTypes();
+  }, []);
 
   const handleSubmit = async (values) => {
     try {
@@ -81,7 +100,7 @@ const InterviewSetupPage = () => {
               rules={[{ required: true, message: "请选择职位类型" }]}
             >
               <Select placeholder="选择你要模拟的职位">
-                {positions.map((pos) => (
+                {positionTypes.map((pos) => (
                   <Option key={pos.value} value={pos.value}>
                     {pos.label}
                   </Option>

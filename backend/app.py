@@ -912,5 +912,37 @@ def delete_session(session_id):
         return jsonify({"error": f"删除面试会话失败: {str(e)}"}), 500
 
 
+@app.route('/api/position_types', methods=['GET'])
+def get_position_types():
+    """获取可用职位类型列表的接口"""
+    try:
+        # 这里可以从数据库或配置文件中获取职位类型
+        # 目前为了简化，我们直接在代码中定义一些常用职位类型
+        position_types = [
+            {"value": "软件工程师", "label": "软件工程师"},
+            {"value": "前端开发工程师", "label": "前端开发工程师"},
+            {"value": "后端开发工程师", "label": "后端开发工程师"},
+            {"value": "产品经理", "label": "产品经理"},
+            {"value": "UI设计师", "label": "UI设计师"},
+            {"value": "UX设计师", "label": "UX设计师"},
+            {"value": "数据分析师", "label": "数据分析师"},
+            {"value": "人力资源专员", "label": "人力资源专员"},
+            {"value": "市场营销专员", "label": "市场营销专员"},
+            {"value": "运营专员", "label": "运营专员"},
+            {"value": "财务分析师", "label": "财务分析师"},
+            {"value": "项目经理", "label": "项目经理"},
+            {"value": "测试工程师", "label": "测试工程师"},
+            {"value": "DevOps工程师", "label": "DevOps工程师"},
+        ]
+        
+        return jsonify({
+            "positionTypes": position_types
+        })
+
+    except Exception as e:
+        logger.exception(f"获取职位类型列表失败: {str(e)}")
+        return jsonify({"error": f"获取职位类型列表失败: {str(e)}"}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

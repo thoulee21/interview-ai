@@ -20,6 +20,11 @@ const interviewAPI = {
     return apiClient.post("/start_interview", data);
   },
 
+  // 获取可用职位类型列表
+  getPositionTypes: () => {
+    return apiClient.get("/position_types");
+  },
+
   // 提交问题回答
   answerQuestion: (sessionId, answer, videoAnalysis = null, audioAnalysis = null) => {
     return apiClient.post("/answer_question", {
