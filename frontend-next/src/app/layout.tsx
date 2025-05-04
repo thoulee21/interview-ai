@@ -1,6 +1,7 @@
 "use client";
 
 import AppHeader from "@/components/layout/AppHeader";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
 import "@ant-design/v5-patch-for-react-19";
 import Clarity from "@microsoft/clarity";
 import { Layout } from "antd";
@@ -19,30 +20,32 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
-        <Layout className="layout">
-          <AppHeader />
-          <div
-            className="site-content"
-            style={{
-              minHeight: "calc(100vh - 134px)", // 保证内容区域至少占满视窗高度减去头部和底部高度
-            }}
-          >
+        <AntdRegistry>
+          <Layout className="layout">
+            <AppHeader />
             <div
-              className="container"
-              style={{ maxWidth: "1200px", marginTop: "74px" }}
+              className="site-content"
+              style={{
+                minHeight: "calc(100vh - 134px)", // 保证内容区域至少占满视窗高度减去头部和底部高度
+              }}
             >
-              {children}
+              <div
+                className="container"
+                style={{ maxWidth: "1200px", marginTop: "74px" }}
+              >
+                {children}
+              </div>
             </div>
-          </div>
-          <Footer
-            style={{
-              textAlign: "center",
-              marginTop: "6px",
-            }}
-          >
-            智能模拟面试系统 ©{new Date().getFullYear()} 中国软件杯参赛作品
-          </Footer>
-        </Layout>
+            <Footer
+              style={{
+                textAlign: "center",
+                marginTop: "6px",
+              }}
+            >
+              智能模拟面试系统 ©{new Date().getFullYear()} 中国软件杯参赛作品
+            </Footer>
+          </Layout>
+        </AntdRegistry>
       </body>
     </html>
   );
