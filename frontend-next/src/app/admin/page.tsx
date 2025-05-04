@@ -208,12 +208,17 @@ export default function AdminPage() {
 
   return (
     <div className="admin-page">
-      <Breadcrumb style={{ marginBottom: 16 }}>
-        <Breadcrumb.Item>
-          <Link href="/">首页</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>管理后台</Breadcrumb.Item>
-      </Breadcrumb>
+      <Breadcrumb 
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            title: <Link href="/">首页</Link>
+          },
+          {
+            title: "管理后台"
+          }
+        ]}
+      />
 
       <Title level={2}>面试会话管理</Title>
 
