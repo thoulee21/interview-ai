@@ -35,7 +35,7 @@ const PositionTypesPage = () => {
     try {
       setLoading(true);
       const response = await interviewAPI.getAdminPositionTypes();
-      setPositionTypes(response.data.positionTypes || []);
+      setPositionTypes(response.data || []);
     } catch (error) {
       console.error("获取职位类型列表失败:", error);
       message.error("获取职位类型列表失败，请稍后重试");
