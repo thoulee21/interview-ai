@@ -12,8 +12,6 @@ services:
       - XUNFEI_APP_ID=${XUNFEI_APP_ID}
       - XUNFEI_API_KEY=${XUNFEI_API_KEY}
       - XUNFEI_API_SECRET=${XUNFEI_API_SECRET}
-    volumes:
-      - ./backend/:/app/
     networks:
       - intergo
 
