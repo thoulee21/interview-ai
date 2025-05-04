@@ -1,7 +1,8 @@
 services:
   backend:
     build: ./backend
-    container_name: ghcr.io/thoulee21/interview-ai/backend
+    container_name: interview-ai-backend
+    image: ghcr.io/thoulee21/interview-ai/backend:latest
     restart: unless-stopped
     ports:
       - "5000:5000"
@@ -16,7 +17,8 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: ghcr.io/thoulee21/interview-ai/frontend
+    container_name: interview-ai-frontend
+    image: ghcr.io/thoulee21/interview-ai/frontend:latest
     restart: unless-stopped
     ports:
       - "80:3000"
