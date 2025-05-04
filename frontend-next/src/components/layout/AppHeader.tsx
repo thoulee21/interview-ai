@@ -76,6 +76,7 @@ const AppHeader = () => {
       children: [
         {
           key: "/admin",
+          icon: <UserOutlined />,
           label: <Link href="/admin">面试会话管理</Link>,
         },
         {
