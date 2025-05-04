@@ -1,12 +1,18 @@
 "use client";
 
 import interviewAPI from "@/services/api";
-import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  ExclamationCircleOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import {
   Breadcrumb,
   Button,
   Card,
   Input,
+  Modal,
   Popconfirm,
   Space,
   Table,
@@ -16,10 +22,11 @@ import {
 } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
+const { confirm } = Modal;
 
 type PositionType = {
   id: number;
@@ -61,8 +68,25 @@ export default function PositionTypesPage() {
       message.success("职位类型已删除");
       fetchPositionTypes();
     } catch (error: unknown) {
-      message.error("删除职位类型失败，请稍后重试");
-      console.error("删除职位类型失败:", error);
+      type ErrorResponse = {
+        response?: { status?: number; data?: { usageCount?: number } };
+      };
+      if ((error as ErrorResponse).response?.status === 409) {
+        // 处理已有会话使用该职位类型的情况
+        const usageCount =
+          (error as ErrorResponse).response?.data?.usageCount || 0;
+        confirm({
+          title: "无法删除职位类型",
+          icon: <ExclamationCircleOutlined />,
+          content: `该职位类型已被 ${usageCount} 个面试会话使用，无法删除。`,
+          okText: "知道了",
+          cancelText: null,
+          okButtonProps: { type: "primary" },
+        });
+      } else {
+        console.error("删除职位类型失败:", error);
+        message.error("删除职位类型失败，请稍后重试");
+      }
       setLoading(false);
     }
   };
@@ -136,7 +160,7 @@ export default function PositionTypesPage() {
           </Button>
           <Popconfirm
             title="确定要删除此职位类型吗？"
-            description="删除后将无法恢复"
+            description="删除后将无法恢复，已被使用的职位类型无法删除。"
             onConfirm={() => handleDelete(record.id)}
             okText="删除"
             cancelText="取消"
@@ -153,18 +177,18 @@ export default function PositionTypesPage() {
 
   return (
     <div>
-      <Breadcrumb
+      <Breadcrumb 
         style={{ marginBottom: 16 }}
         items={[
           {
-            title: <Link href="/">首页</Link>,
+            title: <Link href="/">首页</Link>
           },
           {
-            title: <Link href="/admin">管理后台</Link>,
+            title: <Link href="/admin">管理后台</Link>
           },
           {
-            title: "职位类型管理",
-          },
+            title: "职位类型管理"
+          }
         ]}
       />
 
