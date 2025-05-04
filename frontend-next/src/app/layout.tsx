@@ -4,13 +4,10 @@ import AppHeader from "@/components/layout/AppHeader";
 import "@ant-design/v5-patch-for-react-19";
 import Clarity from "@microsoft/clarity";
 import { Layout } from "antd";
-import { Inter } from "next/font/google";
 import React from "react";
 import "./index.css";
 
 Clarity.init("rdpfluipqk");
-
-const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
@@ -21,7 +18,7 @@ export default function RootLayout({
 
   return (
     <html lang="zh-CN">
-      <body className={inter.className}>
+      <body>
         <Layout className="layout">
           <AppHeader />
           <div
