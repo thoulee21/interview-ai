@@ -13,7 +13,7 @@ import {
   message,
 } from "antd";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
@@ -77,12 +77,15 @@ export default function InterviewSetupPage() {
       const firstQuestion = response.data.question;
 
       messageApi.success("面试会话已创建，即将开始面试");
-      
+
       // 使用 localStorage 存储初始问题，在面试页面取出
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`interview_${sessionId}_initial_question`, firstQuestion);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          `interview_${sessionId}_initial_question`,
+          firstQuestion
+        );
       }
-      
+
       // 跳转到面试页面
       router.push(`/interview/${sessionId}`);
     } catch (error) {
@@ -110,7 +113,7 @@ export default function InterviewSetupPage() {
             form={form}
             layout="vertical"
             onFinish={handleSubmit}
-            initialValues={{ positionType: "软件工程师", difficulty: "中级" }}
+            initialValues={{ difficulty: "中级" }}
           >
             <Form.Item
               label="选择职位类型"
