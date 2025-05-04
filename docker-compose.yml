@@ -1,8 +1,8 @@
 services:
   backend:
     build: ./backend
-    container_name: interview-ai-backend
-    restart: always
+    container_name: ghcr.io/thoulee21/interview-ai/backend
+    restart: unless-stopped
     ports:
       - "5000:5000"
     environment:
@@ -16,10 +16,10 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: interview-ai-frontend
-    restart: always
+    container_name: ghcr.io/thoulee21/interview-ai/frontend
+    restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "80:3000"
     environment:
       # 生产环境中应该使用实际的域名或IP
       - NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
