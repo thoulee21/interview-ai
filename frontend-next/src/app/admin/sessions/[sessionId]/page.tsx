@@ -399,18 +399,18 @@ export default function AdminSessionDetailPage() {
 
   return (
     <div className="admin-session-detail">
-      <Breadcrumb 
+      <Breadcrumb
         style={{ marginBottom: 16 }}
         items={[
           {
-            title: <Link href="/">首页</Link>
+            title: <Link href="/">首页</Link>,
           },
           {
-            title: <Link href="/admin">管理后台</Link>
+            title: <Link href="/admin">管理后台</Link>,
           },
           {
-            title: "会话详情"
-          }
+            title: "会话详情",
+          },
         ]}
       />
 
@@ -489,89 +489,99 @@ export default function AdminSessionDetailPage() {
         </Descriptions>
       </Card>
 
-      <Tabs defaultActiveKey="questions" type="card">
-        <Tabs.TabPane
-          tab={
-            <span>
-              <QuestionCircleOutlined /> 问题与回答
-            </span>
-          }
-          key="questions"
-        >
-          <Card>
-            <Table
-              dataSource={sessionDetails.questions.map((q) => ({
-                ...q,
-                key: q.id,
-              }))}
-              columns={questionsColumns}
-              expandable={{
-                expandedRowRender: (record) => (
-                  <div style={{ padding: "0 20px" }}>
-                    {record.answer ? (
-                      <>
-                        <Title level={5}>用户回答</Title>
-                        <Paragraph style={{ whiteSpace: "pre-wrap" }}>
-                          {record.answer}
-                        </Paragraph>
-                        {record.evaluation && (
+      <Tabs
+        defaultActiveKey="questions"
+        type="card"
+        items={[
+          {
+            key: "questions",
+            label: (
+              <span>
+                <QuestionCircleOutlined /> 问题与回答
+              </span>
+            ),
+            children: (
+              <Card>
+                <Table
+                  dataSource={sessionDetails.questions.map((q) => ({
+                    ...q,
+                    key: q.id,
+                  }))}
+                  columns={questionsColumns}
+                  expandable={{
+                    expandedRowRender: (record) => (
+                      <div style={{ padding: "0 20px" }}>
+                        {record.answer ? (
                           <>
-                            <Divider />
-                            <Title level={5}>AI评估</Title>
-                            <div className="markdown-content">
-                              <ReactMarkdown>{record.evaluation}</ReactMarkdown>
-                            </div>
+                            <Title level={5}>用户回答</Title>
+                            <Paragraph style={{ whiteSpace: "pre-wrap" }}>
+                              {record.answer}
+                            </Paragraph>
+                            {record.evaluation && (
+                              <>
+                                <Divider />
+                                <Title level={5}>AI评估</Title>
+                                <div className="markdown-content">
+                                  <ReactMarkdown>
+                                    {record.evaluation}
+                                  </ReactMarkdown>
+                                </div>
+                              </>
+                            )}
                           </>
+                        ) : (
+                          <Paragraph type="secondary">
+                            用户尚未回答此问题
+                          </Paragraph>
                         )}
-                      </>
-                    ) : (
-                      <Paragraph type="secondary">用户尚未回答此问题</Paragraph>
-                    )}
+                      </div>
+                    ),
+                    expandIcon: ({ expanded, onExpand, record }) =>
+                      record.answer ? (
+                        expanded ? (
+                          <EyeOutlined onClick={(e) => onExpand(record, e)} />
+                        ) : (
+                          <EyeOutlined
+                            onClick={(e) => onExpand(record, e)}
+                            style={{ color: "#1890ff" }}
+                          />
+                        )
+                      ) : null,
+                  }}
+                  pagination={false}
+                />
+              </Card>
+            ),
+          },
+          {
+            key: "analyses",
+            label: (
+              <span>
+                <VideoCameraOutlined /> 多模态分析
+              </span>
+            ),
+            children: (
+              <Card>
+                {sessionDetails.analyses &&
+                sessionDetails.analyses.length > 0 ? (
+                  <Table
+                    dataSource={sessionDetails.analyses.map((a) => ({
+                      ...a,
+                      key: a.id,
+                    }))}
+                    columns={analysesColumns}
+                    pagination={false}
+                  />
+                ) : (
+                  <div style={{ textAlign: "center", padding: "30px 0" }}>
+                    <Paragraph type="secondary">暂无多模态分析数据</Paragraph>
                   </div>
-                ),
-                expandIcon: ({ expanded, onExpand, record }) =>
-                  record.answer ? (
-                    expanded ? (
-                      <EyeOutlined onClick={(e) => onExpand(record, e)} />
-                    ) : (
-                      <EyeOutlined
-                        onClick={(e) => onExpand(record, e)}
-                        style={{ color: "#1890ff" }}
-                      />
-                    )
-                  ) : null,
-              }}
-              pagination={false}
-            />
-          </Card>
-        </Tabs.TabPane>
-
-        <Tabs.TabPane
-          tab={
-            <span>
-              <VideoCameraOutlined /> 多模态分析
-            </span>
-          }
-          key="analyses"
-        >
-          <Card>
-            {sessionDetails.analyses && sessionDetails.analyses.length > 0 ? (
-              <Table
-                dataSource={sessionDetails.analyses.map((a) => ({
-                  ...a,
-                  key: a.id,
-                }))}
-                columns={analysesColumns}
-                pagination={false}
-              />
-            ) : (
-              <div style={{ textAlign: "center", padding: "30px 0" }}>
-                <Paragraph type="secondary">暂无多模态分析数据</Paragraph>
-              </div>
-            )}
-          </Card>
-        </Tabs.TabPane>
-      </Tabs>
+                )}
+              </Card>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }
