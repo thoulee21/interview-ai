@@ -100,6 +100,46 @@ def init_db():
     )
     ''')
 
+    # 创建职位类型表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS position_types (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        value TEXT UNIQUE NOT NULL,
+        label TEXT NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    # 检查职位类型表是否为空，如果为空则添加默认数据
+    cursor.execute("SELECT COUNT(*) FROM position_types")
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        # 默认职位类型数据
+        default_position_types = [
+            ("software_engineer", "软件工程师", "负责软件系统的设计、开发、测试和维护"),
+            ("frontend_engineer", "前端开发工程师", "负责网站和应用程序的用户界面开发"),
+            ("backend_engineer", "后端开发工程师", "负责服务器端逻辑和数据库交互的开发"),
+            ("product_manager", "产品经理", "负责产品的规划、开发和市场推广"),
+            ("ui_designer", "UI设计师", "负责用户界面的视觉设计"),
+            ("ux_designer", "UX设计师", "负责用户体验设计和用户研究"),
+            ("data_analyst", "数据分析师", "负责数据收集、处理和分析"),
+            ("hr_specialist", "人力资源专员", "负责招聘、培训和员工关系管理"),
+            ("marketing_specialist", "市场营销专员", "负责市场策略制定和执行"),
+            ("operations_specialist", "运营专员", "负责日常运营和用户增长"),
+            ("financial_analyst", "财务分析师", "负责财务数据分析和报告"),
+            ("project_manager", "项目经理", "负责项目计划、执行和控制"),
+            ("test_engineer", "测试工程师", "负责软件测试和质量保证"),
+            ("devops_engineer", "DevOps工程师", "负责开发和运维的融合工作")
+        ]
+
+        cursor.executemany(
+            "INSERT INTO position_types (value, label, description) VALUES (?, ?, ?)",
+            default_position_types
+        )
+
     conn.commit()
     conn.close()
 
@@ -617,6 +657,7 @@ def get_interview_results(session_id):
                 score = 75  # 默认分数
                 try:
                     from schemas.validation import extract_evaluation_from_text
+
                     # 尝试提取JSON数据
                     eval_data = extract_evaluation_from_text(q['evaluation'])
                     if eval_data and isinstance(eval_data, dict):
@@ -625,7 +666,7 @@ def get_interview_results(session_id):
                             raw_score = float(eval_data['score'])
                             # 将1-10分转换为百分制
                             score = int(raw_score * 10)
-                            
+
                 except Exception as e:
                     logger.warning(f"提取评分失败: {str(e)}")
 
@@ -916,25 +957,24 @@ def delete_session(session_id):
 def get_position_types():
     """获取可用职位类型列表的接口"""
     try:
-        # 这里可以从数据库或配置文件中获取职位类型
-        # 目前为了简化，我们直接在代码中定义一些常用职位类型
-        position_types = [
-            {"value": "软件工程师", "label": "软件工程师"},
-            {"value": "前端开发工程师", "label": "前端开发工程师"},
-            {"value": "后端开发工程师", "label": "后端开发工程师"},
-            {"value": "产品经理", "label": "产品经理"},
-            {"value": "UI设计师", "label": "UI设计师"},
-            {"value": "UX设计师", "label": "UX设计师"},
-            {"value": "数据分析师", "label": "数据分析师"},
-            {"value": "人力资源专员", "label": "人力资源专员"},
-            {"value": "市场营销专员", "label": "市场营销专员"},
-            {"value": "运营专员", "label": "运营专员"},
-            {"value": "财务分析师", "label": "财务分析师"},
-            {"value": "项目经理", "label": "项目经理"},
-            {"value": "测试工程师", "label": "测试工程师"},
-            {"value": "DevOps工程师", "label": "DevOps工程师"},
-        ]
-        
+        # 从数据库中获取职位类型列表
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT id, value, label, description FROM position_types ORDER BY label")
+
+        position_types = []
+        for row in cursor.fetchall():
+            position_types.append({
+                "id": row['id'],
+                "value": row['value'],
+                "label": row['label'],
+                "description": row['description']
+            })
+
+        conn.close()
+
         return jsonify({
             "positionTypes": position_types
         })
@@ -942,6 +982,222 @@ def get_position_types():
     except Exception as e:
         logger.exception(f"获取职位类型列表失败: {str(e)}")
         return jsonify({"error": f"获取职位类型列表失败: {str(e)}"}), 500
+
+
+@app.route('/api/admin/position_types', methods=['GET'])
+def get_admin_position_types():
+    """管理员获取所有职位类型的接口"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT id, value, label, description, created_at, updated_at FROM position_types ORDER BY label")
+
+        position_types = []
+        for row in cursor.fetchall():
+            position_types.append({
+                "id": row['id'],
+                "value": row['value'],
+                "label": row['label'],
+                "description": row['description'],
+                "createdAt": row['created_at'],
+                "updatedAt": row['updated_at']
+            })
+
+        conn.close()
+
+        return jsonify({
+            "positionTypes": position_types,
+            "total": len(position_types)
+        })
+
+    except Exception as e:
+        logger.exception(f"管理员获取职位类型列表失败: {str(e)}")
+        return jsonify({"error": f"管理员获取职位类型列表失败: {str(e)}"}), 500
+
+
+@app.route('/api/admin/position_types/<int:position_id>', methods=['GET'])
+def get_position_type_detail(position_id):
+    """获取单个职位类型详情"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT id, value, label, description, created_at, updated_at FROM position_types WHERE id = ?", (position_id,))
+        position = cursor.fetchone()
+
+        if not position:
+            return jsonify({"error": "职位类型不存在"}), 404
+
+        position_detail = {
+            "id": position['id'],
+            "value": position['value'],
+            "label": position['label'],
+            "description": position['description'],
+            "createdAt": position['created_at'],
+            "updatedAt": position['updated_at']
+        }
+
+        conn.close()
+        return jsonify(position_detail)
+
+    except Exception as e:
+        logger.exception(f"获取职位类型详情失败: {str(e)}")
+        return jsonify({"error": f"获取职位类型详情失败: {str(e)}"}), 500
+
+
+@app.route('/api/admin/position_types', methods=['POST'])
+def create_position_type():
+    """创建新的职位类型"""
+    try:
+        data = request.json
+        value = data.get('value')
+        label = data.get('label')
+        description = data.get('description', '')
+
+        # 验证必填字段
+        if not value or not label:
+            return jsonify({"error": "职位编码和名称为必填项"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 检查是否已存在相同的value
+        cursor.execute(
+            "SELECT id FROM position_types WHERE value = ?", (value,))
+        if cursor.fetchone():
+            return jsonify({"error": "已存在相同编码的职位类型"}), 409
+
+        # 插入新职位类型
+        now = datetime.now()
+        cursor.execute(
+            "INSERT INTO position_types (value, label, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            (value, label, description, now, now)
+        )
+
+        # 获取新插入的ID
+        new_id = cursor.lastrowid
+
+        conn.commit()
+
+        # 获取完整的新职位类型数据
+        cursor.execute(
+            "SELECT id, value, label, description, created_at, updated_at FROM position_types WHERE id = ?", (new_id,))
+        new_position = cursor.fetchone()
+
+        position_detail = {
+            "id": new_position['id'],
+            "value": new_position['value'],
+            "label": new_position['label'],
+            "description": new_position['description'],
+            "createdAt": new_position['created_at'],
+            "updatedAt": new_position['updated_at']
+        }
+
+        conn.close()
+        return jsonify(position_detail), 201
+
+    except Exception as e:
+        logger.exception(f"创建职位类型失败: {str(e)}")
+        return jsonify({"error": f"创建职位类型失败: {str(e)}"}), 500
+
+
+@app.route('/api/admin/position_types/<int:position_id>', methods=['PUT'])
+def update_position_type(position_id):
+    """更新职位类型信息"""
+    try:
+        data = request.json
+        value = data.get('value')
+        label = data.get('label')
+        description = data.get('description', '')
+
+        # 验证必填字段
+        if not value or not label:
+            return jsonify({"error": "职位编码和名称为必填项"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 检查要更新的职位类型是否存在
+        cursor.execute(
+            "SELECT id FROM position_types WHERE id = ?", (position_id,))
+        if not cursor.fetchone():
+            return jsonify({"error": "职位类型不存在"}), 404
+
+        # 检查是否与其他职位类型的value冲突
+        cursor.execute(
+            "SELECT id FROM position_types WHERE value = ? AND id != ?", (value, position_id))
+        if cursor.fetchone():
+            return jsonify({"error": "已存在相同编码的其他职位类型"}), 409
+
+        # 更新职位类型
+        now = datetime.now()
+        cursor.execute(
+            "UPDATE position_types SET value = ?, label = ?, description = ?, updated_at = ? WHERE id = ?",
+            (value, label, description, now, position_id)
+        )
+
+        conn.commit()
+
+        # 获取更新后的职位类型数据
+        cursor.execute(
+            "SELECT id, value, label, description, created_at, updated_at FROM position_types WHERE id = ?", (position_id,))
+        updated_position = cursor.fetchone()
+
+        position_detail = {
+            "id": updated_position['id'],
+            "value": updated_position['value'],
+            "label": updated_position['label'],
+            "description": updated_position['description'],
+            "createdAt": updated_position['created_at'],
+            "updatedAt": updated_position['updated_at']
+        }
+
+        conn.close()
+        return jsonify(position_detail)
+
+    except Exception as e:
+        logger.exception(f"更新职位类型失败: {str(e)}")
+        return jsonify({"error": f"更新职位类型失败: {str(e)}"}), 500
+
+
+@app.route('/api/admin/position_types/<int:position_id>', methods=['DELETE'])
+def delete_position_type(position_id):
+    """删除职位类型"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 检查职位类型是否存在
+        cursor.execute(
+            "SELECT id FROM position_types WHERE id = ?", (position_id,))
+        if not cursor.fetchone():
+            return jsonify({"error": "职位类型不存在"}), 404
+
+        # 检查是否有面试会话使用该职位类型
+        cursor.execute(
+            "SELECT COUNT(*) FROM interview_sessions WHERE position_type = (SELECT value FROM position_types WHERE id = ?)", (position_id,))
+        usage_count = cursor.fetchone()[0]
+        if usage_count > 0:
+            return jsonify({
+                "error": "无法删除该职位类型，因为它已被使用",
+                "usageCount": usage_count
+            }), 409
+
+        # 删除职位类型
+        cursor.execute(
+            "DELETE FROM position_types WHERE id = ?", (position_id,))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "职位类型已成功删除"})
+
+    except Exception as e:
+        logger.exception(f"删除职位类型失败: {str(e)}")
+        return jsonify({"error": f"删除职位类型失败: {str(e)}"}), 500
 
 
 if __name__ == '__main__':

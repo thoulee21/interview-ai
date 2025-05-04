@@ -9,6 +9,8 @@ import HomePage from "./pages/HomePage";
 import InterviewPage from "./pages/InterviewPage";
 import InterviewSetupPage from "./pages/InterviewSetupPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import PositionTypeDetailPage from "./pages/PositionTypeDetailPage";
+import PositionTypesPage from "./pages/PositionTypesPage";
 import ResultPage from "./pages/ResultPage";
 
 const { Footer } = Layout;
@@ -28,6 +30,18 @@ function App() {
             <Route
               path="/admin/sessions/:sessionId"
               element={<AdminSessionDetailPage />}
+            />
+            <Route
+              path="/admin/position-types"
+              element={<PositionTypesPage />}
+            />
+            <Route
+              path="/admin/position-types/create"
+              element={<PositionTypeDetailPage />}
+            />
+            <Route
+              path="/admin/position-types/:id"
+              element={<PositionTypeDetailPage />}
             />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

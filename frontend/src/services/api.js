@@ -1,8 +1,12 @@
 import axios from "axios";
-import { typeChatTransform, interviewEvaluationSchema } from '../utils/typeChat';
+import {
+  interviewEvaluationSchema,
+  typeChatTransform,
+} from "../utils/typeChat";
 
 // 从环境变量中获取API基础URL，如未设置则使用默认值
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:5000/api";
 
 // 创建axios实例
 const apiClient = axios.create({
@@ -26,12 +30,17 @@ const interviewAPI = {
   },
 
   // 提交问题回答
-  answerQuestion: (sessionId, answer, videoAnalysis = null, audioAnalysis = null) => {
+  answerQuestion: (
+    sessionId,
+    answer,
+    videoAnalysis = null,
+    audioAnalysis = null
+  ) => {
     return apiClient.post("/answer_question", {
       session_id: sessionId,
       answer: answer,
       video_analysis: videoAnalysis,
-      audio_analysis: audioAnalysis
+      audio_analysis: audioAnalysis,
     });
   },
 
@@ -80,22 +89,48 @@ const interviewAPI = {
   getHealthStatus: () => {
     return apiClient.get("/health");
   },
-  
+
   // 管理后台API
   // 获取所有面试会话
   getAllSessions: () => {
     return apiClient.get("/admin/sessions");
   },
-  
+
   // 获取单个面试会话详情
   getSessionDetails: (sessionId) => {
     return apiClient.get(`/admin/sessions/${sessionId}`);
   },
-  
+
   // 删除面试会话
   deleteSession: (sessionId) => {
     return apiClient.delete(`/admin/sessions/${sessionId}`);
-  }
+  },
+
+  // 职位类型管理接口
+  // 获取管理员职位类型列表
+  getAdminPositionTypes: () => {
+    return apiClient.get("/admin/position_types");
+  },
+
+  // 获取单个职位类型详情
+  getPositionTypeDetail: (id) => {
+    return apiClient.get(`/admin/position_types/${id}`);
+  },
+
+  // 创建新职位类型
+  createPositionType: (data) => {
+    return apiClient.post("/admin/position_types", data);
+  },
+
+  // 更新职位类型
+  updatePositionType: (id, data) => {
+    return apiClient.put(`/admin/position_types/${id}`, data);
+  },
+
+  // 删除职位类型
+  deletePositionType: (id) => {
+    return apiClient.delete(`/admin/position_types/${id}`);
+  },
 };
 
 export default interviewAPI;

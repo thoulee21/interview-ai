@@ -1,8 +1,9 @@
 import {
+  ApartmentOutlined,
   DashboardOutlined,
   HomeOutlined,
   SettingOutlined,
-  UserOutlined
+  UserOutlined,
 } from "@ant-design/icons";
 import { Avatar, Layout, Menu } from "antd";
 import React, { useEffect, useState } from "react";
@@ -65,9 +66,20 @@ const AppHeader = () => {
       label: <Link to="/setup">开始面试</Link>,
     },
     {
-      key: "/admin",
+      key: "admin",
       icon: <DashboardOutlined />,
-      label: <Link to="/admin">管理后台</Link>,
+      label: "管理后台",
+      children: [
+        {
+          key: "/admin",
+          label: <Link to="/admin">面试会话管理</Link>,
+        },
+        {
+          key: "/admin/position-types",
+          icon: <ApartmentOutlined />,
+          label: <Link to="/admin/position-types">职位类型管理</Link>,
+        },
+      ],
     },
   ];
 
