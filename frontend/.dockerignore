@@ -1,8 +1,4 @@
-.git/
 .env.*
-__pycache__/
-interview_ai.db
-docs/
 .next/
 node_modules/
 next-env.d.ts
