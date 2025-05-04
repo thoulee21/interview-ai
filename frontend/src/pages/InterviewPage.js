@@ -105,30 +105,68 @@ const InterviewPage = () => {
   }, [isRecording, recordedChunks, sessionId]);
 
   const startRecording = useCallback(() => {
-    if (!webcamRef.current || !webcamRef.current.stream) return;
+    // 检查摄像头流是否可用，如果不可用则使用重试机制
+    if (!webcamRef.current || !webcamRef.current.stream) {
+      console.log("摄像头流暂不可用，等待中...");
 
-    setIsRecording(true);
+      // 设置最大重试次数和计数器
+      const maxRetries = 10;
+      let retryCount = 0;
 
-    try {
-      mediaRecorderRef.current = new MediaRecorder(webcamRef.current.stream, {
-        mimeType: "video/webm",
-      });
-
-      mediaRecorderRef.current.addEventListener(
-        "dataavailable",
-        handleDataAvailable
-      );
-      mediaRecorderRef.current.start();
-
-      // 设置定期分析 - 每30秒分析一次（实际环境中可调整周期）
-      recordingInterval.current = setInterval(() => {
-        if (recordedChunks.length > 0 && !isComplete) {
-          // 不影响用户体验，静默分析
-          silentAnalysis();
+      // 创建一个重试函数
+      const retryStartRecording = () => {
+        if (retryCount >= maxRetries) {
+          console.error("无法获取摄像头流，已达到最大重试次数");
+          message.warning("无法访问摄像头，请检查您的摄像头权限并刷新页面");
+          return;
         }
-      }, 30000);
-    } catch (error) {
-      console.error("无法开始录制:", error);
+
+        retryCount++;
+        console.log(`尝试获取摄像头流，第 ${retryCount} 次尝试...`);
+
+        // 检查摄像头流是否已经可用
+        if (webcamRef.current && webcamRef.current.stream) {
+          console.log("摄像头流已可用，开始录制");
+          actuallyStartRecording();
+        } else {
+          // 如果还不可用，等待500毫秒后重试
+          setTimeout(retryStartRecording, 500);
+        }
+      };
+
+      // 开始重试过程
+      retryStartRecording();
+      return;
+    }
+
+    // 如果摄像头流已经可用，直接开始录制
+    actuallyStartRecording();
+
+    function actuallyStartRecording() {
+      setIsRecording(true);
+
+      try {
+        mediaRecorderRef.current = new MediaRecorder(webcamRef.current.stream, {
+          mimeType: "video/webm",
+        });
+
+        mediaRecorderRef.current.addEventListener(
+          "dataavailable",
+          handleDataAvailable
+        );
+        mediaRecorderRef.current.start();
+
+        // 设置定期分析 - 每5秒分析一次
+        recordingInterval.current = setInterval(() => {
+          if (recordedChunks.length > 0 && !isComplete) {
+            // 不影响用户体验，静默分析
+            silentAnalysis();
+          }
+        }, 5000);
+      } catch (error) {
+        console.error("无法开始录制:", error);
+        message.error("无法开始录制视频，请检查您的摄像头权限");
+      }
     }
   }, [isComplete, recordedChunks.length, silentAnalysis]);
 
@@ -201,6 +239,8 @@ const InterviewPage = () => {
 
   // 自动开始录制视频
   const handleDataAvailable = ({ data }) => {
+    console.log("录制数据可用:", data);
+
     if (data.size > 0) {
       setRecordedChunks((prev) => [...prev, data]);
     }
@@ -281,7 +321,9 @@ const InterviewPage = () => {
       } else {
         // 继续面试
         // 格式化评估结果为可读性好的Markdown
-        const formattedEvaluation = formatEvaluationToMarkdown(response.data.evaluation);
+        const formattedEvaluation = formatEvaluationToMarkdown(
+          response.data.evaluation
+        );
         setEvaluation(formattedEvaluation);
         setCurrentQuestion(response.data.next_question);
         setQuestionIndex(questionIndex + 1);
