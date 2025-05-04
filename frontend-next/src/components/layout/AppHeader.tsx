@@ -43,6 +43,7 @@ const AppHeader = () => {
     transition: "all 0.3s ease",
     background: "linear-gradient(90deg, #1890ff 0%, #10239e 100%)",
     boxShadow: scrolled ? "0 2px 8px rgba(0, 0, 0, 0.15)" : "none",
+    height: "64px",
   } as React.CSSProperties;
 
   const logoStyle = {

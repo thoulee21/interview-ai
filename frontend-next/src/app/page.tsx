@@ -57,7 +57,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="landing-page">
+    <div className="landing-page" style={{ marginTop: "-10px" }}>
       {/* 英雄区域 */}
       <div
         className="hero-section"

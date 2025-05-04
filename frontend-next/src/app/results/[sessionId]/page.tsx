@@ -178,7 +178,7 @@ export default function ResultPage() {
   }
 
   return (
-    <div style={{ paddingTop: 60 }}>
+    <div>
       <InterviewBreadcrumb currentStep="results" sessionId={sessionId} />
       <Title level={2} className="text-center">
         面试评估结果

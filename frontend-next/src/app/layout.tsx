@@ -29,7 +29,7 @@ export default function RootLayout({
           >
             <div
               className="container"
-              style={{ maxWidth: "1200px", marginTop: 80 }}
+              style={{ maxWidth: "1200px", marginTop: "74px" }}
             >
               {children}
             </div>
