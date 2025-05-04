@@ -144,18 +144,30 @@ const InterviewPage = () => {
 
     function actuallyStartRecording() {
       setIsRecording(true);
-
+  
       try {
         mediaRecorderRef.current = new MediaRecorder(webcamRef.current.stream, {
           mimeType: "video/webm",
         });
-
-        mediaRecorderRef.current.addEventListener(
-          "dataavailable",
-          handleDataAvailable
-        );
-        mediaRecorderRef.current.start();
-
+  
+        // 清除先前的事件监听器（如果有的话）
+        if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.removeEventListener("dataavailable", handleDataAvailable);
+        }
+        
+        // 重新添加事件监听器
+        mediaRecorderRef.current.addEventListener("dataavailable", handleDataAvailable);
+        
+        // 添加错误处理
+        mediaRecorderRef.current.addEventListener("error", (error) => {
+          console.error("MediaRecorder 错误:", error);
+        });
+        
+        // 重要：添加timeslice参数（1秒），确保每秒触发一次dataavailable事件
+        mediaRecorderRef.current.start(1000);
+        
+        console.log("MediaRecorder 已启动，每1秒触发一次dataavailable事件");
+  
         // 设置定期分析 - 每5秒分析一次
         recordingInterval.current = setInterval(() => {
           if (recordedChunks.length > 0 && !isComplete) {
@@ -239,8 +251,6 @@ const InterviewPage = () => {
 
   // 自动开始录制视频
   const handleDataAvailable = ({ data }) => {
-    console.log("录制数据可用:", data);
-
     if (data.size > 0) {
       setRecordedChunks((prev) => [...prev, data]);
     }
