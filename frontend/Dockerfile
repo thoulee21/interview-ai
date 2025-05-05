@@ -9,10 +9,6 @@ RUN npm ci
 # 复制项目文件
 COPY . .
 
-# 构建应用 - 确保环境变量在构建时被注入
-ARG NEXT_PUBLIC_API_BASE_URL
-ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
-
 # 构建应用
 RUN npm run build
 

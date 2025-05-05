@@ -16,8 +16,6 @@ services:
   frontend:
     build: 
       context: ./frontend
-      args:
-        - NEXT_PUBLIC_API_BASE_URL=https://api.intergo.dpdns.org/
     container_name: interview-ai-frontend
     image: ghcr.io/thoulee21/interview-ai/frontend:latest
     restart: unless-stopped
