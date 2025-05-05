@@ -203,7 +203,7 @@ export default function InterviewPage() {
 
           // 添加错误处理
           mediaRecorderRef.current.addEventListener("error", (error) => {
-            console.error("MediaRecorder 错误:", error);
+            console.log("MediaRecorder 错误:", error);
           });
 
           // 重要：添加timeslice参数（1秒），确保每秒触发一次dataavailable事件
