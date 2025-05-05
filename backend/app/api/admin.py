@@ -46,6 +46,7 @@ def get_session_details(session_id):
         # 获取多模态分析
         analyses = MultimodalAnalysis.get_for_session(session_id)
 
+        session = dict(session)
         # 计算会话开始和结束时间（如果有）
         start_time = session["start_time"] if "start_time" in session else None
         end_time = session["end_time"] if "end_time" in session else None
