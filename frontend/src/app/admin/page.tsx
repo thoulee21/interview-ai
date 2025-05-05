@@ -36,6 +36,8 @@ export default function AdminPage() {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [positionFilter, setPositionFilter] = useState("all");
+  const [sortField, setSortField] = useState<string>("startTime");
+  const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | undefined>("descend");
   const router = useRouter();
 
   useEffect(() => {
@@ -89,10 +91,35 @@ export default function AdminPage() {
             .toLowerCase()
             .includes(searchText.toLowerCase())),
     )
-    .sort(
-      (a, b) =>
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
-    );
+    .sort((a, b) => {
+      if (!sortOrder) return 0;
+      const direction = sortOrder === "ascend" ? 1 : -1;
+
+      switch (sortField) {
+        case "sessionId":
+          return direction * a.sessionId.localeCompare(b.sessionId);
+        case "positionType":
+          return direction * a.positionType.localeCompare(b.positionType);
+        case "difficulty":
+          // 自定义难度级别排序
+          const difficultyOrder = { "初级": 1, "中级": 2, "高级": 3 };
+          return direction * ((difficultyOrder[a.difficulty as keyof typeof difficultyOrder] || 0) - (difficultyOrder[b.difficulty as keyof typeof difficultyOrder] || 0));
+        case "startTime":
+          return direction * (new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+        case "status":
+          const statusOrder = { "active": 1, "completed": 2, "abandoned": 3 };
+          return direction * ((statusOrder[a.status as keyof typeof statusOrder] || 0) - (statusOrder[b.status as keyof typeof statusOrder] || 0));
+        case "questionCount":
+          return direction * (Number(a.questionCount) - Number(b.questionCount));
+        case "duration":
+          const aDuration = a.duration !== undefined ? Number(a.duration) : 0;
+          const bDuration = b.duration !== undefined ? Number(b.duration) : 0;
+          return direction * (aDuration - bDuration);
+        default:
+          // 默认按开始时间排序
+          return direction * (new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+      }
+    });
 
   // 获取所有职位类型（用于筛选）
   const positionTypes = [
@@ -108,12 +135,16 @@ export default function AdminPage() {
       render: (text: string) => (
         <Text ellipsis={{ tooltip: text }}>{text.slice(0, 8)}...</Text>
       ),
+      sorter: true,
+      sortOrder: sortField === "sessionId" ? sortOrder : undefined,
     },
     {
       title: "职位类型",
       dataIndex: "positionType",
       key: "positionType",
       render: (text: string) => <Tag icon={<UserOutlined />}>{text}</Tag>,
+      sorter: true,
+      sortOrder: sortField === "positionType" ? sortOrder : undefined,
     },
     {
       title: "难度",
@@ -124,12 +155,16 @@ export default function AdminPage() {
           text === "初级" ? "green" : text === "中级" ? "blue" : "red";
         return <Tag color={color}>{text}</Tag>;
       },
+      sorter: true,
+      sortOrder: sortField === "difficulty" ? sortOrder : undefined,
     },
     {
       title: "开始时间",
       dataIndex: "startTime",
       key: "startTime",
       render: (text: string) => new Date(text).toLocaleString(),
+      sorter: true,
+      sortOrder: sortField === "startTime" ? sortOrder : undefined,
     },
     {
       title: "状态",
@@ -147,6 +182,8 @@ export default function AdminPage() {
         };
         return <Tag color={color}>{statusText}</Tag>;
       },
+      sorter: true,
+      sortOrder: sortField === "status" ? sortOrder : undefined,
     },
     {
       title: "问题数",
@@ -157,12 +194,16 @@ export default function AdminPage() {
           {record.answeredCount}/{text}
         </Text>
       ),
+      sorter: true,
+      sortOrder: sortField === "questionCount" ? sortOrder : undefined,
     },
     {
       title: "持续时间",
       dataIndex: "duration",
       key: "duration",
       render: (text: string) => (text ? `${text} 分钟` : "-"),
+      sorter: true,
+      sortOrder: sortField === "duration" ? sortOrder : undefined,
     },
     {
       title: "操作",
@@ -291,6 +332,17 @@ export default function AdminPage() {
               showTotal: (total) => `共 ${total} 条记录`,
             }}
             bordered
+            onChange={(_pagination, _filters, sorter) => {
+              const typedSorter = sorter as {
+                field: string;
+                order?: "ascend" | "descend";
+              };
+
+              if (typedSorter) {
+                setSortField(typedSorter.field);
+                setSortOrder(typedSorter.order);
+              }
+            }}
           />
         </Spin>
       </Card>
