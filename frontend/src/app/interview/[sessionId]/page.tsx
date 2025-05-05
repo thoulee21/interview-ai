@@ -18,7 +18,6 @@ import {
   Typography,
   message,
 } from "antd";
-import { console } from "inspector";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
