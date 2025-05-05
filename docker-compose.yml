@@ -7,7 +7,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - FLASK_ENV=production
+      - FLASK_DEBUG=0
       # 讯飞星火API凭证，需要在实际部署时填入
       - XUNFEI_APP_ID=${XUNFEI_APP_ID}
       - XUNFEI_API_KEY=${XUNFEI_API_KEY}
