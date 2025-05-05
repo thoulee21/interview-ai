@@ -43,9 +43,9 @@ type QuestionType = {
 };
 
 type VideoAnalysisType = {
-  eye_contact: number;
-  facial_expressions: number;
-  body_language: number;
+  eyeContact: number;
+  facialExpressions: number;
+  bodyLanguage: number;
   confidence: number;
   recommendations: string;
 };
@@ -54,7 +54,7 @@ type AudioAnalysisType = {
   clarity: number;
   pace: number;
   tone: number;
-  filler_words_count: number;
+  fillerWordsCount: number;
   recommendations: string;
 };
 
@@ -239,10 +239,10 @@ export default function AdminSessionDetailPage() {
                       }}
                     >
                       <Text>眼神接触</Text>
-                      <Text strong>{record.videoAnalysis.eye_contact}/10</Text>
+                      <Text strong>{record.videoAnalysis.eyeContact}/10</Text>
                     </div>
                     <Progress
-                      percent={record.videoAnalysis.eye_contact * 10}
+                      percent={record.videoAnalysis.eyeContact * 10}
                       size="small"
                     />
                   </div>
@@ -257,11 +257,11 @@ export default function AdminSessionDetailPage() {
                     >
                       <Text>面部表情</Text>
                       <Text strong>
-                        {record.videoAnalysis.facial_expressions}/10
+                        {record.videoAnalysis.facialExpressions}/10
                       </Text>
                     </div>
                     <Progress
-                      percent={record.videoAnalysis.facial_expressions * 10}
+                      percent={record.videoAnalysis.facialExpressions * 10}
                       size="small"
                     />
                   </div>
@@ -278,11 +278,11 @@ export default function AdminSessionDetailPage() {
                     >
                       <Text>肢体语言</Text>
                       <Text strong>
-                        {record.videoAnalysis.body_language}/10
+                        {record.videoAnalysis.bodyLanguage}/10
                       </Text>
                     </div>
                     <Progress
-                      percent={record.videoAnalysis.body_language * 10}
+                      percent={record.videoAnalysis.bodyLanguage * 10}
                       size="small"
                     />
                   </div>
@@ -376,7 +376,7 @@ export default function AdminSessionDetailPage() {
                     >
                       <Text>填充词数量</Text>
                       <Text strong>
-                        {record.audioAnalysis.filler_words_count}
+                        {record.audioAnalysis.fillerWordsCount}
                       </Text>
                     </div>
                   </div>

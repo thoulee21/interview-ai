@@ -88,9 +88,9 @@ export default function InterviewPage() {
 
       // 更新状态，但不展示给用户
       const formattedVideoData = {
-        eyeContact: videoData.eye_contact || 0,
-        facialExpressions: videoData.facial_expressions || 0,
-        bodyLanguage: videoData.body_language || 0,
+        eyeContact: videoData.eyeContact || 0,
+        facialExpressions: videoData.facialExpressions || 0,
+        bodyLanguage: videoData.bodyLanguage || 0,
         confidence: videoData.confidence || 0,
         recommendations: videoData.recommendations || "",
       };
@@ -108,7 +108,7 @@ export default function InterviewPage() {
         clarity: audioData.clarity || 0,
         pace: audioData.pace || 0,
         tone: audioData.tone || 0,
-        fillerWordsCount: audioData.filler_words_count || 0,
+        fillerWordsCount: audioData.fillerWordsCount || 0,
         recommendations: audioData.recommendations || "",
       };
       setAudioAnalysis(formattedAudioData);
