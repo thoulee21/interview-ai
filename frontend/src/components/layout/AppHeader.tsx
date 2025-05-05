@@ -1,5 +1,6 @@
 "use client";
 
+import { version } from "@/../package.json";
 import {
   ApartmentOutlined,
   DashboardOutlined,
@@ -104,7 +105,7 @@ const AppHeader = () => {
               boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
             }}
           />
-          <span style={logoTextStyle}>智能模拟面试系统</span>
+          <span style={logoTextStyle}>智能模拟面试系统 v{version}</span>
         </Link>
       </div>
 
