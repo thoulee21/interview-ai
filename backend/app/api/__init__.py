@@ -6,7 +6,7 @@ from app.api import admin, analysis, health, interview, position
 from flask import Blueprint
 
 # 创建API蓝图
-api_bp = Blueprint('api', __name__, url_prefix='/api')
+api_bp = Blueprint('api', __name__, url_prefix='/')
 
 # 导入各个子模块的路由
 
