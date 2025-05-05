@@ -1,5 +1,5 @@
 // 帮助函数：从JSON字符串中提取评估信息并转换为Markdown格式
-const formatEvaluationToMarkdown = (evaluationText) => {
+const formatEvaluationToMarkdown = (evaluationText: string) => {
   try {
     // 尝试提取JSON部分并解析
     const jsonMatch = evaluationText.match(/```json\s*([\s\S]*?)\s*```/);
@@ -11,7 +11,7 @@ const formatEvaluationToMarkdown = (evaluationText) => {
 
     if (data.strengths && Array.isArray(data.strengths)) {
       markdown += "### 优势\n";
-      data.strengths.forEach((strength) => {
+      data.strengths.forEach((strength: string) => {
         markdown += `* ${strength}\n`;
       });
       markdown += "\n";
@@ -19,7 +19,7 @@ const formatEvaluationToMarkdown = (evaluationText) => {
 
     if (data.weaknesses && Array.isArray(data.weaknesses)) {
       markdown += "### 需要改进\n";
-      data.weaknesses.forEach((weakness) => {
+      data.weaknesses.forEach((weakness: string) => {
         markdown += `* ${weakness}\n`;
       });
       markdown += "\n";
