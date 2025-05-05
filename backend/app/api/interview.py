@@ -78,9 +78,9 @@ def answer_question():
                 logger.warning(f"视频分析数据验证失败: {errors}")
                 # 应用默认值或修正错误的数据
                 video_analysis = {
-                    "eye_contact": video_analysis.get("eyeContact", 7.5),
-                    "facial_expressions": video_analysis.get("facialExpressions", 7.0),
-                    "body_language": video_analysis.get("bodyLanguage", 6.5),
+                    "eyeContact": video_analysis.get("eyeContact", 7.5),
+                    "facialExpressions": video_analysis.get("facialExpressions", 7.0),
+                    "bodyLanguage": video_analysis.get("bodyLanguage", 6.5),
                     "confidence": video_analysis.get("confidence", 7.0)
                 }
 
@@ -93,7 +93,7 @@ def answer_question():
                     "clarity": audio_analysis.get("clarity", 7.5),
                     "pace": audio_analysis.get("pace", 7.0),
                     "tone": audio_analysis.get("tone", 7.5),
-                    "filler_words_count": audio_analysis.get("fillerWordsCount", 5)
+                    "fillerWordsCount": audio_analysis.get("fillerWordsCount", 5)
                 }
 
         # 评估回答
@@ -299,7 +299,7 @@ def get_interview_results(session_id):
             delivery_score = audio_analysis.get(
                 'clarity', 8.0) * 10 if audio_analysis else 75
             nonverbal_score = video_analysis.get(
-                'eye_contact', 7.5) * 10 if video_analysis else 75
+                'eyeContact', 7.5) * 10 if video_analysis else 75
 
             # 计算总体得分(权重：内容60%，表达20%，非语言表现20%)
             overall_score = int(content_score * 0.6 +

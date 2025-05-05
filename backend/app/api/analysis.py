@@ -25,9 +25,9 @@ def evaluate_video():
 
         # 对于MVP，我们使用模拟数据
         analysis = {
-            "eye_contact": 8.5,  # 眼神接触评分(1-10)
-            "facial_expressions": 7.2,  # 面部表情评分
-            "body_language": 6.8,  # 肢体语言评分
+            "eyeContact": 8.5,  # 眼神接触评分(1-10)
+            "facialExpressions": 7.2,  # 面部表情评分
+            "bodyLanguage": 6.8,  # 肢体语言评分
             "confidence": 7.5,  # 自信程度
             "recommendations": "保持良好的眼神接触，但可以尝试展示更多自然的面部表情。"
         }
@@ -67,7 +67,7 @@ def evaluate_audio():
             "clarity": 8.2,  # 清晰度评分(1-10)
             "pace": 7.5,  # 语速评分
             "tone": 8.0,  # 语调评分
-            "filler_words_count": 4,  # 填充词数量("嗯"、"啊"等)
+            "fillerWordsCount": 4,  # 填充词数量("嗯"、"啊"等)
             "recommendations": "整体表现良好，但注意减少填充词的使用，保持语速的一致性。"
         }
 

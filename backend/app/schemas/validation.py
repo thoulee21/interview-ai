@@ -51,13 +51,13 @@ INTERVIEW_EVALUATION_SCHEMA = {
 VIDEO_ANALYSIS_SCHEMA = {
     "type": "object",
     "properties": {
-        "eye_contact": {"type": "number", "minimum": 0, "maximum": 10},
-        "facial_expressions": {"type": "number", "minimum": 0, "maximum": 10},
-        "body_language": {"type": "number", "minimum": 0, "maximum": 10},
+        "eyeContact": {"type": "number", "minimum": 0, "maximum": 10},
+        "facialExpressions": {"type": "number", "minimum": 0, "maximum": 10},
+        "bodyLanguage": {"type": "number", "minimum": 0, "maximum": 10},
         "confidence": {"type": "number", "minimum": 0, "maximum": 10},
         "recommendations": {"type": "string"}
     },
-    "required": ["eye_contact", "facial_expressions", "body_language", "confidence"]
+    "required": ["eyeContact", "facialExpressions", "bodyLanguage", "confidence"]
 }
 
 # 音频分析结果的JSON Schema
@@ -67,10 +67,10 @@ AUDIO_ANALYSIS_SCHEMA = {
         "clarity": {"type": "number", "minimum": 0, "maximum": 10},
         "pace": {"type": "number", "minimum": 0, "maximum": 10},
         "tone": {"type": "number", "minimum": 0, "maximum": 10},
-        "filler_words_count": {"type": "number", "minimum": 0},
+        "fillerWordsCount": {"type": "number", "minimum": 0},
         "recommendations": {"type": "string"}
     },
-    "required": ["clarity", "pace", "tone", "filler_words_count"]
+    "required": ["clarity", "pace", "tone", "fillerWordsCount"]
 }
 
 

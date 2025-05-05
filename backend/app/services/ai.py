@@ -379,9 +379,9 @@ class XunFeiSparkAPI:
             # 添加视频分析数据
             if video_analysis:
                 prompt += "\n视频行为分析数据:\n"
-                prompt += f"眼神接触评分: {video_analysis.get('eye_contact', 'N/A')}/10\n"
-                prompt += f"面部表情评分: {video_analysis.get('facial_expressions', 'N/A')}/10\n"
-                prompt += f"肢体语言评分: {video_analysis.get('body_language', 'N/A')}/10\n"
+                prompt += f"眼神接触评分: {video_analysis.get('eyeContact', 'N/A')}/10\n"
+                prompt += f"面部表情评分: {video_analysis.get('facialExpressions', 'N/A')}/10\n"
+                prompt += f"肢体语言评分: {video_analysis.get('bodyLanguage', 'N/A')}/10\n"
                 prompt += f"自信程度评分: {video_analysis.get('confidence', 'N/A')}/10\n"
 
             # 添加音频分析数据
@@ -390,7 +390,7 @@ class XunFeiSparkAPI:
                 prompt += f"语音清晰度评分: {audio_analysis.get('clarity', 'N/A')}/10\n"
                 prompt += f"语速评分: {audio_analysis.get('pace', 'N/A')}/10\n"
                 prompt += f"语调评分: {audio_analysis.get('tone', 'N/A')}/10\n"
-                prompt += f"填充词使用次数: {audio_analysis.get('filler_words_count', 'N/A')}\n"
+                prompt += f"填充词使用次数: {audio_analysis.get('fillerWordsCount', 'N/A')}\n"
 
             # TypeChat 输出格式指导
             prompt += """

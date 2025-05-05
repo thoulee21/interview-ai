@@ -432,9 +432,9 @@ class MultimodalAnalysis:
             # 处理视频分析数据
             if video_samples:
                 aggregated_video_analysis = {
-                    "eye_contact": sum(v.get("eyeContact", 0) for v in video_samples) / len(video_samples),
-                    "facial_expressions": sum(v.get("facialExpressions", 0) for v in video_samples) / len(video_samples),
-                    "body_language": sum(v.get("bodyLanguage", 0) for v in video_samples) / len(video_samples),
+                    "eyeContact": sum(v.get("eyeContact", 0) for v in video_samples) / len(video_samples),
+                    "facialExpressions": sum(v.get("facialExpressions", 0) for v in video_samples) / len(video_samples),
+                    "bodyLanguage": sum(v.get("bodyLanguage", 0) for v in video_samples) / len(video_samples),
                     "confidence": sum(v.get("confidence", 0) for v in video_samples) / len(video_samples)
                 }
 
@@ -444,7 +444,7 @@ class MultimodalAnalysis:
                     "clarity": sum(a.get("clarity", 0) for a in audio_samples) / len(audio_samples),
                     "pace": sum(a.get("pace", 0) for a in audio_samples) / len(audio_samples),
                     "tone": sum(a.get("tone", 0) for a in audio_samples) / len(audio_samples),
-                    "filler_words_count": sum(a.get("fillerWordsCount", 0) for a in audio_samples)
+                    "fillerWordsCount": sum(a.get("fillerWordsCount", 0) for a in audio_samples)
                 }
 
         return aggregated_video_analysis, aggregated_audio_analysis
