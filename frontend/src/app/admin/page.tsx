@@ -37,7 +37,9 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [positionFilter, setPositionFilter] = useState("all");
   const [sortField, setSortField] = useState<string>("startTime");
-  const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | undefined>("descend");
+  const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | undefined>(
+    "descend",
+  );
   const router = useRouter();
 
   useEffect(() => {
@@ -102,22 +104,40 @@ export default function AdminPage() {
           return direction * a.positionType.localeCompare(b.positionType);
         case "difficulty":
           // 自定义难度级别排序
-          const difficultyOrder = { "初级": 1, "中级": 2, "高级": 3 };
-          return direction * ((difficultyOrder[a.difficulty as keyof typeof difficultyOrder] || 0) - (difficultyOrder[b.difficulty as keyof typeof difficultyOrder] || 0));
+          const difficultyOrder = { 初级: 1, 中级: 2, 高级: 3 };
+          return (
+            direction *
+            ((difficultyOrder[a.difficulty as keyof typeof difficultyOrder] ||
+              0) -
+              (difficultyOrder[b.difficulty as keyof typeof difficultyOrder] ||
+                0))
+          );
         case "startTime":
-          return direction * (new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+          return (
+            direction *
+            (new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+          );
         case "status":
-          const statusOrder = { "active": 1, "completed": 2, "abandoned": 3 };
-          return direction * ((statusOrder[a.status as keyof typeof statusOrder] || 0) - (statusOrder[b.status as keyof typeof statusOrder] || 0));
+          const statusOrder = { active: 1, completed: 2, abandoned: 3 };
+          return (
+            direction *
+            ((statusOrder[a.status as keyof typeof statusOrder] || 0) -
+              (statusOrder[b.status as keyof typeof statusOrder] || 0))
+          );
         case "questionCount":
-          return direction * (Number(a.questionCount) - Number(b.questionCount));
+          return (
+            direction * (Number(a.questionCount) - Number(b.questionCount))
+          );
         case "duration":
           const aDuration = a.duration !== undefined ? Number(a.duration) : 0;
           const bDuration = b.duration !== undefined ? Number(b.duration) : 0;
           return direction * (aDuration - bDuration);
         default:
           // 默认按开始时间排序
-          return direction * (new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+          return (
+            direction *
+            (new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+          );
       }
     });
 
