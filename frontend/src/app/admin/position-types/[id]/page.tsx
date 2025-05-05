@@ -19,7 +19,7 @@ import {
 } from "antd";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -43,8 +43,15 @@ export default function PositionTypeDetailPage() {
   const id = params.id as string;
   const router = useRouter();
   const [form] = Form.useForm();
+  const formRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [positionType, setPositionType] = useState<PositionType | null>(null);
+
+  useEffect(() => {
+    if (formRef.current) {
+      form.setFieldsValue({});
+    }
+  }, [form, formRef]);
 
   // 获取职位类型详情
   useEffect(() => {
@@ -132,64 +139,63 @@ export default function PositionTypeDetailPage() {
 
       <Card>
         <Spin spinning={loading}>
-          {positionType && (
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSave}
-              initialValues={{
-                value: positionType?.value || "",
-                label: positionType?.label || "",
-                description: positionType?.description || "",
-              }}
+          <Form
+            form={form}
+            ref={formRef}
+            layout="vertical"
+            onFinish={handleSave}
+            initialValues={{
+              value: positionType?.value || "",
+              label: positionType?.label || "",
+              description: positionType?.description || "",
+            }}
+          >
+            <Form.Item
+              label="职位编码"
+              name="value"
+              rules={[
+                { required: true, message: "请输入职位编码" },
+                { max: 50, message: "职位编码不能超过50个字符" },
+              ]}
             >
-              <Form.Item
-                label="职位编码"
-                name="value"
-                rules={[
-                  { required: true, message: "请输入职位编码" },
-                  { max: 50, message: "职位编码不能超过50个字符" },
-                ]}
-              >
-                <Input placeholder="请输入职位编码，如software_engineer" />
-              </Form.Item>
+              <Input placeholder="请输入职位编码，如software_engineer" />
+            </Form.Item>
 
-              <Form.Item
-                label="职位名称"
-                name="label"
-                rules={[
-                  { required: true, message: "请输入职位名称" },
-                  { max: 50, message: "职位名称不能超过50个字符" },
-                ]}
-              >
-                <Input placeholder="请输入职位名称，如软件工程师" />
-              </Form.Item>
+            <Form.Item
+              label="职位名称"
+              name="label"
+              rules={[
+                { required: true, message: "请输入职位名称" },
+                { max: 50, message: "职位名称不能超过50个字符" },
+              ]}
+            >
+              <Input placeholder="请输入职位名称，如软件工程师" />
+            </Form.Item>
 
-              <Form.Item
-                label="职位描述"
-                name="description"
-                rules={[{ max: 200, message: "职位描述不能超过200个字符" }]}
-              >
-                <TextArea placeholder="请输入职位描述" rows={4} />
-              </Form.Item>
+            <Form.Item
+              label="职位描述"
+              name="description"
+              rules={[{ max: 200, message: "职位描述不能超过200个字符" }]}
+            >
+              <TextArea placeholder="请输入职位描述" rows={4} />
+            </Form.Item>
 
-              <Form.Item>
-                <Space>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    loading={loading}
-                    icon={<SaveOutlined />}
-                  >
-                    保存
-                  </Button>
-                  <Button onClick={() => router.push("/admin/position-types")}>
-                    取消
-                  </Button>
-                </Space>
-              </Form.Item>
-            </Form>
-          )}
+            <Form.Item>
+              <Space>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  icon={<SaveOutlined />}
+                >
+                  保存
+                </Button>
+                <Button onClick={() => router.push("/admin/position-types")}>
+                  取消
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
         </Spin>
       </Card>
     </div>
