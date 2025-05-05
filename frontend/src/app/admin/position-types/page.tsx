@@ -41,6 +41,10 @@ export default function PositionTypesPage() {
   const [loading, setLoading] = useState(false);
   const [positionTypes, setPositionTypes] = useState<PositionType[]>([]);
   const [searchText, setSearchText] = useState("");
+  const [sortField, setSortField] = useState<string>("label");
+  const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | undefined>(
+    "ascend",
+  );
   const router = useRouter();
 
   // 获取职位类型列表
@@ -111,7 +115,32 @@ export default function PositionTypesPage() {
         position.label.toLowerCase().includes(searchText.toLowerCase()) ||
         position.description?.toLowerCase().includes(searchText.toLowerCase()),
     )
-    .sort((a, b) => a.label.localeCompare(b.label, "zh-CN"));
+    .sort((a, b) => {
+      if (!sortOrder) return 0;
+
+      const direction = sortOrder === "ascend" ? 1 : -1;
+
+      switch (sortField) {
+        case "id":
+          return direction * (a.id - b.id);
+        case "value":
+          return direction * a.value.localeCompare(b.value, "zh-CN");
+        case "label":
+          return direction * a.label.localeCompare(b.label, "zh-CN");
+        case "createdAt":
+          return (
+            direction *
+            (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+          );
+        case "description":
+          return (
+            direction *
+            (a.description || "").localeCompare(b.description || "", "zh-CN")
+          );
+        default:
+          return 0;
+      }
+    });
 
   // 表格列定义
   const columns = [
@@ -120,17 +149,23 @@ export default function PositionTypesPage() {
       dataIndex: "id",
       key: "id",
       width: 60,
+      sorter: true,
+      sortOrder: sortField === "id" ? sortOrder : undefined,
     },
     {
       title: "职位编码",
       dataIndex: "value",
       key: "value",
       render: (text: string) => <Tag color="blue">{text}</Tag>,
+      sorter: true,
+      sortOrder: sortField === "value" ? sortOrder : undefined,
     },
     {
       title: "职位名称",
       dataIndex: "label",
       key: "label",
+      sorter: true,
+      sortOrder: sortField === "label" ? sortOrder : undefined,
     },
     {
       title: "描述",
@@ -139,12 +174,16 @@ export default function PositionTypesPage() {
       render: (text: string) => (
         <Text ellipsis={{ tooltip: text }}>{text || "-"}</Text>
       ),
+      sorter: true,
+      sortOrder: sortField === "description" ? sortOrder : undefined,
     },
     {
       title: "创建时间",
       dataIndex: "createdAt",
       key: "createdAt",
       render: (date: string) => new Date(date).toLocaleString("zh-CN"),
+      sorter: true,
+      sortOrder: sortField === "createdAt" ? sortOrder : undefined,
     },
     {
       title: "操作",
@@ -226,6 +265,18 @@ export default function PositionTypesPage() {
             showSizeChanger: true,
             showTotal: (total) => `共 ${total} 条`,
             pageSizeOptions: ["10", "20", "50"],
+            hideOnSinglePage: true,
+          }}
+          onChange={(_pagination, _filters, sorter) => {
+            const typedSorter = sorter as {
+              field: string;
+              order?: "ascend" | "descend";
+            };
+
+            if (typedSorter) {
+              setSortField(typedSorter.field);
+              setSortOrder(typedSorter.order);
+            }
           }}
         />
       </Card>
