@@ -1,5 +1,3 @@
-"use client";
-
 import axios from "axios";
 
 // 从环境变量中获取API基础URL
