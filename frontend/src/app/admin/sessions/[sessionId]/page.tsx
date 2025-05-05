@@ -1,14 +1,15 @@
 "use client";
 
 import interviewAPI from "@/services/api";
+import formatEvaluationToMarkdown from "@/utils/formatEvaluationToMarkdown";
 import {
   ArrowLeftOutlined,
+  EditOutlined,
   EyeOutlined,
   FileTextOutlined,
   QuestionCircleOutlined,
   SoundOutlined,
   VideoCameraOutlined,
-  EditOutlined,
 } from "@ant-design/icons";
 import {
   Breadcrumb,
@@ -527,7 +528,9 @@ export default function AdminSessionDetailPage() {
                                 <Title level={5}>AI评估</Title>
                                 <div className="markdown-content">
                                   <ReactMarkdown>
-                                    {record.evaluation}
+                                    {formatEvaluationToMarkdown(
+                                      record.evaluation
+                                    )}
                                   </ReactMarkdown>
                                 </div>
                               </>
