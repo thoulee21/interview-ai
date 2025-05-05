@@ -1,5 +1,7 @@
 "use client";
 
+export const runtime = "edge";
+
 import InterviewBreadcrumb from "@/components/InterviewBreadcrumb";
 import interviewAPI from "@/services/api";
 import formatEvaluationToMarkdown from "@/utils/formatEvaluationToMarkdown";
