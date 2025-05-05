@@ -211,13 +211,19 @@ export default function InterviewPage() {
 
           console.log("MediaRecorder 已启动，每1秒触发一次dataavailable事件");
 
-          // 设置定期分析 - 每5秒分析一次
+          const ANALYSIS_INTERVAL = Math.floor(
+            Math.random() * (3000 - 1000 + 1) + 1000,
+          ); // 随机间隔1-3秒
+          // 设置定期分析间隔为1-3秒
+          console.log(`设置定期分析间隔为 ${ANALYSIS_INTERVAL} 毫秒`);
+
+          // 设置定期分析 - 每ANALYSIS_INTERVAL毫秒分析一次
           recordingInterval.current = setInterval(() => {
             if (recordedChunks.length > 0 && !isComplete) {
               // 不影响用户体验，静默分析
               silentAnalysis();
             }
-          }, 5000);
+          }, ANALYSIS_INTERVAL);
         } else {
           throw new Error("摄像头流不可用");
         }
