@@ -33,7 +33,7 @@ const interviewAPI = {
     sessionId: string,
     answer: string,
     videoAnalysis: unknown = null,
-    audioAnalysis: unknown = null
+    audioAnalysis: unknown = null,
   ) => {
     return apiClient.post("/answer_question", {
       session_id: sessionId,

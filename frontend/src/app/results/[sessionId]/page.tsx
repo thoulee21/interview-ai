@@ -85,7 +85,7 @@ export default function ResultPage() {
         // 如果后端已返回结构化数据，则无需此处理
         if (resultData.rawEvaluation) {
           const structuredData = interviewAPI.processEvaluation(
-            resultData.rawEvaluation
+            resultData.rawEvaluation,
           );
           if (structuredData) {
             resultData = { ...resultData, ...structuredData };
@@ -117,7 +117,7 @@ export default function ResultPage() {
                 }
               }
               return item;
-            }
+            },
           );
         }
 
@@ -142,14 +142,16 @@ export default function ResultPage() {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: "flex", 
-        flexDirection: "column", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "100vh", 
-        textAlign: "center" 
-      }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          textAlign: "center",
+        }}
+      >
         <Spin size="large" />
         <p style={{ marginTop: 20 }}>正在加载面试评估结果...</p>
       </div>
@@ -158,17 +160,19 @@ export default function ResultPage() {
 
   if (!results) {
     return (
-      <div style={{ 
-        display: "flex", 
-        flexDirection: "column", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "100vh", 
-        textAlign: "center" 
-      }}>
-        <Empty 
-          description="未找到面试结果" 
-          image={Empty.PRESENTED_IMAGE_SIMPLE} 
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          textAlign: "center",
+        }}
+      >
+        <Empty
+          description="未找到面试结果"
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
         <Paragraph style={{ marginTop: 16 }}>
           该会话可能不存在或已被删除，请尝试创建新的面试

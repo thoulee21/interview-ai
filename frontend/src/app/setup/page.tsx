@@ -82,7 +82,7 @@ export default function InterviewSetupPage() {
       if (typeof window !== "undefined") {
         localStorage.setItem(
           `interview_${sessionId}_initial_question`,
-          firstQuestion
+          firstQuestion,
         );
       }
 

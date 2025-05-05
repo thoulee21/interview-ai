@@ -94,7 +94,9 @@ code {
 .landing-page .animate-on-scroll {
   opacity: 0;
   transform: translateY(30px);
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  transition:
+    opacity 0.8s ease-out,
+    transform 0.8s ease-out;
 }
 
 .landing-page .animate-on-scroll.animated {
@@ -139,11 +141,11 @@ code {
   .landing-page .hero-section {
     padding: 60px 16px;
   }
-  
+
   .landing-page .hero-section .ant-typography {
     font-size: 32px !important;
   }
-  
+
   .landing-page .advantages-section,
   .landing-page .competition-section,
   .landing-page .cta-section {

@@ -109,7 +109,7 @@ export default function PositionTypesPage() {
         searchText === "" ||
         position.value.toLowerCase().includes(searchText.toLowerCase()) ||
         position.label.toLowerCase().includes(searchText.toLowerCase()) ||
-        position.description?.toLowerCase().includes(searchText.toLowerCase())
+        position.description?.toLowerCase().includes(searchText.toLowerCase()),
     )
     .sort((a, b) => a.label.localeCompare(b.label, "zh-CN"));
 

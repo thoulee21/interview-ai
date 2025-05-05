@@ -41,7 +41,7 @@ export default function HomePage() {
 
     const handleScroll = () => {
       const elements = document.querySelectorAll(
-        ".animate-on-scroll:not(.animated)"
+        ".animate-on-scroll:not(.animated)",
       );
       elements.forEach((element) => {
         const position = element.getBoundingClientRect();

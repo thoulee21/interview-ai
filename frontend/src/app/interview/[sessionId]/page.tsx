@@ -57,10 +57,10 @@ export default function InterviewPage() {
 
   // 视频分析和音频分析相关状态 (仅内部使用，不再向用户展示实时分析)
   const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysisType | null>(
-    null
+    null,
   );
   const [audioAnalysis, setAudioAnalysis] = useState<AudioAnalysisType | null>(
-    null
+    null,
   );
   const [isRecording, setIsRecording] = useState(false);
 
@@ -82,7 +82,7 @@ export default function InterviewPage() {
       // 后台分析视频
       const videoResponse = await interviewAPI.evaluateVideo(
         videoBlob,
-        sessionId
+        sessionId,
       );
       const videoData = videoResponse.data;
 
@@ -99,7 +99,7 @@ export default function InterviewPage() {
       // 后台分析音频
       const audioResponse = await interviewAPI.evaluateAudio(
         videoBlob,
-        sessionId
+        sessionId,
       );
       const audioData = audioResponse.data;
 
@@ -184,21 +184,21 @@ export default function InterviewPage() {
             webcamRef.current.stream,
             {
               mimeType: "video/webm",
-            }
+            },
           );
 
           // 清除先前的事件监听器（如果有的话）
           if (mediaRecorderRef.current) {
             mediaRecorderRef.current.removeEventListener(
               "dataavailable",
-              handleDataAvailable
+              handleDataAvailable,
             );
           }
 
           // 重新添加事件监听器
           mediaRecorderRef.current.addEventListener(
             "dataavailable",
-            handleDataAvailable
+            handleDataAvailable,
           );
 
           // 添加错误处理
@@ -346,7 +346,7 @@ export default function InterviewPage() {
         sessionId,
         answer,
         currentQuestionData.videoAnalysis,
-        currentQuestionData.audioAnalysis
+        currentQuestionData.audioAnalysis,
       );
 
       // 处理回答评估
@@ -360,12 +360,11 @@ export default function InterviewPage() {
 
         // 获取面试结果详情
         try {
-          const resultResponse = await interviewAPI.getInterviewResults(
-            sessionId
-          );
+          const resultResponse =
+            await interviewAPI.getInterviewResults(sessionId);
           setFinalEvaluation(
             resultResponse.data.recommendations ||
-              response.data.final_evaluation
+              response.data.final_evaluation,
           );
           setOverallScore(resultResponse.data.overallScore);
         } catch (error) {
@@ -379,7 +378,7 @@ export default function InterviewPage() {
         // 继续面试
         // 格式化评估结果为可读性好的Markdown
         const formattedEvaluation = formatEvaluationToMarkdown(
-          response.data.evaluation
+          response.data.evaluation,
         );
         setEvaluation(formattedEvaluation);
         setCurrentQuestion(response.data.next_question);
@@ -505,8 +504,8 @@ export default function InterviewPage() {
                               overallScore >= 80
                                 ? "success"
                                 : overallScore >= 60
-                                ? "warning"
-                                : "error"
+                                  ? "warning"
+                                  : "error"
                             }
                             style={{ fontSize: 18, padding: "8px 16px" }}
                           >

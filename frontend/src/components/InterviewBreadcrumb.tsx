@@ -29,7 +29,7 @@ const InterviewBreadcrumb: React.FC<InterviewBreadcrumbProps> = ({
   // 确定当前步骤的索引
   const steps = ["setup", "interview", "results"];
   const currentStepIndex = steps.indexOf(currentStep);
-  
+
   // 根据面试阶段动态调整导航文案
   let interviewText = "面试进行中";
   if (currentStep === "interview" && isComplete) {
@@ -46,20 +46,24 @@ const InterviewBreadcrumb: React.FC<InterviewBreadcrumbProps> = ({
             title: <Link href="/">首页</Link>,
           },
           {
-            title: currentStepIndex >= 0 ? (
-              <Link href="/setup">面试设置</Link>
-            ) : (
-              "面试设置"
-            ),
+            title:
+              currentStepIndex >= 0 ? (
+                <Link href="/setup">面试设置</Link>
+              ) : (
+                "面试设置"
+              ),
           },
           ...(currentStepIndex >= 1 || currentStep === "interview"
             ? [
                 {
-                  title: sessionId && currentStepIndex > 1 ? (
-                    <Link href={`/interview/${sessionId}`}>{interviewText}</Link>
-                  ) : (
-                    interviewText
-                  ),
+                  title:
+                    sessionId && currentStepIndex > 1 ? (
+                      <Link href={`/interview/${sessionId}`}>
+                        {interviewText}
+                      </Link>
+                    ) : (
+                      interviewText
+                    ),
                 },
               ]
             : []),

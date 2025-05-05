@@ -217,7 +217,7 @@ export default function AdminSessionDetailPage() {
       width: 100,
       render: (_: string, record: AnalysisType) => {
         const question = sessionDetails.questions.find(
-          (q) => q.id === record.questionId
+          (q) => q.id === record.questionId,
         );
         return question ? `问题 ${question.questionIndex + 1}` : "未知问题";
       },
@@ -277,9 +277,7 @@ export default function AdminSessionDetailPage() {
                       }}
                     >
                       <Text>肢体语言</Text>
-                      <Text strong>
-                        {record.videoAnalysis.bodyLanguage}/10
-                      </Text>
+                      <Text strong>{record.videoAnalysis.bodyLanguage}/10</Text>
                     </div>
                     <Progress
                       percent={record.videoAnalysis.bodyLanguage * 10}
@@ -468,15 +466,15 @@ export default function AdminSessionDetailPage() {
                 sessionDetails.status === "completed"
                   ? "success"
                   : sessionDetails.status === "active"
-                  ? "processing"
-                  : "default"
+                    ? "processing"
+                    : "default"
               }
             >
               {sessionDetails.status === "completed"
                 ? "已完成"
                 : sessionDetails.status === "active"
-                ? "进行中"
-                : sessionDetails.status}
+                  ? "进行中"
+                  : sessionDetails.status}
             </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="开始时间">
@@ -529,7 +527,7 @@ export default function AdminSessionDetailPage() {
                                 <div className="markdown-content">
                                   <ReactMarkdown>
                                     {formatEvaluationToMarkdown(
-                                      record.evaluation
+                                      record.evaluation,
                                     )}
                                   </ReactMarkdown>
                                 </div>

@@ -64,11 +64,11 @@
   .desktop-menu {
     display: none;
   }
-  
+
   .mobile-menu {
     display: flex;
   }
-  
+
   .site-header {
     padding: 0 16px;
   }
