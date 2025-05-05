@@ -18,6 +18,7 @@ import {
   Typography,
   message,
 } from "antd";
+import { console } from "inspector";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -75,13 +76,19 @@ export default function InterviewPage() {
   const isInitialized = useRef(false);
 
   const silentAnalysis = useCallback(async () => {
-    if (recordedChunks.length === 0) return;
+    if (recordedChunks.length === 0)
+      return {
+        videoAnalysis: null,
+        audioAnalysis: null,
+        msg: "没有录制数据",
+      };
 
     try {
       // 准备视频blob
       const videoBlob = new Blob(recordedChunks, { type: "video/webm" });
 
       // 后台分析视频
+      console.debug("开始分析视频数据...");
       const videoResponse = await interviewAPI.evaluateVideo(
         videoBlob,
         sessionId,
@@ -97,8 +104,10 @@ export default function InterviewPage() {
         recommendations: videoData.recommendations || "",
       };
       setVideoAnalysis(formattedVideoData);
+      console.debug("视频分析结果: ", formattedVideoData);
 
       // 后台分析音频
+      console.debug("开始分析音频数据...");
       const audioResponse = await interviewAPI.evaluateAudio(
         videoBlob,
         sessionId,
@@ -114,6 +123,7 @@ export default function InterviewPage() {
         recommendations: audioData.recommendations || "",
       };
       setAudioAnalysis(formattedAudioData);
+      console.debug("音频分析结果: ", formattedAudioData);
 
       // 清空录制内容，为下一次录制准备
       setRecordedChunks([]);
@@ -126,9 +136,20 @@ export default function InterviewPage() {
       ) {
         mediaRecorderRef.current.start();
       }
+
+      return {
+        videoAnalysis: formattedVideoData,
+        audioAnalysis: formattedAudioData,
+        msg: "分析成功",
+      };
     } catch (error) {
-      console.error("后台分析失败:", error);
+      console.log("后台分析失败:", error);
       // 静默失败，不打扰用户
+      return {
+        videoAnalysis: null,
+        audioAnalysis: null,
+        msg: "分析失败，请稍后重试",
+      };
     }
   }, [isRecording, recordedChunks, sessionId]);
 
@@ -210,22 +231,7 @@ export default function InterviewPage() {
 
           // 重要：添加timeslice参数（1秒），确保每秒触发一次dataavailable事件
           mediaRecorderRef.current.start(1000);
-
-          console.log("MediaRecorder 已启动，每1秒触发一次dataavailable事件");
-
-          const ANALYSIS_INTERVAL = Math.floor(
-            Math.random() * (3000 - 1000 + 1) + 1000,
-          ); // 随机间隔1-3秒
-          // 设置定期分析间隔为1-3秒
-          console.log(`设置定期分析间隔为 ${ANALYSIS_INTERVAL} 毫秒`);
-
-          // 设置定期分析 - 每ANALYSIS_INTERVAL毫秒分析一次
-          recordingInterval.current = setInterval(() => {
-            if (recordedChunks.length > 0 && !isComplete) {
-              // 不影响用户体验，静默分析
-              silentAnalysis();
-            }
-          }, ANALYSIS_INTERVAL);
+          console.log("MediaRecorder 已启动，每1秒录制一次视频数据");
         } else {
           throw new Error("摄像头流不可用");
         }
@@ -234,13 +240,7 @@ export default function InterviewPage() {
         messageApi.error("无法开始录制视频，请检查您的摄像头权限");
       }
     }
-  }, [
-    handleDataAvailable,
-    isComplete,
-    messageApi,
-    recordedChunks.length,
-    silentAnalysis,
-  ]);
+  }, [handleDataAvailable, messageApi]);
 
   // 获取初始面试问题
   useEffect(() => {
@@ -302,11 +302,13 @@ export default function InterviewPage() {
     // 标记已经初始化
     isInitialized.current = true;
 
+    const currentInterval = recordingInterval.current;
     // 组件卸载时清理资源
     return () => {
       stopRecording();
-      if (recordingInterval.current) {
-        clearInterval(recordingInterval.current);
+      // 在清理函数中捕获当前的 interval 引用
+      if (currentInterval) {
+        clearInterval(currentInterval);
       }
     };
   }, [messageApi, router, sessionId, startRecording]); // 依赖项列表
@@ -329,16 +331,12 @@ export default function InterviewPage() {
 
   // 提交答案
   const handleSubmitAnswer = async () => {
-    if (!answer.trim()) {
-      messageApi.warning("请输入你的回答");
-      return;
-    }
-
     try {
       setLoading(true);
 
       // 在提交前进行一次分析，确保获取最新数据
-      await silentAnalysis();
+      const analysisRes = await silentAnalysis();
+      console.debug("多模态数据分析结果: ", analysisRes);
 
       // 整合当前问题的多模态分析数据
       const currentQuestionData = {
