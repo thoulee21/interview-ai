@@ -122,7 +122,7 @@ export default function InterviewSetupPage() {
             >
               <Select placeholder="选择你要模拟的职位">
                 {positionTypes.map((pos) => (
-                  <Option key={pos.value} value={pos.value}>
+                  <Option key={pos.value} value={pos.label}>
                     {pos.label}
                   </Option>
                 ))}
