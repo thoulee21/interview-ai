@@ -6,8 +6,10 @@ import json
 import logging
 from datetime import datetime
 
+from app.api.auth import token_required
 from app.models.interview import (FinalEvaluation, InterviewQuestion,
                                   InterviewSession, MultimodalAnalysis)
+from app.models.user import User
 from app.schemas.validation import (extract_evaluation_from_text,
                                     fix_evaluation_data,
                                     validate_audio_analysis,
@@ -20,15 +22,24 @@ from flask import current_app, jsonify, request
 logger = logging.getLogger(__name__)
 
 
+@token_required
 def start_interview():
     """开始一个新的面试会话"""
     data = request.json
     position_type = data.get('positionType', '软件工程师')  # 职位类型
     difficulty = data.get('difficulty', '中级')  # 难度
 
+    # 获取当前用户ID
+    user_id = request.user.get('user_id')
+    if not user_id:
+        return jsonify({"error": "需要登录才能开始面试"}), 401
+
     try:
         # 创建会话
         session_id = InterviewSession.create(position_type, difficulty)
+
+        # 关联用户和会话
+        User.associate_session(user_id, session_id)
 
         # 生成第一个面试问题
         question_response = ai_service.generate_interview_question(
@@ -53,6 +64,7 @@ def start_interview():
         return jsonify({"error": f"创建面试会话失败: {str(e)}"}), 500
 
 
+@token_required
 def answer_question():
     """处理面试问题的回答并生成下一个问题"""
     data = request.json
@@ -65,6 +77,16 @@ def answer_question():
     session = InterviewSession.get(session_id)
     if not session:
         return jsonify({"error": "无效的会话ID"}), 400
+
+    # 检查当前用户是否有权限操作此会话
+    user_id = request.user.get('user_id')
+    is_admin = request.user.get('is_admin')
+
+    if not is_admin:
+        # 检查会话是否属于当前用户
+        user_sessions = User.get_user_sessions(user_id)
+        if not any(s['session_id'] == session_id for s in user_sessions):
+            return jsonify({"error": "您没有权限操作此会话"}), 403
 
     try:
         # 获取当前问题
@@ -211,8 +233,19 @@ def answer_question():
         return jsonify({"error": f"处理回答失败: {str(e)}"}), 500
 
 
+@token_required
 def get_interview_results(session_id):
     """获取面试结果的接口"""
+    # 检查当前用户是否有权限查看此会话结果
+    user_id = request.user.get('user_id')
+    is_admin = request.user.get('is_admin')
+
+    if not is_admin:
+        # 检查会话是否属于当前用户
+        user_sessions = User.get_user_sessions(user_id)
+        if not any(s['session_id'] == session_id for s in user_sessions):
+            return jsonify({"error": "您没有权限查看此会话结果"}), 403
+
     try:
         # 检查会话是否存在
         session = InterviewSession.get(session_id)

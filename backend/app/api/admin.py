@@ -5,6 +5,7 @@
 
 import logging
 
+from app.api.auth import admin_required
 from app.models.interview import (InterviewQuestion, InterviewSession,
                                   MultimodalAnalysis)
 from app.models.position import PositionType
@@ -14,6 +15,7 @@ from flask import jsonify, request
 logger = logging.getLogger(__name__)
 
 
+@admin_required
 def get_all_sessions():
     """获取所有面试会话"""
     try:
@@ -32,6 +34,7 @@ def get_all_sessions():
         return jsonify({"error": f"获取会话列表失败: {str(e)}"}), 500
 
 
+@admin_required
 def get_session_details(session_id):
     """获取会话详情"""
     try:
@@ -66,6 +69,7 @@ def get_session_details(session_id):
         return jsonify({"error": f"获取会话详情失败: {str(e)}"}), 500
 
 
+@admin_required
 def delete_session(session_id):
     """删除会话"""
     try:
@@ -86,6 +90,7 @@ def delete_session(session_id):
         return jsonify({"error": f"删除会话失败: {str(e)}"}), 500
 
 
+@admin_required
 def get_admin_position_types():
     """获取所有职位类型（管理员版，包含更多详情）"""
     try:
@@ -101,6 +106,7 @@ def get_admin_position_types():
         return jsonify({"error": f"获取职位类型列表失败: {str(e)}"}), 500
 
 
+@admin_required
 def get_position_type_detail(position_id):
     """获取职位类型详情"""
     try:
@@ -117,6 +123,7 @@ def get_position_type_detail(position_id):
         return jsonify({"error": f"获取职位类型详情失败: {str(e)}"}), 500
 
 
+@admin_required
 def create_position_type():
     """创建新的职位类型"""
     try:
@@ -143,6 +150,7 @@ def create_position_type():
         return jsonify({"error": f"创建职位类型失败: {str(e)}"}), 500
 
 
+@admin_required
 def update_position_type(position_id):
     """更新职位类型"""
     try:
@@ -174,6 +182,7 @@ def update_position_type(position_id):
         return jsonify({"error": f"更新职位类型失败: {str(e)}"}), 500
 
 
+@admin_required
 def delete_position_type(position_id):
     """删除职位类型"""
     try:

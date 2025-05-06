@@ -2,7 +2,7 @@
 API蓝图模块
 """
 
-from app.api import admin, analysis, health, interview, position
+from app.api import admin, analysis, auth, health, interview, position
 from flask import Blueprint
 
 # 创建API蓝图
@@ -12,6 +12,13 @@ api_bp = Blueprint('api', __name__, url_prefix='/')
 
 # 注册健康检查路由
 api_bp.add_url_rule('/health', view_func=health.health_check)
+
+# 注册用户认证相关路由
+api_bp.add_url_rule('/auth/register', view_func=auth.register, methods=['POST'])
+api_bp.add_url_rule('/auth/login', view_func=auth.login, methods=['POST'])
+api_bp.add_url_rule('/auth/profile', view_func=auth.user_profile)
+api_bp.add_url_rule('/auth/change-password', view_func=auth.change_password, methods=['POST'])
+api_bp.add_url_rule('/auth/users', view_func=auth.admin_user_list)
 
 # 注册面试相关路由
 api_bp.add_url_rule('/start_interview',

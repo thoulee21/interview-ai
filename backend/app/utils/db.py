@@ -84,6 +84,31 @@ def init_db():
     )
     ''')
 
+    # 创建用户表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        email TEXT UNIQUE,
+        is_admin INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP,
+        UNIQUE(username)
+    )
+    ''')
+
+    # 创建用户-面试会话关联表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS user_sessions (
+        user_id INTEGER,
+        session_id TEXT,
+        PRIMARY KEY (user_id, session_id),
+        FOREIGN KEY (user_id) REFERENCES users (id),
+        FOREIGN KEY (session_id) REFERENCES interview_sessions (session_id)
+    )
+    ''')
+
     # 创建职位类型表
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS position_types (
@@ -95,6 +120,19 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
+
+    # 检查用户表是否为空，如果为空则添加默认管理员用户
+    cursor.execute("SELECT COUNT(*) FROM users")
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        # 添加默认管理员用户，密码为"admin123"的哈希值
+        import hashlib
+        default_password = hashlib.sha256("admin123".encode()).hexdigest()
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, email, is_admin) VALUES (?, ?, ?, ?)",
+            ("admin", default_password, "admin@example.com", 1)
+        )
 
     # 检查职位类型表是否为空，如果为空则添加默认数据
     cursor.execute("SELECT COUNT(*) FROM position_types")
