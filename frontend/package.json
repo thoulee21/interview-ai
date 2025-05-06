@@ -2,6 +2,11 @@
   "name": "frontend-next",
   "version": "0.2.0",
   "private": true,
+  "author": {
+    "name": "thouLee",
+    "email": "thou_lee@outlook.com",
+    "url": "https://thoulee21.github.io/"
+  },
   "cloudflare": {
     "label": "Interview Go",
     "products": [
