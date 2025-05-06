@@ -1,7 +1,8 @@
 "use client";
 
+import AuthGuard from "@/components/AuthGuard";
 import InterviewBreadcrumb from "@/components/InterviewBreadcrumb";
-import interviewAPI from "@/services/api";
+import { interviewAPI } from "@/services/api";
 import {
   Button,
   Card,
@@ -97,72 +98,76 @@ export default function InterviewSetupPage() {
   };
 
   return (
-    <div>
-      {contextHolder}
-      <InterviewBreadcrumb currentStep="setup" />
-      <Title level={2} className="text-center">
-        设置你的模拟面试
-      </Title>
-      <Paragraph className="text-center">
-        选择你希望模拟的面试类型和难度，我们将为你创建个性化的面试体验
-      </Paragraph>
+    <AuthGuard>
+      <div>
+        {contextHolder}
+        <InterviewBreadcrumb currentStep="setup" />
+        <Title level={2} className="text-center">
+          设置你的模拟面试
+        </Title>
+        <Paragraph className="text-center">
+          选择你希望模拟的面试类型和难度，我们将为你创建个性化的面试体验
+        </Paragraph>
 
-      <Card style={{ maxWidth: "600px", margin: "0 auto", marginTop: "32px" }}>
-        <Spin spinning={loading}>
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            initialValues={{ difficulty: "中级" }}
-          >
-            <Form.Item
-              label="选择职位类型"
-              name="positionType"
-              rules={[{ required: true, message: "请选择职位类型" }]}
+        <Card
+          style={{ maxWidth: "600px", margin: "0 auto", marginTop: "32px" }}
+        >
+          <Spin spinning={loading}>
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+              initialValues={{ difficulty: "中级" }}
             >
-              <Select placeholder="选择你要模拟的职位">
-                {positionTypes.map((pos) => (
-                  <Option key={pos.value} value={pos.label}>
-                    {pos.label}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+              <Form.Item
+                label="选择职位类型"
+                name="positionType"
+                rules={[{ required: true, message: "请选择职位类型" }]}
+              >
+                <Select placeholder="选择你要模拟的职位">
+                  {positionTypes.map((pos) => (
+                    <Option key={pos.value} value={pos.label}>
+                      {pos.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
 
-            <Form.Item
-              label="选择面试难度"
-              name="difficulty"
-              rules={[{ required: true, message: "请选择面试难度" }]}
-            >
-              <Radio.Group>
-                <Radio.Button value="初级">初级</Radio.Button>
-                <Radio.Button value="中级">中级</Radio.Button>
-                <Radio.Button value="高级">高级</Radio.Button>
-              </Radio.Group>
-            </Form.Item>
+              <Form.Item
+                label="选择面试难度"
+                name="difficulty"
+                rules={[{ required: true, message: "请选择面试难度" }]}
+              >
+                <Radio.Group>
+                  <Radio.Button value="初级">初级</Radio.Button>
+                  <Radio.Button value="中级">中级</Radio.Button>
+                  <Radio.Button value="高级">高级</Radio.Button>
+                </Radio.Group>
+              </Form.Item>
 
-            <Form.Item>
-              <Button type="primary" htmlType="submit" block>
-                开始面试
-              </Button>
-            </Form.Item>
-          </Form>
-        </Spin>
-      </Card>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" block>
+                  开始面试
+                </Button>
+              </Form.Item>
+            </Form>
+          </Spin>
+        </Card>
 
-      <Card
-        style={{
-          maxWidth: "600px",
-          margin: "32px auto",
-          backgroundColor: "#f6f8fa",
-        }}
-      >
-        <Title level={4}>准备建议</Title>
-        <Paragraph>1. 确保你的摄像头和麦克风正常工作</Paragraph>
-        <Paragraph>2. 选择安静、光线充足的环境</Paragraph>
-        <Paragraph>3. 穿着得体，保持专业形象</Paragraph>
-        <Paragraph>4. 准备好纸笔，可能需要记录一些信息</Paragraph>
-      </Card>
-    </div>
+        <Card
+          style={{
+            maxWidth: "600px",
+            margin: "32px auto",
+            backgroundColor: "#f6f8fa",
+          }}
+        >
+          <Title level={4}>准备建议</Title>
+          <Paragraph>1. 确保你的摄像头和麦克风正常工作</Paragraph>
+          <Paragraph>2. 选择安静、光线充足的环境</Paragraph>
+          <Paragraph>3. 穿着得体，保持专业形象</Paragraph>
+          <Paragraph>4. 准备好纸笔，可能需要记录一些信息</Paragraph>
+        </Card>
+      </div>
+    </AuthGuard>
   );
 }

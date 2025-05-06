@@ -1,23 +1,33 @@
 "use client";
 
 import pkg from "@/../package.json";
+import { authAPI } from "@/services/api";
 import {
   ApartmentOutlined,
   DashboardOutlined,
   HomeOutlined,
+  LoginOutlined,
+  LogoutOutlined,
   SettingOutlined,
+  UserAddOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Avatar, Layout, Menu } from "antd";
+import { Avatar, Button, Dropdown, Layout, Menu, message } from "antd";
+import type { ItemType, MenuItemType } from "antd/es/menu/interface";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useState } from "react";
 
 const { Header } = Layout;
 
 const AppHeader = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,6 +41,43 @@ const AppHeader = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // 在组件加载时检查登录状态
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const authenticated = authAPI.isAuthenticated();
+      setIsAuthenticated(authenticated);
+
+      if (authenticated) {
+        setIsAdmin(authAPI.isAdmin());
+
+        // 从localStorage获取用户信息
+        try {
+          const userStr = localStorage.getItem("user");
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            setUserName(user.username || "用户");
+          }
+        } catch (e) {
+          console.error("获取用户信息失败:", e);
+        }
+      }
+    };
+
+    checkAuthStatus();
+  }, [pathname]); // 当路径变化时重新检查
+
+  // 处理用户登出
+  const handleLogout = () => {
+    authAPI.logout();
+    setIsAuthenticated(false);
+    setIsAdmin(false);
+    setUserName("");
+    messageApi.success("已成功退出登录");
+
+    // 重定向到首页
+    router.push("/");
+  };
 
   // 根据页面滚动状态动态设置Header样式
   const headerStyle = {
@@ -59,33 +106,60 @@ const AppHeader = () => {
     fontWeight: "bold",
   };
 
-  const menuItems = [
+  // 根据用户登录状态决定显示的菜单项
+  const getMenuItems = useCallback(() => {
+    const baseItems: ItemType<MenuItemType>[] = [
+      {
+        key: "/",
+        icon: <HomeOutlined />,
+        label: <Link href="/">首页</Link>,
+      },
+      {
+        key: "/setup",
+        icon: <SettingOutlined />,
+        label: <Link href="/setup">开始面试</Link>,
+      },
+    ];
+
+    // 只有管理员才能看到管理后台菜单
+    if (isAdmin) {
+      baseItems.push({
+        key: "admin",
+        icon: <DashboardOutlined />,
+        label: "管理后台",
+        children: [
+          {
+            key: "/admin",
+            icon: <UserOutlined />,
+            label: <Link href="/admin">面试会话管理</Link>,
+          },
+          {
+            key: "/admin/position-types",
+            icon: <ApartmentOutlined />,
+            label: <Link href="/admin/position-types">职位类型管理</Link>,
+          },
+        ],
+      });
+    }
+
+    return baseItems;
+  }, [isAdmin]);
+
+  const menuItems = getMenuItems();
+
+  // 用户下拉菜单选项
+  const userMenuItems = [
     {
-      key: "/",
-      icon: <HomeOutlined />,
-      label: <Link href="/">首页</Link>,
+      key: "profile",
+      icon: <UserOutlined />,
+      label: "个人资料",
+      onClick: () => router.push("/profile"),
     },
     {
-      key: "/setup",
-      icon: <SettingOutlined />,
-      label: <Link href="/setup">开始面试</Link>,
-    },
-    {
-      key: "admin",
-      icon: <DashboardOutlined />,
-      label: "管理后台",
-      children: [
-        {
-          key: "/admin",
-          icon: <UserOutlined />,
-          label: <Link href="/admin">面试会话管理</Link>,
-        },
-        {
-          key: "/admin/position-types",
-          icon: <ApartmentOutlined />,
-          label: <Link href="/admin/position-types">职位类型管理</Link>,
-        },
-      ],
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "退出登录",
+      onClick: handleLogout,
     },
   ];
 
@@ -94,6 +168,7 @@ const AppHeader = () => {
       className={`site-header ${scrolled ? "scrolled" : ""}`}
       style={headerStyle}
     >
+      {contextHolder}
       <div className="logo" style={logoStyle}>
         <Link href="/">
           <Avatar
@@ -126,6 +201,39 @@ const AppHeader = () => {
           }}
           items={menuItems}
         />
+
+        {/* 用户认证相关组件 */}
+        <div style={{ marginLeft: 16 }}>
+          {isAuthenticated ? (
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Button
+                type="text"
+                icon={<UserOutlined />}
+                style={{ color: "white" }}
+              >
+                {userName}
+              </Button>
+            </Dropdown>
+          ) : (
+            <div style={{ display: "flex", gap: "8px" }}>
+              <Button
+                type="text"
+                icon={<LoginOutlined />}
+                style={{ color: "white" }}
+                onClick={() => router.push("/login")}
+              >
+                登录
+              </Button>
+              <Button
+                type="primary"
+                icon={<UserAddOutlined />}
+                onClick={() => router.push("/register")}
+              >
+                注册
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </Header>
   );

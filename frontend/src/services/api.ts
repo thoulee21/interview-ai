@@ -16,6 +16,78 @@ const apiClient = axios.create({
   },
 });
 
+// 添加请求拦截器，自动添加认证令牌
+apiClient.interceptors.request.use((config) => {
+  // 从localStorage获取认证令牌
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("auth_token");
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
+// 认证相关API
+const authAPI = {
+  // 用户登录
+  login: (data: { username: string; password: string }) => {
+    return apiClient.post("/auth/login", data);
+  },
+
+  // 用户注册
+  register: (data: { username: string; password: string; email?: string }) => {
+    return apiClient.post("/auth/register", data);
+  },
+
+  // 获取用户资料
+  getUserProfile: () => {
+    return apiClient.get("/auth/profile");
+  },
+
+  // 修改密码
+  changePassword: (data: { old_password: string; new_password: string }) => {
+    return apiClient.post("/auth/change-password", data);
+  },
+
+  // 获取用户列表（管理员功能）
+  getAllUsers: () => {
+    return apiClient.get("/auth/users");
+  },
+
+  // 检查是否为管理员
+  isAdmin: () => {
+    if (typeof window !== "undefined") {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          return user.is_admin === true;
+        } catch {
+          return false;
+        }
+      }
+    }
+    return false;
+  },
+
+  // 检查用户是否已登录
+  isAuthenticated: () => {
+    if (typeof window !== "undefined") {
+      return !!localStorage.getItem("auth_token");
+    }
+    return false;
+  },
+
+  // 用户登出
+  logout: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user");
+    }
+  },
+};
+
 // 面试相关API
 const interviewAPI = {
   // 开始新的面试会话
@@ -134,4 +206,5 @@ const interviewAPI = {
   },
 };
 
+export { apiClient, authAPI, interviewAPI };
 export default interviewAPI;
