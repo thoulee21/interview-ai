@@ -35,22 +35,25 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     // 检查是否是账户已被停用的错误
-    if (error.response && error.response.status === 403 && 
-        error.response.data && error.response.data.status === "inactive") {
-      
+    if (
+      error.response &&
+      error.response.status === 403 &&
+      error.response.data &&
+      error.response.data.status === "inactive"
+    ) {
       // 用户账户被停用，强制登出
       if (typeof window !== "undefined") {
         // 清除认证信息
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user");
-        
+
         // 显示通知并重定向
         alert("您的账户已被停用，请联系管理员。");
         window.location.href = "/login";
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // 认证相关API
@@ -200,8 +203,8 @@ const interviewAPI = {
 
   // 管理后台API
   // 获取所有面试会话
-  getAllSessions: () => {
-    return apiClient.get("/admin/sessions");
+  getAllSessions: (params?: { userId?: number }) => {
+    return apiClient.get("/admin/sessions", { params });
   },
 
   // 获取单个面试会话详情

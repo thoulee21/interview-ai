@@ -25,7 +25,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export const runtime = 'edge';
+export const runtime = "edge";
 
 const { Title } = Typography;
 const { Option } = Select;

@@ -2,12 +2,13 @@
 
 import AuthGuard from "@/components/AuthGuard";
 import { interviewAPI } from "@/services/api";
-import type { SessionType } from "@/types";
+import type { SessionType, UserProfile } from "@/types";
 import {
   DeleteOutlined,
   EyeOutlined,
   FileTextOutlined,
   SearchOutlined,
+  TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import {
@@ -26,31 +27,35 @@ import {
 } from "antd";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 export default function AdminPage() {
   const [sessions, setSessions] = useState<SessionType[]>([]);
+  const [users, setUsers] = useState<{ id: number; username: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [positionFilter, setPositionFilter] = useState("all");
+  const [userFilter, setUserFilter] = useState<number | undefined>(undefined);
   const [sortField, setSortField] = useState<string>("startTime");
   const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | undefined>(
     "descend",
   );
   const router = useRouter();
 
-  useEffect(() => {
-    fetchSessions();
-  }, []);
-
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await interviewAPI.getAllSessions();
+      // 添加用户筛选条件
+      const params: { userId?: number } = {};
+      if (userFilter) {
+        params.userId = userFilter;
+      }
+
+      const response = await interviewAPI.getAllSessions(params);
       setSessions(response.data.sessions);
     } catch (error) {
       console.error("获取面试会话列表失败:", error);
@@ -58,7 +63,33 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
+  }, [userFilter]);
+
+  useEffect(() => {
+    fetchSessions();
+    fetchUsers();
+  }, [fetchSessions]);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await interviewAPI.getAllUsers();
+      if (response.data && response.data.users) {
+        setUsers(
+          response.data.users.map((user: UserProfile) => ({
+            id: user.id,
+            username: user.username,
+          })),
+        );
+      }
+    } catch (error) {
+      console.error("获取用户列表失败:", error);
+    }
   };
+
+  // 当用户筛选更改时更新会话列表
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions, userFilter]);
 
   const handleDelete = async (sessionId: string) => {
     try {
@@ -92,7 +123,9 @@ export default function AdminPage() {
           session.sessionId.toLowerCase().includes(searchText.toLowerCase()) ||
           session.positionType
             .toLowerCase()
-            .includes(searchText.toLowerCase())),
+            .includes(searchText.toLowerCase()) ||
+          (session.username &&
+            session.username.toLowerCase().includes(searchText.toLowerCase()))),
     )
     .sort((a, b) => {
       if (!sortOrder) return 0;
@@ -103,6 +136,8 @@ export default function AdminPage() {
           return direction * a.sessionId.localeCompare(b.sessionId);
         case "positionType":
           return direction * a.positionType.localeCompare(b.positionType);
+        case "username":
+          return direction * (a.username || "").localeCompare(b.username || "");
         case "difficulty":
           // 自定义难度级别排序
           const difficultyOrder = { 初级: 1, 中级: 2, 高级: 3 };
@@ -158,6 +193,18 @@ export default function AdminPage() {
       ),
       sorter: true,
       sortOrder: sortField === "sessionId" ? sortOrder : undefined,
+    },
+    {
+      title: "用户",
+      dataIndex: "username",
+      key: "username",
+      render: (text: string) => (
+        <Tag icon={<TeamOutlined />} color="purple">
+          {text || "未知用户"}
+        </Tag>
+      ),
+      sorter: true,
+      sortOrder: sortField === "username" ? sortOrder : undefined,
     },
     {
       title: "职位类型",
@@ -302,7 +349,7 @@ export default function AdminPage() {
           >
             <Space wrap>
               <Input
-                placeholder="搜索会话ID或职位"
+                placeholder="搜索会话ID、职位或用户"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 prefix={<SearchOutlined />}
@@ -329,6 +376,19 @@ export default function AdminPage() {
                 {positionTypes.map((type) => (
                   <Option key={type} value={type}>
                     {type}
+                  </Option>
+                ))}
+              </Select>
+              <Select
+                value={userFilter}
+                onChange={(value) => setUserFilter(value)}
+                style={{ width: 150 }}
+                placeholder="用户筛选"
+                allowClear
+              >
+                {users.map((user) => (
+                  <Option key={user.id} value={user.id}>
+                    {user.username}
                   </Option>
                 ))}
               </Select>

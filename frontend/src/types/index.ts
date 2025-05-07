@@ -7,6 +7,8 @@ export type SessionType = {
   questionCount: number;
   answeredCount: number;
   duration?: number | null;
+  userId?: number;
+  username?: string;
 };
 
 // 定义用户信息类型
