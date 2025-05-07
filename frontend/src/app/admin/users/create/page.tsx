@@ -60,7 +60,7 @@ export default function CreateUserPage() {
             </p>
             {response.data.password && (
               <>
-                <p>系统生成的初始密码为：</p>
+                <p>初始密码为：</p>
                 <p
                   style={{
                     background: "#f5f5f5",
