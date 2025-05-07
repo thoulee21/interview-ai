@@ -29,12 +29,14 @@
 ### 开发环境
 
 1. 克隆仓库
+
 ```bash
 git clone <仓库地址>
 cd interview-ai/frontend
 ```
 
 2. 安装依赖
+
 ```bash
 npm install
 # 或
@@ -44,6 +46,7 @@ pnpm install
 ```
 
 3. 运行开发服务器
+
 ```bash
 npm run dev
 # 或
