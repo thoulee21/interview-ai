@@ -45,6 +45,11 @@ const authAPI = {
     return apiClient.get("/auth/profile");
   },
 
+  // 更新用户资料
+  updateProfile: (data: { email?: string }) => {
+    return apiClient.put("/auth/update-profile", data);
+  },
+
   // 修改密码
   changePassword: (data: { old_password: string; new_password: string }) => {
     return apiClient.post("/auth/change-password", data);
@@ -85,6 +90,11 @@ const authAPI = {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user");
     }
+  },
+
+  // 获取用户面试会话列表
+  getUserSessions: () => {
+    return apiClient.get("/auth/my-sessions");
   },
 };
 
