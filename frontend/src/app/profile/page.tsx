@@ -2,14 +2,15 @@
 
 import AuthGuard from "@/components/AuthGuard";
 import { authAPI } from "@/services/api";
+import type { InterviewSession, UserProfile } from "@/types";
 import {
-  UserOutlined,
-  MailOutlined,
-  LockOutlined,
-  EditOutlined,
-  SaveOutlined,
   ClockCircleOutlined,
+  EditOutlined,
   FileTextOutlined,
+  LockOutlined,
+  MailOutlined,
+  SaveOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import {
   Avatar,
@@ -35,26 +36,6 @@ import { useEffect, useState } from "react";
 
 const { Title, Text } = Typography;
 
-// 定义用户信息类型
-interface UserProfile {
-  id: number;
-  username: string;
-  email: string;
-  is_admin: boolean;
-  created_at: string;
-  last_login?: string;
-}
-
-// 定义会话类型
-interface InterviewSession {
-  session_id: string;
-  position_type: string;
-  difficulty: string;
-  start_time: string;
-  end_time?: string;
-  status: string;
-}
-
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +44,7 @@ export default function ProfilePage() {
   const [editMode, setEditMode] = useState(false);
   const [changePasswordVisible, setChangePasswordVisible] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
-  
+
   // 仅在实际需要时才使用表单实例
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
@@ -86,7 +67,7 @@ export default function ProfilePage() {
 
     fetchUserProfile();
   }, [messageApi]);
-  
+
   // 切换到编辑模式时设置表单初始值
   useEffect(() => {
     if (editMode && user) {
