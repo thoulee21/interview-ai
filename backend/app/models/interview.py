@@ -56,13 +56,14 @@ class InterviewSession:
         return cursor.fetchone()
 
     @staticmethod
-    def get_all(limit=100, offset=0):
+    def get_all(limit=100, offset=0, user_filter=None):
         """
         获取所有面试会话
 
         Args:
             limit (int, optional): 限制返回数量
             offset (int, optional): 偏移量
+            user_filter (int, optional): 按用户ID筛选
 
         Returns:
             list: 会话列表
@@ -70,7 +71,7 @@ class InterviewSession:
         db = get_db()
         cursor = db.cursor()
 
-        cursor.execute("""
+        query = """
             SELECT 
                 s.session_id, 
                 s.position_type, 
@@ -79,17 +80,37 @@ class InterviewSession:
                 s.end_time, 
                 s.status,
                 COUNT(q.id) as question_count,
-                SUM(CASE WHEN q.answer IS NOT NULL THEN 1 ELSE 0 END) as answered_count
+                SUM(CASE WHEN q.answer IS NOT NULL THEN 1 ELSE 0 END) as answered_count,
+                u.id as user_id,
+                u.username
             FROM 
                 interview_sessions s
             LEFT JOIN 
                 interview_questions q ON s.session_id = q.session_id
+            LEFT JOIN
+                user_sessions us ON s.session_id = us.session_id
+            LEFT JOIN
+                users u ON us.user_id = u.id
+        """
+
+        params = []
+
+        # 添加用户筛选条件
+        if user_filter:
+            query += " WHERE u.id = ? "
+            params.append(user_filter)
+
+        query += """
             GROUP BY 
                 s.session_id
             ORDER BY 
                 s.start_time DESC
             LIMIT ? OFFSET ?
-        """, (limit, offset))
+        """
+
+        params.extend([limit, offset])
+
+        cursor.execute(query, params)
 
         sessions = []
         for row in cursor.fetchall():
@@ -101,7 +122,8 @@ class InterviewSession:
 
             duration = None
             if start_time and end_time:
-                duration = (end_time - start_time).total_seconds() / 60  # 转换为分钟
+                duration = (
+                    end_time - start_time).total_seconds() / 60  # 转换为分钟
 
             sessions.append({
                 'sessionId': row['session_id'],
@@ -112,9 +134,11 @@ class InterviewSession:
                 'status': row['status'],
                 'questionCount': row['question_count'],
                 'answeredCount': row['answered_count'],
-                'duration': round(duration, 1) if duration else None
+                'duration': round(duration, 1) if duration else None,
+                'userId': row['user_id'],
+                'username': row['username']
             })
-        
+
         return sessions
 
     @staticmethod
@@ -239,7 +263,7 @@ class InterviewQuestion:
             "SELECT * FROM interview_questions WHERE session_id = ? ORDER BY question_index",
             (session_id,)
         )
-        
+
         questions = []
         for q in cursor.fetchall():
             questions.append({
@@ -250,7 +274,7 @@ class InterviewQuestion:
                 'questionIndex': q['question_index'],
                 'createdAt': q['created_at']
             })
-        
+
         return questions
 
     @staticmethod
@@ -388,7 +412,7 @@ class MultimodalAnalysis:
                 'audioAnalysis': json.loads(a['audio_analysis']) if a['audio_analysis'] else None,
                 'createdAt': a['created_at']
             })
-        
+
         return analyses
 
     @staticmethod
@@ -454,7 +478,7 @@ class FinalEvaluation:
     """最终评估模型"""
 
     @staticmethod
-    def create(session_id, overall_score, content_score, delivery_score, nonverbal_score, 
+    def create(session_id, overall_score, content_score, delivery_score, nonverbal_score,
                strengths, improvements, recommendations):
         """
         创建最终评估

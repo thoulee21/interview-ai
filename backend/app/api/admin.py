@@ -24,8 +24,10 @@ def get_all_sessions():
     try:
         limit = request.args.get('limit', default=100, type=int)
         offset = request.args.get('offset', default=0, type=int)
+        user_id = request.args.get('userId', default=None, type=int)
 
-        sessions = InterviewSession.get_all(limit=limit, offset=offset)
+        sessions = InterviewSession.get_all(
+            limit=limit, offset=offset, user_filter=user_id)
         return jsonify({
             "sessions": sessions,
             "total": len(sessions),
