@@ -1,6 +1,6 @@
 [project]
 name = "interview-backend"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = [
     {name = "thoulee",email = "thou_lee@outlook.com"}
@@ -23,6 +23,7 @@ dependencies = [
     "websocket-client (>=1.8.0,<2.0.0)",
     "jsonschema (>=4.23.0,<5.0.0)",
     "pyjwt (>=2.10.1,<3.0.0)",
+    "tomli (>=2.2.1,<3.0.0)",
 ]
 
 [tool.poetry]
