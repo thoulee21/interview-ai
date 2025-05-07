@@ -14,11 +14,14 @@ api_bp = Blueprint('api', __name__, url_prefix='/')
 api_bp.add_url_rule('/health', view_func=health.health_check)
 
 # 注册用户认证相关路由
-api_bp.add_url_rule('/auth/register', view_func=auth.register, methods=['POST'])
+api_bp.add_url_rule(
+    '/auth/register', view_func=auth.register, methods=['POST'])
 api_bp.add_url_rule('/auth/login', view_func=auth.login, methods=['POST'])
 api_bp.add_url_rule('/auth/profile', view_func=auth.user_profile)
-api_bp.add_url_rule('/auth/update-profile', view_func=auth.update_profile, methods=['PUT'])
-api_bp.add_url_rule('/auth/change-password', view_func=auth.change_password, methods=['POST'])
+api_bp.add_url_rule('/auth/update-profile',
+                    view_func=auth.update_profile, methods=['PUT'])
+api_bp.add_url_rule('/auth/change-password',
+                    view_func=auth.change_password, methods=['POST'])
 api_bp.add_url_rule('/auth/users', view_func=auth.admin_user_list)
 api_bp.add_url_rule('/auth/my-sessions', view_func=auth.get_user_sessions)
 
@@ -39,12 +42,14 @@ api_bp.add_url_rule('/evaluate_audio',
 # 注册职位类型相关路由
 api_bp.add_url_rule('/position_types', view_func=position.get_position_types)
 
-# 注册管理员相关路由
+# 注册管理员相关路由 - 会话管理
 api_bp.add_url_rule('/admin/sessions', view_func=admin.get_all_sessions)
 api_bp.add_url_rule('/admin/sessions/<session_id>',
                     view_func=admin.get_session_details)
 api_bp.add_url_rule('/admin/sessions/<session_id>',
                     view_func=admin.delete_session, methods=['DELETE'])
+
+# 注册管理员相关路由 - 职位类型管理
 api_bp.add_url_rule('/admin/position_types',
                     view_func=admin.get_admin_position_types)
 api_bp.add_url_rule('/admin/position_types',
@@ -55,3 +60,16 @@ api_bp.add_url_rule('/admin/position_types/<int:position_id>',
                     view_func=admin.update_position_type, methods=['PUT'])
 api_bp.add_url_rule('/admin/position_types/<int:position_id>',
                     view_func=admin.delete_position_type, methods=['DELETE'])
+
+# 注册管理员相关路由 - 用户管理
+api_bp.add_url_rule('/admin/users', view_func=admin.get_all_users)
+api_bp.add_url_rule(
+    '/admin/users', view_func=admin.create_user, methods=['POST'])
+api_bp.add_url_rule('/admin/users/<int:user_id>',
+                    view_func=admin.get_user_detail)
+api_bp.add_url_rule('/admin/users/<int:user_id>',
+                    view_func=admin.update_user, methods=['PUT'])
+api_bp.add_url_rule('/admin/users/<int:user_id>',
+                    view_func=admin.delete_user, methods=['DELETE'])
+api_bp.add_url_rule('/admin/users/<int:user_id>/reset-password',
+                    view_func=admin.reset_user_password, methods=['POST'])

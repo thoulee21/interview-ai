@@ -4,6 +4,7 @@
 """
 
 import sqlite3
+
 from flask import current_app, g
 
 
@@ -92,6 +93,7 @@ def init_db():
         password_hash TEXT NOT NULL,
         email TEXT UNIQUE,
         is_admin INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_login TIMESTAMP,
         UNIQUE(username)

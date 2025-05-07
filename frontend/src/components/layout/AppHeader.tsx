@@ -9,6 +9,7 @@ import {
   LoginOutlined,
   LogoutOutlined,
   SettingOutlined,
+  TeamOutlined,
   UserAddOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -137,6 +138,11 @@ const AppHeader = () => {
             key: "/admin/position-types",
             icon: <ApartmentOutlined />,
             label: <Link href="/admin/position-types">职位类型管理</Link>,
+          },
+          {
+            key: "/admin/users",
+            icon: <TeamOutlined />,
+            label: <Link href="/admin/users">用户管理</Link>,
           },
         ],
       });

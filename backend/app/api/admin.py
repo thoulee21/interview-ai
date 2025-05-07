@@ -4,17 +4,20 @@
 """
 
 import logging
+import secrets
 
 from app.api.auth import admin_required
 from app.models.interview import (InterviewQuestion, InterviewSession,
                                   MultimodalAnalysis)
 from app.models.position import PositionType
+from app.models.user import User
 from flask import jsonify, request
 
 # 配置日志
 logger = logging.getLogger(__name__)
 
 
+# 会话管理相关API
 @admin_required
 def get_all_sessions():
     """获取所有面试会话"""
@@ -90,6 +93,7 @@ def delete_session(session_id):
         return jsonify({"error": f"删除会话失败: {str(e)}"}), 500
 
 
+# 职位类型管理相关API
 @admin_required
 def get_admin_position_types():
     """获取所有职位类型（管理员版，包含更多详情）"""
@@ -209,3 +213,149 @@ def delete_position_type(position_id):
     except Exception as e:
         logger.exception(f"删除职位类型失败: {str(e)}")
         return jsonify({"error": f"删除职位类型失败: {str(e)}"}), 500
+
+
+# 用户管理相关API
+@admin_required
+def get_all_users():
+    """获取所有用户列表"""
+    try:
+        users = User.get_all_users()
+        return jsonify({"users": users})
+    except Exception as e:
+        logger.exception(f"获取用户列表失败: {str(e)}")
+        return jsonify({"error": f"获取用户列表失败: {str(e)}"}), 500
+
+
+@admin_required
+def get_user_detail(user_id):
+    """获取用户详情"""
+    try:
+        user = User.get_by_id(user_id)
+        if not user:
+            return jsonify({"error": "用户不存在"}), 404
+        return jsonify(user)
+    except Exception as e:
+        logger.exception(f"获取用户详情失败: {str(e)}")
+        return jsonify({"error": f"获取用户详情失败: {str(e)}"}), 500
+
+
+@admin_required
+def update_user(user_id):
+    """更新用户信息"""
+    try:
+        # 检查用户是否存在
+        user = User.get_by_id(user_id)
+        if not user:
+            return jsonify({"error": "用户不存在"}), 404
+
+        # 获取要更新的数据
+        data = request.json
+        email = data.get('email')
+        is_admin = data.get('is_admin')
+        status = data.get('status')
+
+        # 更新用户信息
+        update_data = {}
+        if email is not None:
+            update_data['email'] = email
+        if is_admin is not None:
+            update_data['is_admin'] = bool(is_admin)
+        if status is not None:
+            update_data['status'] = status
+
+        success = User.update_user(user_id, update_data)
+
+        if success:
+            # 获取更新后的用户信息
+            updated_user = User.get_by_id(user_id)
+            return jsonify({"message": "用户信息更新成功", "user": updated_user})
+        else:
+            return jsonify({"error": "更新用户信息失败"}), 500
+    except Exception as e:
+        logger.exception(f"更新用户信息失败: {str(e)}")
+        return jsonify({"error": f"更新用户信息失败: {str(e)}"}), 500
+
+
+@admin_required
+def delete_user(user_id):
+    """删除用户"""
+    try:
+        # 确保不能删除自己
+        if str(request.user.get('user_id')) == str(user_id):
+            return jsonify({"error": "不能删除当前登录的用户"}), 400
+
+        # 执行删除操作
+        success = User.delete_user(user_id)
+
+        if success:
+            return jsonify({"message": "用户已成功删除或停用"})
+        else:
+            return jsonify({"error": "删除用户失败"}), 500
+    except Exception as e:
+        logger.exception(f"删除用户失败: {str(e)}")
+        return jsonify({"error": f"删除用户失败: {str(e)}"}), 500
+
+
+@admin_required
+def reset_user_password(user_id):
+    """重置用户密码"""
+    try:
+        # 检查用户是否存在
+        user = User.get_by_id(user_id)
+        if not user:
+            return jsonify({"error": "用户不存在"}), 404
+
+        # 生成随机密码
+        new_password = ''.join(secrets.choice(
+            'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for _ in range(10))
+
+        # 更新密码
+        success = User.reset_password(user_id, new_password)
+
+        if success:
+            return jsonify({
+                "message": "密码已重置",
+                "username": user["username"],
+                "new_password": new_password  # 在实际生产环境中应使用邮件发送而不是直接返回
+            })
+        else:
+            return jsonify({"error": "重置密码失败"}), 500
+    except Exception as e:
+        logger.exception(f"重置密码失败: {str(e)}")
+        return jsonify({"error": f"重置密码失败: {str(e)}"}), 500
+
+
+@admin_required
+def create_user():
+    """创建新用户"""
+    try:
+        data = request.json
+        username = data.get('username')
+        password = data.get('password') or ''.join(secrets.choice(
+            'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for _ in range(10))
+        email = data.get('email')
+        is_admin = data.get('is_admin', False)
+
+        # 验证必要字段
+        if not username:
+            return jsonify({"error": "用户名不能为空"}), 400
+
+        # 创建新用户
+        user_id = User.create(username, password, email,
+                              is_admin=1 if is_admin else 0)
+
+        if not user_id:
+            return jsonify({"error": "用户名已存在"}), 409
+
+        # 获取创建的用户
+        new_user = User.get_by_id(user_id)
+
+        return jsonify({
+            "message": "用户创建成功",
+            "user": new_user,
+            "password": password  # 在实际生产环境中应使用邮件发送而不是直接返回
+        }), 201
+    except Exception as e:
+        logger.exception(f"创建用户失败: {str(e)}")
+        return jsonify({"error": f"创建用户失败: {str(e)}"}), 500

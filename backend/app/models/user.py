@@ -3,7 +3,6 @@
 """
 
 import hashlib
-import time
 from datetime import datetime
 
 from app.utils.db import get_db
@@ -71,7 +70,8 @@ class User:
             "email": user["email"],
             "is_admin": bool(user["is_admin"]),
             "created_at": user["created_at"],
-            "last_login": user["last_login"]
+            "last_login": user["last_login"],
+            "status": user["status"]
         }
 
     @staticmethod
@@ -112,6 +112,10 @@ class User:
         if not user:
             return None
 
+        # 检查用户状态
+        if user.get("status") == "inactive":
+            return None
+
         # 验证密码
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         if user["password_hash"] != password_hash:
@@ -131,6 +135,7 @@ class User:
             "username": user["username"],
             "email": user["email"],
             "is_admin": bool(user["is_admin"]),
+            "status": user["status"],
             "created_at": user["created_at"],
             "last_login": datetime.now()
         }
@@ -281,7 +286,7 @@ class User:
         cursor = db.cursor()
 
         cursor.execute(
-            "SELECT id, username, email, is_admin, created_at, last_login FROM users")
+            "SELECT id, username, email, is_admin, status, created_at, last_login FROM users")
 
         users = []
         for row in cursor.fetchall():
@@ -290,8 +295,100 @@ class User:
                 "username": row["username"],
                 "email": row["email"],
                 "is_admin": bool(row["is_admin"]),
+                "status": row["status"],
                 "created_at": row["created_at"],
                 "last_login": row["last_login"]
             })
 
         return users
+
+    @staticmethod
+    def update_user(user_id, data):
+        """
+        更新用户信息（管理员功能）
+
+        Args:
+            user_id (int): 用户ID
+            data (dict): 要更新的字段，可包含 email, is_admin, status
+
+        Returns:
+            bool: 更新是否成功
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        # 构建更新SQL
+        update_fields = []
+        params = []
+
+        if 'email' in data and data['email'] is not None:
+            update_fields.append("email = ?")
+            params.append(data['email'])
+
+        if 'is_admin' in data and data['is_admin'] is not None:
+            update_fields.append("is_admin = ?")
+            params.append(1 if data['is_admin'] else 0)
+
+        if 'status' in data and data['status'] is not None:
+            update_fields.append("status = ?")
+            params.append(data['status'])
+
+        # 如果没有要更新的字段，直接返回成功
+        if not update_fields:
+            return True
+
+        # 添加用户ID参数
+        params.append(user_id)
+
+        # 执行更新
+        cursor.execute(
+            f"UPDATE users SET {', '.join(update_fields)} WHERE id = ?",
+            params
+        )
+        db.commit()
+        return cursor.rowcount > 0
+
+    @staticmethod
+    def delete_user(user_id):
+        """
+        删除用户（管理员功能）
+
+        Args:
+            user_id (int): 要删除的用户ID
+
+        Returns:
+            bool: 删除是否成功
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        # 先检查是否有关联的会话
+        cursor.execute(
+            "SELECT COUNT(*) FROM user_sessions WHERE user_id = ?", (user_id,))
+        session_count = cursor.fetchone()[0]
+
+        if session_count > 0:
+            # 如果有关联会话，改为停用账户而不是删除
+            cursor.execute(
+                "UPDATE users SET status = 'inactive' WHERE id = ?", (user_id,))
+            db.commit()
+            return True
+        else:
+            # 如果没有关联会话，可以直接删除
+            cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+            db.commit()
+            return cursor.rowcount > 0
+
+    @staticmethod
+    def reset_password(user_id, new_password):
+        """
+        重置用户密码（管理员功能）
+
+        Args:
+            user_id (int): 用户ID
+            new_password (str): 新密码（明文）
+
+        Returns:
+            bool: 重置是否成功
+        """
+        return User.update_password(user_id, new_password)

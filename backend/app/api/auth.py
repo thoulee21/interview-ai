@@ -120,25 +120,27 @@ def update_profile():
 
     try:
         # 提取令牌
-        token = auth_header.split(" ")[1] if " " in auth_header else auth_header
+        token = auth_header.split(
+            " ")[1] if " " in auth_header else auth_header
 
         # 验证令牌
-        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        payload = jwt.decode(
+            token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
         user_id = payload.get('user_id')
 
         # 获取请求数据
         data = request.json
         email = data.get('email')
-        
+
         # 更新用户资料
         success = User.update_profile(user_id, email)
-        
+
         if not success:
             return jsonify({"error": "更新用户资料失败"}), 500
-            
+
         # 获取更新后的用户信息
         user = User.get_by_id(user_id)
-        
+
         return jsonify({
             "message": "用户资料更新成功",
             "user": {
@@ -240,16 +242,18 @@ def get_user_sessions():
 
     try:
         # 提取令牌
-        token = auth_header.split(" ")[1] if " " in auth_header else auth_header
+        token = auth_header.split(
+            " ")[1] if " " in auth_header else auth_header
 
         # 验证令牌
-        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        payload = jwt.decode(
+            token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
         user_id = payload.get('user_id')
         is_admin = payload.get('is_admin')
 
         # 获取用户会话列表
         sessions = User.get_user_sessions(user_id)
-        
+
         return jsonify({"sessions": sessions})
     except jwt.ExpiredSignatureError:
         return jsonify({"error": "令牌已过期"}), 401
@@ -273,6 +277,15 @@ def token_required(f):
             # 验证令牌
             payload = jwt.decode(
                 token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload.get('user_id')
+
+            # 检查用户状态
+            user = User.get_by_id(user_id)
+            if not user:
+                return jsonify({"error": "用户不存在"}), 401
+
+            if user.get("status") == "inactive":
+                return jsonify({"error": "账户已被停用", "status": "inactive"}), 403
 
             # 设置当前用户信息
             request.user = {

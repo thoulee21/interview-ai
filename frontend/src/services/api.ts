@@ -28,6 +28,31 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// 添加响应拦截器，处理身份验证和账户状态问题
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // 检查是否是账户已被停用的错误
+    if (error.response && error.response.status === 403 && 
+        error.response.data && error.response.data.status === "inactive") {
+      
+      // 用户账户被停用，强制登出
+      if (typeof window !== "undefined") {
+        // 清除认证信息
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user");
+        
+        // 显示通知并重定向
+        alert("您的账户已被停用，请联系管理员。");
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // 认证相关API
 const authAPI = {
   // 用户登录
@@ -213,6 +238,45 @@ const interviewAPI = {
   // 删除职位类型
   deletePositionType: (id: string) => {
     return apiClient.delete(`/admin/position_types/${id}`);
+  },
+
+  // 用户管理接口
+  // 获取所有用户
+  getAllUsers: () => {
+    return apiClient.get("/admin/users");
+  },
+
+  // 获取单个用户详情
+  getUserDetail: (id: string) => {
+    return apiClient.get(`/admin/users/${id}`);
+  },
+
+  // 创建新用户
+  createUser: (data: {
+    username: string;
+    password?: string;
+    email?: string;
+    is_admin?: boolean;
+  }) => {
+    return apiClient.post("/admin/users", data);
+  },
+
+  // 更新用户
+  updateUser: (
+    id: string,
+    data: { email?: string; is_admin?: boolean; status?: string },
+  ) => {
+    return apiClient.put(`/admin/users/${id}`, data);
+  },
+
+  // 删除用户
+  deleteUser: (id: string) => {
+    return apiClient.delete(`/admin/users/${id}`);
+  },
+
+  // 重置用户密码
+  resetUserPassword: (id: string) => {
+    return apiClient.post(`/admin/users/${id}/reset-password`);
   },
 };
 
