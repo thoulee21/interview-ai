@@ -23,7 +23,7 @@ import {
 } from "antd";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export const runtime = "edge";
 
@@ -43,7 +43,6 @@ export default function UserDetailPage() {
   const userId = params.id as string;
   const router = useRouter();
   const [form] = Form.useForm();
-  const formRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [messageApi, contextHolder] = message.useMessage();
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -55,15 +54,13 @@ export default function UserDetailPage() {
       const response = await interviewAPI.getUserDetail(userId);
       setUser(response.data);
 
-      if (formRef.current) {
-        // 设置表单初始值
-        form.setFieldsValue({
-          username: response.data.username,
-          email: response.data.email || "",
-          is_admin: response.data.is_admin,
-          status: response.data.status || "active",
-        });
-      }
+      // 设置表单初始值
+      form.setFieldsValue({
+        username: response.data.username,
+        email: response.data.email || "",
+        is_admin: response.data.is_admin,
+        status: response.data.status || "active",
+      });
     } catch (error) {
       console.error("获取用户详情失败:", error);
       messageApi.error("获取用户详情失败，请稍后重试");
@@ -71,7 +68,7 @@ export default function UserDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId, form, router, messageApi, formRef]);
+  }, [userId, form, router, messageApi]);
 
   useEffect(() => {
     fetchUserDetail();
@@ -133,14 +130,6 @@ export default function UserDetailPage() {
     }
   };
 
-  if (loading && !user) {
-    return (
-      <div style={{ textAlign: "center", padding: "50px 0" }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   return (
     <AuthGuard requireAdmin={true}>
       {contextHolder}
@@ -184,60 +173,63 @@ export default function UserDetailPage() {
 
       <Card>
         <Spin spinning={loading}>
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSave}
-            ref={formRef}
-          >
-            <Form.Item
-              name="username"
-              label="用户名"
-              rules={[{ required: true, message: "请输入用户名" }]}
-            >
-              <Input disabled />
-            </Form.Item>
-
-            <Form.Item
-              name="email"
-              label="邮箱"
-              rules={[{ type: "email", message: "请输入有效的邮箱地址" }]}
-            >
-              <Input placeholder="用户邮箱" />
-            </Form.Item>
-
-            <Form.Item
-              name="is_admin"
-              label="管理员权限"
-              valuePropName="checked"
-            >
-              <Switch checkedChildren="是" unCheckedChildren="否" />
-            </Form.Item>
-
-            <Form.Item name="status" label="状态">
-              <Select>
-                <Option value="active">启用</Option>
-                <Option value="inactive">停用</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item>
-              <div style={{ display: "flex", gap: "10px" }}>
-                <Button type="primary" htmlType="submit">
-                  保存
-                </Button>
-                <Button
-                  type="default"
-                  onClick={handleResetPassword}
-                  icon={<KeyOutlined />}
-                >
-                  重置密码
-                </Button>
-                <Button onClick={() => router.push("/admin/users")}>
-                  取消
-                </Button>
+          <Form form={form} layout="vertical" onFinish={handleSave}>
+            {loading && !user ? (
+              <div style={{ textAlign: "center", padding: "50px 0" }}>
+                <Spin size="large" />
               </div>
-            </Form.Item>
+            ) : (
+              <>
+                <Form.Item
+                  name="username"
+                  label="用户名"
+                  rules={[{ required: true, message: "请输入用户名" }]}
+                >
+                  <Input disabled />
+                </Form.Item>
+
+                <Form.Item
+                  name="email"
+                  label="邮箱"
+                  rules={[{ type: "email", message: "请输入有效的邮箱地址" }]}
+                >
+                  <Input placeholder="用户邮箱" />
+                </Form.Item>
+
+                <Form.Item
+                  name="is_admin"
+                  label="管理员权限"
+                  valuePropName="checked"
+                >
+                  <Switch checkedChildren="是" unCheckedChildren="否" />
+                </Form.Item>
+
+                <Form.Item name="status" label="状态">
+                  <Select>
+                    <Option value="active">启用</Option>
+                    <Option value="inactive">停用</Option>
+                  </Select>
+                </Form.Item>
+
+                <Form.Item>
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <Button type="primary" htmlType="submit">
+                      保存
+                    </Button>
+                    <Button
+                      type="default"
+                      onClick={handleResetPassword}
+                      icon={<KeyOutlined />}
+                    >
+                      重置密码
+                    </Button>
+                    <Button onClick={() => router.push("/admin/users")}>
+                      取消
+                    </Button>
+                  </div>
+                </Form.Item>
+              </>
+            )}
           </Form>
         </Spin>
       </Card>
