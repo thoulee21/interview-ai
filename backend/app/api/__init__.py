@@ -17,8 +17,10 @@ api_bp.add_url_rule('/health', view_func=health.health_check)
 api_bp.add_url_rule('/auth/register', view_func=auth.register, methods=['POST'])
 api_bp.add_url_rule('/auth/login', view_func=auth.login, methods=['POST'])
 api_bp.add_url_rule('/auth/profile', view_func=auth.user_profile)
+api_bp.add_url_rule('/auth/update-profile', view_func=auth.update_profile, methods=['PUT'])
 api_bp.add_url_rule('/auth/change-password', view_func=auth.change_password, methods=['POST'])
 api_bp.add_url_rule('/auth/users', view_func=auth.admin_user_list)
+api_bp.add_url_rule('/auth/my-sessions', view_func=auth.get_user_sessions)
 
 # 注册面试相关路由
 api_bp.add_url_rule('/start_interview',

@@ -102,7 +102,52 @@ def user_profile():
             "username": user["username"],
             "email": user["email"],
             "is_admin": user["is_admin"],
-            "created_at": user["created_at"]
+            "created_at": user["created_at"],
+            "last_login": user["last_login"]
+        })
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "令牌已过期"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "无效的令牌"}), 401
+
+
+def update_profile():
+    """更新用户资料"""
+    # 从请求头获取令牌
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "未提供认证令牌"}), 401
+
+    try:
+        # 提取令牌
+        token = auth_header.split(" ")[1] if " " in auth_header else auth_header
+
+        # 验证令牌
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        user_id = payload.get('user_id')
+
+        # 获取请求数据
+        data = request.json
+        email = data.get('email')
+        
+        # 更新用户资料
+        success = User.update_profile(user_id, email)
+        
+        if not success:
+            return jsonify({"error": "更新用户资料失败"}), 500
+            
+        # 获取更新后的用户信息
+        user = User.get_by_id(user_id)
+        
+        return jsonify({
+            "message": "用户资料更新成功",
+            "user": {
+                "id": user["id"],
+                "username": user["username"],
+                "email": user["email"],
+                "is_admin": user["is_admin"],
+                "created_at": user["created_at"]
+            }
         })
     except jwt.ExpiredSignatureError:
         return jsonify({"error": "令牌已过期"}), 401
@@ -180,6 +225,32 @@ def admin_user_list():
         users = User.get_all_users()
 
         return jsonify({"users": users})
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "令牌已过期"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "无效的令牌"}), 401
+
+
+def get_user_sessions():
+    """获取用户的面试会话列表"""
+    # 从请求头获取令牌
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "未提供认证令牌"}), 401
+
+    try:
+        # 提取令牌
+        token = auth_header.split(" ")[1] if " " in auth_header else auth_header
+
+        # 验证令牌
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        user_id = payload.get('user_id')
+        is_admin = payload.get('is_admin')
+
+        # 获取用户会话列表
+        sessions = User.get_user_sessions(user_id)
+        
+        return jsonify({"sessions": sessions})
     except jwt.ExpiredSignatureError:
         return jsonify({"error": "令牌已过期"}), 401
     except jwt.InvalidTokenError:

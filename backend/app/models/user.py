@@ -161,6 +161,44 @@ class User:
         return cursor.rowcount > 0
 
     @staticmethod
+    def update_profile(user_id, email=None):
+        """
+        更新用户资料
+
+        Args:
+            user_id (int): 用户ID
+            email (str, optional): 邮箱
+
+        Returns:
+            bool: 更新是否成功
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        # 构建更新SQL
+        update_fields = []
+        params = []
+
+        if email is not None:
+            update_fields.append("email = ?")
+            params.append(email)
+
+        # 如果没有要更新的字段，直接返回成功
+        if not update_fields:
+            return True
+
+        # 添加用户ID参数
+        params.append(user_id)
+
+        # 执行更新
+        cursor.execute(
+            f"UPDATE users SET {', '.join(update_fields)} WHERE id = ?",
+            params
+        )
+        db.commit()
+        return cursor.rowcount > 0
+
+    @staticmethod
     def associate_session(user_id, session_id):
         """
         关联用户和面试会话
