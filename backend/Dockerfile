@@ -5,7 +5,8 @@ WORKDIR /app
 COPY debian.sources /etc/apt/sources.list.d/debian.sources
 
 # 安装系统依赖（包括OpenCV和NumPy编译需要的依赖）
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0 \
     ffmpeg \
@@ -17,18 +18,12 @@ RUN pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/we
 # 安装 poetry
 RUN pip install poetry
 
-# 复制项目文件
-COPY pyproject.toml poetry.lock* ./
-
-# 配置 poetry 不创建虚拟环境并安装依赖
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-interaction --no-ansi --no-root
-
 # 复制所有项目文件
 COPY . .
 
-# 暴露端口
+RUN poetry install --no-interaction
+
 EXPOSE 5000
 
 # 运行应用
-CMD ["gunicorn", "--workers=4", "--bind=0.0.0.0:5000", "run:app"]
+CMD ["poetry", "run", "gunicorn", "--workers=4", "--bind=0.0.0.0:5000", "run:app"]
