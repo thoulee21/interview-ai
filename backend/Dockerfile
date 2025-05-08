@@ -11,6 +11,8 @@ RUN apt-get install -y \
     libglib2.0-0 \
     ffmpeg \
     build-essential \
+    portaudio19-dev \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 poetry
