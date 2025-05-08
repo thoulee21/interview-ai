@@ -34,10 +34,8 @@ api_bp.add_url_rule('/interview_results/<session_id>',
                     view_func=interview.get_interview_results)
 
 # 注册分析相关路由
-api_bp.add_url_rule('/evaluate_video',
-                    view_func=analysis.evaluate_video, methods=['POST'])
-api_bp.add_url_rule('/evaluate_audio',
-                    view_func=analysis.evaluate_audio, methods=['POST'])
+api_bp.add_url_rule('/multimodal_analysis',
+                    view_func=analysis.multimodal_analysis, methods=['POST'])
 
 # 注册职位类型相关路由
 api_bp.add_url_rule('/position_types', view_func=position.get_position_types)
