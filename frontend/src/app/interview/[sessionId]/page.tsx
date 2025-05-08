@@ -65,6 +65,9 @@ export default function InterviewPage() {
     null,
   );
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingTimer, setRecordingTimer] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
   const webcamRef = useRef<Webcam>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -107,7 +110,7 @@ export default function InterviewPage() {
       const data = response.data;
 
       // 更新视频分析状态
-      const videoData = data.video
+      const videoData = data.video;
       const formattedVideoData = {
         eyeContact: videoData.eyeContact || 0,
         facialExpressions: videoData.facialExpressions || 0,
@@ -206,12 +209,24 @@ export default function InterviewPage() {
 
       try {
         if (webcamRef.current && webcamRef.current.stream) {
-          mediaRecorderRef.current = new MediaRecorder(
-            webcamRef.current.stream,
-            {
-              mimeType: "video/webm",
-            },
-          );
+          // 配置MediaRecorder选项，降低比特率和分辨率以提高稳定性
+          const options = {
+            mimeType: "video/webm;codecs=vp8,opus",
+            videoBitsPerSecond: 600000, // 降低比特率到600kbps
+          };
+
+          try {
+            mediaRecorderRef.current = new MediaRecorder(
+              webcamRef.current.stream,
+              options,
+            );
+          } catch (e) {
+            console.log("使用高级配置失败，使用默认配置:", e);
+            // 如果指定编解码器失败，使用默认配置
+            mediaRecorderRef.current = new MediaRecorder(
+              webcamRef.current.stream,
+            );
+          }
 
           // 清除先前的事件监听器（如果有的话）
           if (mediaRecorderRef.current) {
@@ -229,12 +244,30 @@ export default function InterviewPage() {
 
           // 添加错误处理
           mediaRecorderRef.current.addEventListener("error", (error) => {
-            console.log("MediaRecorder 错误:", error);
+            console.error("MediaRecorder 错误:", error);
+            // 尝试重启录制
+            setTimeout(() => {
+              if (isRecording) {
+                messageApi.info("录制中断，正在尝试恢复...");
+                restartRecording();
+              }
+            }, 1000);
           });
 
-          // 重要：添加timeslice参数（1秒），确保每秒触发一次dataavailable事件
-          mediaRecorderRef.current.start(1000);
-          console.log("MediaRecorder 已启动，每1秒录制一次视频数据");
+          // 使用更短的timeslice参数（500毫秒），确保更频繁地触发dataavailable事件
+          // 这样可以减少单个视频块的大小，降低编码错误的风险
+          mediaRecorderRef.current.start(500);
+          console.log("MediaRecorder 已启动，每500毫秒录制一次视频数据");
+
+          // 设置定时器，每2分钟重置一次录制
+          const timer = setInterval(
+            () => {
+              console.log("执行定期重置录制...");
+              restartRecording();
+            },
+            2 * 60 * 1000,
+          ); // 2分钟
+          setRecordingTimer(timer);
         } else {
           throw new Error("摄像头流不可用");
         }
@@ -243,7 +276,24 @@ export default function InterviewPage() {
         messageApi.error("无法开始录制视频，请检查您的摄像头权限");
       }
     }
-  }, [handleDataAvailable, messageApi]);
+  }, [handleDataAvailable, messageApi, restartRecording, isRecording]);
+
+  // 停止录制
+  const stopRecording = useCallback(() => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+
+    // 清除定时器
+    if (recordingTimer) {
+      clearInterval(recordingTimer);
+      setRecordingTimer(null);
+    }
+  }, [mediaRecorderRef, recordingTimer]);
 
   // 获取初始面试问题
   useEffect(() => {
@@ -309,18 +359,7 @@ export default function InterviewPage() {
     return () => {
       stopRecording();
     };
-  }, [messageApi, router, sessionId, startRecording]);
-
-  // 停止录制
-  const stopRecording = () => {
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
-    ) {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-  };
+  }, [messageApi, router, sessionId, startRecording, stopRecording]);
 
   // 提交答案
   const handleSubmitAnswer = async () => {
