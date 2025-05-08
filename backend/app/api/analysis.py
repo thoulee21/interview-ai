@@ -334,7 +334,7 @@ def extract_and_evaluate_audio(video_path):
 
                 logger.info(f"识别到的文本: {text[:100]}...")
         except Exception as e:
-            logger.warning(f"语音转文本失败, 无法检测填充词: {str(e)}")
+            logger.warning("语音转文本失败, 无法检测填充词: ", e)
 
         # ===== 评分计算 =====
         # 清晰度评分 (1-10)
