@@ -4,6 +4,10 @@ export const runtime = "edge";
 
 import InterviewBreadcrumb from "@/components/InterviewBreadcrumb";
 import interviewAPI from "@/services/api";
+import {
+  extractAudioFromVideo,
+  extractAudioUsingMediaRecorder,
+} from "@/utils/extractAudioFromVideo";
 import formatEvaluationToMarkdown from "@/utils/formatEvaluationToMarkdown";
 import { CheckCircleOutlined, SendOutlined } from "@ant-design/icons";
 import {
@@ -115,12 +119,34 @@ export default function InterviewPage() {
       setVideoAnalysis(formattedVideoData);
       console.debug("视频分析结果: ", formattedVideoData);
 
-      // 后台分析音频
+      // 从视频中提取音频数据
+      console.debug("开始从视频中提取音频数据...");
+      let audioBlob;
+      try {
+        // 尝试使用主要方法提取音频
+        audioBlob = await extractAudioFromVideo(videoBlob);
+        console.debug("成功使用WebAudio API提取音频");
+      } catch (extractError) {
+        console.warn("主要音频提取方法失败，尝试备用方法:", extractError);
+        try {
+          // 尝试使用备用方法
+          audioBlob = await extractAudioUsingMediaRecorder(videoBlob);
+          console.debug("成功使用MediaRecorder API提取音频");
+        } catch (backupError) {
+          console.error("所有音频提取方法均失败:", backupError);
+          // 使用原始视频blob作为最后的后备方案
+          audioBlob = videoBlob;
+          console.debug("使用原始视频Blob作为音频分析输入");
+        }
+      }
+
+      // 后台分析音频 - 使用提取的音频数据
       console.debug("开始分析音频数据...");
       const audioResponse = await interviewAPI.evaluateAudio(
-        videoBlob,
+        audioBlob, // 使用提取的音频数据
         sessionId,
       );
+
       const audioData = audioResponse.data;
 
       // 更新状态，但不展示给用户
