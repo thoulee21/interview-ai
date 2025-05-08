@@ -68,6 +68,9 @@ AUDIO_ANALYSIS_SCHEMA = {
         "pace": {"type": "number", "minimum": 0, "maximum": 10},
         "tone": {"type": "number", "minimum": 0, "maximum": 10},
         "fillerWordsCount": {"type": "number", "minimum": 0},
+        "speechRate": {"type": "number", "minimum": 0},
+        "pitchMean": {"type": "number", "minimum": 0},
+        "duration": {"type": "number", "minimum": 0},
         "recommendations": {"type": "string"}
     },
     "required": ["clarity", "pace", "tone", "fillerWordsCount"]
