@@ -21,5 +21,3 @@ if __name__ == '__main__':
 
     # 启动应用
     app.run(host=host, port=port, debug=(env == 'development'))
-
-    print(f"应用已在 http://{host}:{port} 上启动")
