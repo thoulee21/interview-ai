@@ -15,9 +15,5 @@ env = 'development' if flask_debug == '1' else 'production'
 app = create_app(env)
 
 if __name__ == '__main__':
-    # 获取主机和端口（如果环境变量中设置了）
-    host = os.environ.get('HOST', '0.0.0.0')
-    port = int(os.environ.get('PORT', 5000))
-
     # 启动应用
-    app.run(host=host, port=port, debug=(env == 'development'))
+    app.run(host='0.0.0.0', port=5000, debug=(env == 'development'))
