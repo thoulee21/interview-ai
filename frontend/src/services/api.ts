@@ -154,29 +154,14 @@ const interviewAPI = {
   },
 
   // 分析视频数据
-  evaluateVideo: (videoBlob: Blob, sessionId: string | null = null) => {
+  multimodalAnalysis: (videoBlob: Blob, sessionId: string | null = null) => {
     const formData = new FormData();
     formData.append("video", videoBlob);
     if (sessionId) {
       formData.append("session_id", sessionId);
     }
 
-    return apiClient.post("/evaluate_video", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  },
-
-  // 分析音频数据
-  evaluateAudio: (audioBlob: Blob, sessionId: string | null = null) => {
-    const formData = new FormData();
-    formData.append("audio", audioBlob);
-    if (sessionId) {
-      formData.append("session_id", sessionId);
-    }
-
-    return apiClient.post("/evaluate_audio", formData, {
+    return apiClient.post("/multimodal_analysis", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

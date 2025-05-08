@@ -4,10 +4,6 @@ export const runtime = "edge";
 
 import InterviewBreadcrumb from "@/components/InterviewBreadcrumb";
 import interviewAPI from "@/services/api";
-import {
-  extractAudioFromVideo,
-  extractAudioUsingMediaRecorder,
-} from "@/utils/extractAudioFromVideo";
 import formatEvaluationToMarkdown from "@/utils/formatEvaluationToMarkdown";
 import { CheckCircleOutlined, SendOutlined } from "@ant-design/icons";
 import {
@@ -100,15 +96,18 @@ export default function InterviewPage() {
       // 准备视频blob
       const videoBlob = new Blob(recordedChunks, { type: "video/webm" });
 
-      // 后台分析视频
+      // 后台分析视频（现在后台会同时处理视频和音频分析）
       console.debug("开始分析视频数据...");
-      const videoResponse = await interviewAPI.evaluateVideo(
+      const response = await interviewAPI.multimodalAnalysis(
         videoBlob,
         sessionId,
       );
-      const videoData = videoResponse.data;
 
-      // 更新状态，但不展示给用户
+      // 解析返回的数据（可能包含视频和音频分析结果）
+      const data = response.data;
+
+      // 更新视频分析状态
+      const videoData = data.video
       const formattedVideoData = {
         eyeContact: videoData.eyeContact || 0,
         facialExpressions: videoData.facialExpressions || 0,
@@ -117,54 +116,33 @@ export default function InterviewPage() {
         recommendations: videoData.recommendations || "",
       };
       setVideoAnalysis(formattedVideoData);
-      console.debug("视频分析结果: ", formattedVideoData);
 
-      // 从视频中提取音频数据
-      console.debug("开始从视频中提取音频数据...");
-      let audioBlob;
-      try {
-        // 尝试使用主要方法提取音频
-        audioBlob = await extractAudioFromVideo(videoBlob);
-        console.debug("成功使用WebAudio API提取音频");
-      } catch (extractError) {
-        console.warn("主要音频提取方法失败，尝试备用方法:", extractError);
-        try {
-          // 尝试使用备用方法
-          audioBlob = await extractAudioUsingMediaRecorder(videoBlob);
-          console.debug("成功使用MediaRecorder API提取音频");
-        } catch (backupError) {
-          console.error("所有音频提取方法均失败:", backupError);
-          // 使用原始视频blob作为最后的后备方案
-          audioBlob = videoBlob;
-          console.debug("使用原始视频Blob作为音频分析输入");
-        }
+      // 如果有音频分析结果，也更新状态
+      if (data.audio) {
+        const audioData = data.audio;
+        const formattedAudioData = {
+          clarity: audioData.clarity || 0,
+          pace: audioData.pace || 0,
+          tone: audioData.tone || 0,
+          fillerWordsCount: audioData.fillerWordsCount || 0,
+          recommendations: audioData.recommendations || "",
+        };
+        setAudioAnalysis(formattedAudioData);
       }
-
-      // 后台分析音频 - 使用提取的音频数据
-      console.debug("开始分析音频数据...");
-      const audioResponse = await interviewAPI.evaluateAudio(
-        audioBlob, // 使用提取的音频数据
-        sessionId,
-      );
-
-      const audioData = audioResponse.data;
-
-      // 更新状态，但不展示给用户
-      const formattedAudioData = {
-        clarity: audioData.clarity || 0,
-        pace: audioData.pace || 0,
-        tone: audioData.tone || 0,
-        fillerWordsCount: audioData.fillerWordsCount || 0,
-        recommendations: audioData.recommendations || "",
-      };
-      setAudioAnalysis(formattedAudioData);
-      console.debug("音频分析结果: ", formattedAudioData);
 
       restartRecording();
 
       return {
         videoAnalysis: formattedVideoData,
-        audioAnalysis: formattedAudioData,
+        audioAnalysis: data.audio
+          ? {
+              clarity: data.audio.clarity || 0,
+              pace: data.audio.pace || 0,
+              tone: data.audio.tone || 0,
+              fillerWordsCount: data.audio.fillerWordsCount || 0,
+              recommendations: data.audio.recommendations || "",
+            }
+          : null,
         msg: "分析成功",
       };
     } catch (error) {
