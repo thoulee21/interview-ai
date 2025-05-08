@@ -390,7 +390,9 @@ class XunFeiSparkAPI:
                 prompt += f"语音清晰度评分: {audio_analysis.get('clarity', 'N/A')}/10\n"
                 prompt += f"语速评分: {audio_analysis.get('pace', 'N/A')}/10\n"
                 prompt += f"语调评分: {audio_analysis.get('tone', 'N/A')}/10\n"
+                prompt += f"实际语速: {audio_analysis.get('speechRate', 'N/A')} 字/分钟\n"
                 prompt += f"填充词使用次数: {audio_analysis.get('fillerWordsCount', 'N/A')}\n"
+                prompt += f"音频分析建议: {audio_analysis.get('recommendations', 'N/A')}\n"
 
             # TypeChat 输出格式指导
             prompt += """
@@ -423,7 +425,7 @@ class XunFeiSparkAPI:
 }
 ```
 
-请确保每个分数字段都是1-100的整数，问题得分应包含每个问题的评分和反馈。strengths和improvements必须各包含至少3个具体内容。
+请确保每个分数字段都是1-100的整数，问题得分应包含每个问题的评分和反馈。strengths和improvements必须各包含至少3个具体内容。特别注意音频表现相关的点，包括语速、语调、清晰度和填充词使用情况。
             """
 
             # 调用API

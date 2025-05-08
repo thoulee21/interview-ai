@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime
 
 from app.utils.db import get_db
+from app.utils.float32json import Float32JSONEncoder
 
 
 class InterviewSession:
@@ -346,7 +347,10 @@ class MultimodalAnalysis:
 
         # 准备多模态数据
         video_json = json.dumps(video_analysis) if video_analysis else None
-        audio_json = json.dumps(audio_analysis) if audio_analysis else None
+        
+        audio_json = json.dumps(
+            audio_analysis, cls=Float32JSONEncoder
+        ) if audio_analysis else None
 
         # 检查是否已有记录
         cursor.execute(

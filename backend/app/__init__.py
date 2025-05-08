@@ -7,6 +7,7 @@ import logging
 
 from app.api import api_bp
 from app.utils.db import close_db, init_db
+from app.utils.float32json import Float32FlaskEncoder
 from config import config
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -24,6 +25,9 @@ def create_app(config_name="default"):
     """
     # 创建应用
     app = Flask(__name__)
+
+    # 设置自定义JSON编码器
+    app.json_encoder = Float32FlaskEncoder
 
     # 加载配置
     app.config.from_object(config[config_name])
