@@ -68,11 +68,21 @@ export default function InterviewPage() {
 
   const webcamRef = useRef<Webcam>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordingInterval = useRef<NodeJS.Timeout | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
 
   // 添加一个ref来跟踪是否已经初始化
   const isInitialized = useRef(false);
+
+  // 重新开始录制
+  const restartRecording = useCallback(() => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setRecordedChunks([]);
+      mediaRecorderRef.current.start();
+
+      console.debug("重新开始录制...");
+    }
+  }, []);
 
   const silentAnalysis = useCallback(async () => {
     if (recordedChunks.length === 0)
@@ -124,17 +134,7 @@ export default function InterviewPage() {
       setAudioAnalysis(formattedAudioData);
       console.debug("音频分析结果: ", formattedAudioData);
 
-      // 清空录制内容，为下一次录制准备
-      setRecordedChunks([]);
-
-      // 如果需要，重新开始录制
-      if (
-        isRecording &&
-        mediaRecorderRef.current &&
-        mediaRecorderRef.current.state === "inactive"
-      ) {
-        mediaRecorderRef.current.start();
-      }
+      restartRecording();
 
       return {
         videoAnalysis: formattedVideoData,
@@ -150,7 +150,7 @@ export default function InterviewPage() {
         msg: "分析失败，请稍后重试",
       };
     }
-  }, [isRecording, recordedChunks, sessionId]);
+  }, [recordedChunks, restartRecording, sessionId]);
 
   // 自动开始录制视频
   const handleDataAvailable = useCallback(({ data }: { data: Blob }) => {
@@ -294,23 +294,18 @@ export default function InterviewPage() {
       } catch (error) {
         console.error("获取面试问题失败:", error);
         messageApi.error("获取面试问题失败，请刷新页面重试");
+      } finally {
+        // 标记已经初始化
+        isInitialized.current = true;
       }
     };
 
     initializeInterview();
-    // 标记已经初始化
-    isInitialized.current = true;
 
-    const currentInterval = recordingInterval.current;
-    // 组件卸载时清理资源
     return () => {
       stopRecording();
-      // 在清理函数中捕获当前的 interval 引用
-      if (currentInterval) {
-        clearInterval(currentInterval);
-      }
     };
-  }, [messageApi, router, sessionId, startRecording]); // 依赖项列表
+  }, [messageApi, router, sessionId, startRecording]);
 
   // 停止录制
   const stopRecording = () => {
@@ -321,11 +316,6 @@ export default function InterviewPage() {
       mediaRecorderRef.current.stop();
     }
     setIsRecording(false);
-
-    // 清理定时器
-    if (recordingInterval.current) {
-      clearInterval(recordingInterval.current);
-    }
   };
 
   // 提交答案
@@ -394,8 +384,7 @@ export default function InterviewPage() {
         setVideoAnalysis(null);
         setAudioAnalysis(null);
 
-        // 重置录制
-        setRecordedChunks([]);
+        restartRecording();
 
         messageApi.success("回答已提交，请继续回答下一个问题");
       }
