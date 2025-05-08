@@ -27,6 +27,7 @@ dependencies = [
     "python-speech-features (>=0.6,<0.7)",
     "standard-aifc (>=3.13.0,<4.0.0)",
     "standard-sunau (>=3.13.0,<4.0.0)",
+    "numpy (<2.0.0)",
 ]
 
 [tool.poetry]
