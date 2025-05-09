@@ -253,14 +253,18 @@ def extract_and_evaluate_audio(video_path):
             return None
 
         # ===== 使用librosa加载音频文件 =====
-        y, sr = librosa.load(audio_path, sr=None)
+        try:
+            y, sr = librosa.load(audio_path, sr=None)
 
-        # 检查是否成功加载音频数据
-        if y.size == 0:
-            logger.warning(f"音频文件未包含数据或无法解析: {audio_path}")
+            # 检查是否成功加载音频数据
+            if y.size == 0:
+                logger.warning(f"音频文件未包含数据或无法解析: {audio_path}")
+                return None
+
+            logger.info(f"成功加载音频文件: 采样率={sr}Hz, 时长={len(y)/sr:.2f}秒")
+        except Exception as e:
+            logger.error(f"加载音频文件失败: {str(e)}")
             return None
-
-        logger.info(f"成功加载音频文件: 采样率={sr}Hz, 时长={len(y)/sr:.2f}秒")
 
         # ===== 计算音频特征 =====
         # 1. 时长计算
