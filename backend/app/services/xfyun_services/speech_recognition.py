@@ -1,4 +1,3 @@
-# speech_recognition.py
 import base64
 import json
 import ssl
@@ -64,6 +63,9 @@ class SpeechRecognition:
                     buf = fp.read(frame_size)
                     if not buf:
                         status = 2  # 最后一帧
+                    if not ws.sock or not ws.sock.connected:
+                        print("WebSocket connection is closed. Exiting...")
+                        break
                     if status == 0:
                         # 第一帧
                         data = {
