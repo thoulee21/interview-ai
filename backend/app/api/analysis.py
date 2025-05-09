@@ -5,14 +5,16 @@
 import logging
 import os
 import subprocess
+import time
 import uuid
-from random import randint
 
 import cv2
 import ffmpeg
 import librosa
 import numpy as np
 from app.models.interview import InterviewQuestion, MultimodalAnalysis
+from app.services.xfyun_services import stt
+from app.utils.pcm_wav import wav2pcm
 from flask import current_app, jsonify, request
 
 # 配置日志
@@ -319,8 +321,69 @@ def extract_and_evaluate_audio(video_path):
         spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
         clarity_score = np.mean(spectral_centroid) / 1000  # 归一化
 
-        # 6. 识别填充词(Mock)
-        filler_words_count = randint(0, 10)  # 模拟填充词数量
+        # 6. 识别填充词
+        # Convert .wav to .pcm for stt compatibility
+        pcm_audio_path = audio_path.replace('.wav', '.pcm')
+        try:
+            wav2pcm(audio_path, pcm_audio_path)
+            logger.info(f"成功将音频文件转换为 .pcm 格式: {pcm_audio_path}")
+        except Exception as e:
+            logger.error(
+                f"Failed to convert .wav to .pcm: {str(e)}")
+            return {
+                "clarity": 7.0,
+                "pace": 7.0,
+                "tone": 7.0,
+                "fillerWordsCount": 0,
+                "recommendations": "Audio conversion failed."
+            }
+
+        filler_words_count = 0
+        stt_completed = False
+
+        def on_stt_close(ws, close_status_code, close_msg):
+            """WebSocket 关闭处理"""
+            logger.info(
+                f"STT WebSocket closed with code: {close_status_code}, message: {close_msg}"
+            )
+            nonlocal stt_completed
+            stt_completed = True
+
+        def on_stt_result(stt_result: str):
+            logger.info(f"STT 识别结果: {stt_result}")
+            nonlocal filler_words_count
+            try:
+                if stt_result and isinstance(stt_result, str):
+                    filler_words = ["嗯", "啊", "那个", "就是",
+                                    "这个", "然后", "其实", "所以", "你知道"]
+                    for word in filler_words:
+                        filler_words_count += stt_result.count(word)
+                    logger.info(
+                        f"识别到填充词数量: {filler_words_count} ({stt_result})"
+                    )
+            except Exception as e:
+                logger.warning(f"STT failed: {str(e)}")
+
+        # Use the converted .pcm file for stt
+        stt(
+            pcm_audio_path,
+            callback=on_stt_result,
+            on_close=on_stt_close
+        ).recognize_audio()
+
+        # 等待STT完成
+        while not stt_completed:
+            # 等待一段时间，避免过于频繁的检查
+            time.sleep(0.1)
+
+        # Clean up temporary .pcm file
+        if not current_app.config.get("DEBUG"):
+            try:
+                os.remove(pcm_audio_path)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to delete temporary .pcm file {pcm_audio_path}: {str(e)}"
+                )
 
         # ===== 评分计算 =====
         # 清晰度评分 (1-10)

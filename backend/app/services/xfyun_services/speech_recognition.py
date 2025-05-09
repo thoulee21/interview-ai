@@ -10,7 +10,7 @@ from websocket import WebSocketApp
 
 
 class SpeechRecognition:
-    def __init__(self, server_url, app_id, api_key, api_secret, audio_file, callback=None):
+    def __init__(self, server_url, app_id, api_key, api_secret, audio_file, callback=None, on_close=None):
         """初始化语音听写服务"""
         self.server_url = server_url
         self.app_id = app_id
@@ -18,6 +18,7 @@ class SpeechRecognition:
         self.api_secret = api_secret
         self.audio_file = audio_file
         self.callback = callback  # 添加回调函数
+        self.on_close = on_close
 
         self.common_args = {"app_id": self.app_id}
         self.business_args = {
@@ -49,11 +50,6 @@ class SpeechRecognition:
     def on_error(self, ws, error):
         """WebSocket 错误处理"""
         print(f"Error: {error}")
-
-    def on_close(self, ws, close_status_code, close_msg):
-        """WebSocket 关闭处理"""
-        # print(f"WebSocket closed with code: {close_status_code}, message: {close_msg}")
-        pass
 
     def on_open(self, ws):
         """WebSocket 连接建立后执行"""
