@@ -23,6 +23,7 @@ RUN pip install poetry
 # 复制项目文件
 COPY pyproject.toml poetry.lock* ./
 
+RUN poetry config virtualenvs.create false
 RUN poetry install --no-interaction
 
 # 复制所有项目文件
@@ -30,4 +31,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["poetry", "run", "gunicorn", "--workers=4", "--bind=0.0.0.0:5000", "--timeout=120", "run:app"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "run:app"]
