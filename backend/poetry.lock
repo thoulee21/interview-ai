@@ -1582,39 +1582,6 @@ url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
 reference = "mirrors"
 
 [[package]]
-name = "speechrecognition"
-version = "3.14.2"
-description = "Library for performing speech recognition, with support for several engines and APIs, online and offline."
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-files = [
-    {file = "speechrecognition-3.14.2-py3-none-any.whl", hash = "sha256:42940b95295b358fdd7415daa01260c8b20025d6b4000fbbaa3458f005d912b7"},
-    {file = "speechrecognition-3.14.2.tar.gz", hash = "sha256:2daa467f0b5686017ff3f9a64dcfa1a789ee10d1b0ada3be74bfad10eaef5f49"},
-]
-
-[package.dependencies]
-audioop-lts = {version = "*", markers = "python_version >= \"3.13\""}
-standard-aifc = {version = "*", markers = "python_version >= \"3.13\""}
-typing-extensions = "*"
-
-[package.extras]
-assemblyai = ["requests"]
-audio = ["PyAudio (>=0.2.11)"]
-dev = ["numpy", "pytest", "pytest-randomly", "respx"]
-faster-whisper = ["faster-whisper"]
-google-cloud = ["google-cloud-speech"]
-groq = ["groq", "httpx (<0.28)"]
-openai = ["httpx (<0.28)", "openai"]
-pocketsphinx = ["pocketsphinx"]
-whisper-local = ["openai-whisper", "soundfile"]
-
-[package.source]
-type = "legacy"
-url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
-reference = "mirrors"
-
-[[package]]
 name = "standard-aifc"
 version = "3.13.0"
 description = "Standard library aifc redistribution. \"dead battery\"."
@@ -1824,4 +1791,4 @@ reference = "mirrors"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4"
-content-hash = "8667612ecd865049f6a04312c540285ce510318236b40b2aa6afc3b69598a1d4"
+content-hash = "222d00a593dd008aab12d857e7906f2b7a39af2ef8cd63508fbd5e098958f7e6"

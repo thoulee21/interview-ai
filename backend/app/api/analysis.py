@@ -6,12 +6,12 @@ import logging
 import os
 import subprocess
 import uuid
+from random import randint
 
 import cv2
 import ffmpeg
 import librosa
 import numpy as np
-import speech_recognition
 from app.models.interview import InterviewQuestion, MultimodalAnalysis
 from flask import current_app, jsonify, request
 
@@ -315,26 +315,8 @@ def extract_and_evaluate_audio(video_path):
         spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
         clarity_score = np.mean(spectral_centroid) / 1000  # 归一化
 
-        # 6. 识别填充词
-        filler_words_count = 0
-        try:
-            recognizer = speech_recognition.Recognizer()
-            with speech_recognition.AudioFile(audio_path) as source:
-                audio_data = recognizer.record(source)
-                text = recognizer.recognize_google(
-                    audio_data, language="zh-CN")
-
-                # 中文填充词列表
-                filler_words = ["嗯", "啊", "那个", "就是",
-                                "这个", "然后", "其实", "所以", "你知道"]
-
-                # 统计填充词出现次数
-                for word in filler_words:
-                    filler_words_count += text.count(word)
-
-                logger.info(f"识别到的文本: {text[:100]}...")
-        except Exception as e:
-            logger.warning(f"语音转文本失败, 无法检测填充词: {str(e)}")
+        # 6. 识别填充词(Mock)
+        filler_words_count = randint(0, 10)  # 模拟填充词数量
 
         # ===== 评分计算 =====
         # 清晰度评分 (1-10)
