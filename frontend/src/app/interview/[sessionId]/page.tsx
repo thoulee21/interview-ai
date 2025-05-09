@@ -5,7 +5,11 @@ export const runtime = "edge";
 import InterviewBreadcrumb from "@/components/InterviewBreadcrumb";
 import interviewAPI from "@/services/api";
 import formatEvaluationToMarkdown from "@/utils/formatEvaluationToMarkdown";
-import { CheckCircleOutlined, SendOutlined } from "@ant-design/icons";
+import {
+  AudioOutlined,
+  CheckCircleOutlined,
+  SendOutlined,
+} from "@ant-design/icons";
 import {
   Button,
   Card,
@@ -66,12 +70,29 @@ export default function InterviewPage() {
   );
   const [isRecording, setIsRecording] = useState(false);
 
+  const [isRecognitionAvailable, setIsRecognitionAvailable] = useState(false);
+  const [recognizing, setRecognizing] = useState(false);
+
   const webcamRef = useRef<Webcam>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
 
   // 添加一个ref来跟踪是否已经初始化
   const isInitialized = useRef(false);
+
+  // 检测语音识别是否可用
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition =
+        //@ts-expect-error 有些浏览器可能不支持 SpeechRecognition
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        setIsRecognitionAvailable(true);
+      } else {
+        setIsRecognitionAvailable(false);
+      }
+    }
+  }, []);
 
   // 重新开始录制
   const restartRecording = useCallback(() => {
@@ -107,7 +128,7 @@ export default function InterviewPage() {
       const data = response.data;
 
       // 更新视频分析状态
-      const videoData = data.video
+      const videoData = data.video;
       const formattedVideoData = {
         eyeContact: videoData.eyeContact || 0,
         facialExpressions: videoData.facialExpressions || 0,
@@ -405,6 +426,55 @@ export default function InterviewPage() {
     router.push(`/results/${sessionId}`);
   };
 
+  // 添加语音回答功能，文字回答作为备用
+  const handleVoiceInput = useCallback(() => {
+    if (!webcamRef.current || !webcamRef.current.stream) {
+      messageApi.warning("无法访问麦克风，请检查权限并刷新页面");
+      return;
+    }
+
+    try {
+      //@ts-expect-error 有些浏览器可能不支持 SpeechRecognition
+      const recognition = new (window.SpeechRecognition ||
+        //@ts-expect-error 有些浏览器可能不支持 SpeechRecognition
+        window.webkitSpeechRecognition)();
+
+      recognition.lang = "zh-CN";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        console.log("语音识别开始");
+        setRecognizing(true);
+        messageApi.info("请开始说话...");
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        console.info("语音识别结果:", transcript);
+        setAnswer(transcript);
+        messageApi.success("语音输入成功");
+      };
+
+      recognition.onerror = (event: any) => {
+        console.log("语音识别错误:", event.error);
+        setRecognizing(false);
+        messageApi.error("语音识别失败，请重试");
+      };
+
+      recognition.onend = () => {
+        console.log("语音识别结束");
+        setRecognizing(false);
+        messageApi.info("语音识别已结束");
+      };
+
+      recognition.start();
+    } catch (error) {
+      console.error("语音识别初始化失败:", error);
+      messageApi.error("语音识别不可用，请使用文字输入");
+    }
+  }, [messageApi]);
+
   return (
     <div>
       {contextHolder}
@@ -456,16 +526,38 @@ export default function InterviewPage() {
                 style={{ marginBottom: "20px" }}
                 disabled={loading}
               />
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={handleSubmitAnswer}
-                loading={loading}
-                block
-                disabled={loading || !answer.trim()}
+
+              <Space
+                size="small"
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  width: "100%",
+                }}
               >
-                提交回答
-              </Button>
+                {isRecognitionAvailable && (
+                  <Button
+                    type="default"
+                    icon={<AudioOutlined />}
+                    onClick={handleVoiceInput}
+                    loading={recognizing}
+                    block
+                    disabled={loading || !isRecognitionAvailable || recognizing}
+                  >
+                    使用语音回答
+                  </Button>
+                )}
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  onClick={handleSubmitAnswer}
+                  loading={loading}
+                  block
+                  disabled={loading || !answer.trim() || !isRecording}
+                >
+                  提交回答
+                </Button>
+              </Space>
             </Card>
 
             {evaluation && (
