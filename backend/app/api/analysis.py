@@ -38,7 +38,7 @@ def multimodal_analysis():
         os.makedirs(temp_dir, exist_ok=True)
 
         # 生成唯一文件名并保存视频
-        filename = f"{uuid.uuid4()}.mp4"
+        filename = f"{uuid.uuid4()}.webm"
         video_path = os.path.join(temp_dir, filename)
         video_file.save(video_path)
 
