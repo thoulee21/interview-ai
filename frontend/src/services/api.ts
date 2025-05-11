@@ -142,14 +142,10 @@ const interviewAPI = {
   answerQuestion: (
     sessionId: string,
     answer: string,
-    videoAnalysis: unknown = null,
-    audioAnalysis: unknown = null,
   ) => {
     return apiClient.post("/answer_question", {
       session_id: sessionId,
       answer: answer,
-      video_analysis: videoAnalysis,
-      audio_analysis: audioAnalysis,
     });
   },
 
@@ -171,14 +167,6 @@ const interviewAPI = {
   // 获取面试结果
   getInterviewResults: (sessionId: string) => {
     return apiClient.get(`/interview_results/${sessionId}`);
-  },
-
-  // 处理评估结果并规范成TypeScript定义的结构
-  processEvaluation: (rawEvaluation: unknown) => {
-    // 使用TypeChat对原始评估文本进行处理
-    // Note: 这部分需要迁移 typeChat.ts 和 interviewEvaluationSchema
-    // 暂时返回原始结果，后续会实现这个功能
-    return rawEvaluation;
   },
 
   // 获取健康状态

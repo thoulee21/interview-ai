@@ -70,8 +70,6 @@ def answer_question():
     data = request.json
     session_id = data.get('session_id')
     answer = data.get('answer', '')
-    video_analysis = data.get('video_analysis')  # 接收前端传来的视频分析数据
-    audio_analysis = data.get('audio_analysis')  # 接收前端传来的音频分析数据
 
     # 检查会话是否存在
     session = InterviewSession.get(session_id)
@@ -93,31 +91,6 @@ def answer_question():
         current_question = InterviewQuestion.get_latest_for_session(session_id)
         position_type = session["position_type"]
 
-        # 验证和修复多模态分析数据
-        if video_analysis:
-            is_valid, errors = validate_video_analysis(video_analysis)
-            if not is_valid:
-                logger.warning(f"视频分析数据验证失败: {errors}")
-                # 应用默认值或修正错误的数据
-                video_analysis = {
-                    "eyeContact": video_analysis.get("eyeContact", 7.5),
-                    "facialExpressions": video_analysis.get("facialExpressions", 7.0),
-                    "bodyLanguage": video_analysis.get("bodyLanguage", 6.5),
-                    "confidence": video_analysis.get("confidence", 7.0)
-                }
-
-        if audio_analysis:
-            is_valid, errors = validate_audio_analysis(audio_analysis)
-            if not is_valid:
-                logger.warning(f"音频分析数据验证失败: {errors}")
-                # 应用默认值或修正错误的数据
-                audio_analysis = {
-                    "clarity": audio_analysis.get("clarity", 7.5),
-                    "pace": audio_analysis.get("pace", 7.0),
-                    "tone": audio_analysis.get("tone", 7.5),
-                    "fillerWordsCount": audio_analysis.get("fillerWordsCount", 5)
-                }
-
         # 评估回答
         evaluation_response = ai_service.evaluate_answer(
             current_question["question"],
@@ -132,12 +105,8 @@ def answer_question():
 
         # 更新回答和评估
         InterviewQuestion.update_answer_and_evaluation(
-            current_question["id"], answer, evaluation)
-
-        # 保存多模态分析数据
-        if video_analysis or audio_analysis:
-            MultimodalAnalysis.create_or_update(
-                session_id, current_question["id"], video_analysis, audio_analysis)
+            current_question["id"], answer, evaluation
+        )
 
         # 判断是否结束面试
         question_count = InterviewQuestion.count_for_session(session_id)
@@ -151,7 +120,8 @@ def answer_question():
         if question_count >= current_app.config['INTERVIEW_QUESTION_COUNT']:
             # 获取聚合的多模态分析数据
             aggregated_video_analysis, aggregated_audio_analysis = MultimodalAnalysis.aggregate_for_session(
-                session_id)
+                session_id
+            )
 
             # 生成最终评估
             final_evaluation_response = ai_service.generate_final_evaluation(
@@ -169,7 +139,8 @@ def answer_question():
 
             # 使用 JSON Schema 验证来提取和验证结构化数据
             data, is_valid, errors = validate_evaluation_result(
-                final_evaluation)
+                final_evaluation
+            )
 
             if not is_valid:
                 logger.warning(f"评估结果验证失败: {errors}")
@@ -184,9 +155,11 @@ def answer_question():
                 nonverbal_score = data.get('nonVerbalScore', 75)
                 strengths = data.get('strengths', ["回答条理清晰", "专业知识扎实", "表达流畅"])
                 improvements = data.get(
-                    'improvements', ["可以更加简洁", "需要更多具体案例", "注意减少填充词"])
+                    'improvements', ["可以更加简洁", "需要更多具体案例", "注意减少填充词"]
+                )
                 recommendations = data.get(
-                    'recommendations', "整体表现良好，建议进一步提升回答的简洁性和具体性。")
+                    'recommendations', "整体表现良好，建议进一步提升回答的简洁性和具体性。"
+                )
 
                 # 保存最终评估
                 FinalEvaluation.create(
@@ -287,8 +260,6 @@ def get_interview_results(session_id):
         analyses = MultimodalAnalysis.get_for_session(session_id)
 
         # 如果有多模态分析数据，获取最新的一条
-        video_analysis = None
-        audio_analysis = None
         if analyses:
             latest_analysis = analyses[-1]
             video_analysis = latest_analysis.get('videoAnalysis')
