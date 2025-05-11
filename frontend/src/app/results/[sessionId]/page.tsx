@@ -83,12 +83,8 @@ export default function ResultPage() {
         const response = await interviewAPI.getInterviewResults(sessionId);
         let resultData = response.data;
 
-        // 检查是否有原始评估文本，如有需要可以使用TypeChat进行结构化
-        // 如果后端已返回结构化数据，则无需此处理
         if (resultData.rawEvaluation) {
-          const structuredData = interviewAPI.processEvaluation(
-            resultData.rawEvaluation,
-          );
+          const structuredData = resultData.rawEvaluation;
           if (structuredData) {
             resultData = { ...resultData, ...structuredData };
           }
