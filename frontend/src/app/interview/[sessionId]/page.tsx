@@ -27,22 +27,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import Webcam from "react-webcam";
 
-type VideoAnalysisType = {
-  eyeContact: number;
-  facialExpressions: number;
-  bodyLanguage: number;
-  confidence: number;
-  recommendations: string;
-};
-
-type AudioAnalysisType = {
-  clarity: number;
-  pace: number;
-  tone: number;
-  fillerWordsCount: number;
-  recommendations: string;
-};
-
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
 
@@ -61,13 +45,6 @@ export default function InterviewPage() {
   const [loadingFinalEvaluation, setLoadingFinalEvaluation] = useState(false);
   const [overallScore, setOverallScore] = useState<number | null>(null);
 
-  // 视频分析和音频分析相关状态 (仅内部使用，不再向用户展示实时分析)
-  const [videoAnalysis, setVideoAnalysis] = useState<VideoAnalysisType | null>(
-    null,
-  );
-  const [audioAnalysis, setAudioAnalysis] = useState<AudioAnalysisType | null>(
-    null,
-  );
   const [isRecording, setIsRecording] = useState(false);
 
   const [isRecognitionAvailable, setIsRecognitionAvailable] = useState(false);
@@ -106,78 +83,27 @@ export default function InterviewPage() {
   }, []);
 
   const silentAnalysis = useCallback(async () => {
-    if (recordedChunks.length === 0)
-      return {
-        videoAnalysis: null,
-        audioAnalysis: null,
-        msg: "没有录制数据",
-      };
+    if (recordedChunks.length === 0) {
+      console.warn("没有录制的视频数据，无法进行分析");
+      return;
+    }
 
     try {
-      // 准备视频blob
       const videoBlob = new Blob(recordedChunks, { type: "video/webm" });
 
       // 后台分析视频（现在后台会同时处理视频和音频分析）
-      console.debug("开始分析视频数据...");
+      console.info("开始分析数据...");
       const response = await interviewAPI.multimodalAnalysis(
         videoBlob,
         sessionId,
       );
-
-      // 解析返回的数据（可能包含视频和音频分析结果）
-      const data = response.data;
-
-      // 更新视频分析状态
-      const videoData = data.video;
-      const formattedVideoData = {
-        eyeContact: videoData.eyeContact || 0,
-        facialExpressions: videoData.facialExpressions || 0,
-        bodyLanguage: videoData.bodyLanguage || 0,
-        confidence: videoData.confidence || 0,
-        recommendations: videoData.recommendations || "",
-      };
-      setVideoAnalysis(formattedVideoData);
-
-      // 如果有音频分析结果，也更新状态
-      if (data.audio) {
-        const audioData = data.audio;
-        const formattedAudioData = {
-          clarity: audioData.clarity || 0,
-          pace: audioData.pace || 0,
-          tone: audioData.tone || 0,
-          fillerWordsCount: audioData.fillerWordsCount || 0,
-          recommendations: audioData.recommendations || "",
-        };
-        setAudioAnalysis(formattedAudioData);
-      }
-
+      console.info("分析结果:", response.data);
       restartRecording();
-
-      return {
-        videoAnalysis: formattedVideoData,
-        audioAnalysis: data.audio
-          ? {
-              clarity: data.audio.clarity || 0,
-              pace: data.audio.pace || 0,
-              tone: data.audio.tone || 0,
-              fillerWordsCount: data.audio.fillerWordsCount || 0,
-              recommendations: data.audio.recommendations || "",
-            }
-          : null,
-        msg: "分析成功",
-      };
     } catch (error) {
-      console.log("后台分析失败:", error);
-      // 静默失败，不打扰用户
-      return {
-        videoAnalysis: null,
-        audioAnalysis: null,
-        msg: "分析失败，请稍后重试",
-      };
+      console.warn("后台分析失败:", error);
     }
   }, [recordedChunks, restartRecording, sessionId]);
 
-  // 自动开始录制视频
   const handleDataAvailable = useCallback(({ data }: { data: Blob }) => {
     if (data.size > 0) {
       setRecordedChunks((prev) => [...prev, data]);
@@ -223,8 +149,6 @@ export default function InterviewPage() {
     actuallyStartRecording();
 
     function actuallyStartRecording() {
-      setIsRecording(true);
-
       try {
         if (webcamRef.current && webcamRef.current.stream) {
           mediaRecorderRef.current = new MediaRecorder(
@@ -248,14 +172,22 @@ export default function InterviewPage() {
             handleDataAvailable,
           );
 
+          mediaRecorderRef.current.addEventListener("stop", () => {
+            console.log("MediaRecorder 停止录制");
+            setIsRecording(false);
+          });
+
+          mediaRecorderRef.current.addEventListener("start", () => {
+            console.log("MediaRecorder 开始录制");
+            setIsRecording(true);
+          });
+
           // 添加错误处理
           mediaRecorderRef.current.addEventListener("error", (error) => {
             console.log("MediaRecorder 错误:", error);
           });
 
-          // 重要：添加timeslice参数（1秒），确保每秒触发一次dataavailable事件
           mediaRecorderRef.current.start(1000);
-          console.log("MediaRecorder 已启动，每1秒录制一次视频数据");
         } else {
           throw new Error("摄像头流不可用");
         }
@@ -340,7 +272,6 @@ export default function InterviewPage() {
     ) {
       mediaRecorderRef.current.stop();
     }
-    setIsRecording(false);
   };
 
   // 提交答案
@@ -348,26 +279,9 @@ export default function InterviewPage() {
     try {
       setLoading(true);
 
-      // 在提交前进行一次分析，确保获取最新数据
-      const analysisRes = await silentAnalysis();
-      console.debug("多模态数据分析结果: ", analysisRes);
+      silentAnalysis();
 
-      // 整合当前问题的多模态分析数据
-      const currentQuestionData = {
-        questionIndex: questionIndex,
-        question: currentQuestion,
-        answer: answer,
-        videoAnalysis: videoAnalysis || null,
-        audioAnalysis: audioAnalysis || null,
-      };
-
-      // 调用后端API提交答案，同时提交多模态分析数据
-      const response = await interviewAPI.answerQuestion(
-        sessionId,
-        answer,
-        currentQuestionData.videoAnalysis,
-        currentQuestionData.audioAnalysis,
-      );
+      const response = await interviewAPI.answerQuestion(sessionId, answer);
 
       // 处理回答评估
       if (response.data.is_complete) {
@@ -404,10 +318,6 @@ export default function InterviewPage() {
         setCurrentQuestion(response.data.next_question);
         setQuestionIndex(questionIndex + 1);
         setAnswer("");
-
-        // 清除当前分析数据，准备下一个问题
-        setVideoAnalysis(null);
-        setAudioAnalysis(null);
 
         restartRecording();
 
