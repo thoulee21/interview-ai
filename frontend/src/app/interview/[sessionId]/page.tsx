@@ -279,7 +279,7 @@ export default function InterviewPage() {
     try {
       setLoading(true);
 
-      silentAnalysis();
+      await silentAnalysis();
 
       const response = await interviewAPI.answerQuestion(sessionId, answer);
 
