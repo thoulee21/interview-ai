@@ -259,6 +259,8 @@ def get_interview_results(session_id):
         # 获取多模态分析数据
         analyses = MultimodalAnalysis.get_for_session(session_id)
 
+        video_analysis = None
+        audio_analysis = None
         # 如果有多模态分析数据，获取最新的一条
         if analyses:
             latest_analysis = analyses[-1]
