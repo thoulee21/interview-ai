@@ -225,7 +225,7 @@ class XunFeiSparkAPI:
             result["message"] = f"WebSocket错误: {str(error)}"
 
         def on_close(ws, *args):
-            logger.info("WebSocket连接已关闭")
+            logger.debug("WebSocket连接已关闭")
 
         def on_open(ws):
             def run():
