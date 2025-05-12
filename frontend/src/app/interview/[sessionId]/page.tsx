@@ -353,7 +353,11 @@ export default function InterviewPage() {
       };
 
       recognition.onerror = (event: any) => {
-        console.log("语音识别错误:", event.error);
+        if (event.error === "no-speech") {
+          return;
+        }
+
+        console.error("语音识别错误:", event.error);
         setRecognizing(false);
         messageApi.error("语音识别失败，请重试");
       };
