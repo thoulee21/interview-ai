@@ -7,11 +7,13 @@ import os
 import subprocess
 import time
 import uuid
+from pathlib import Path
 
 import cv2
 import ffmpeg
 import librosa
 import numpy as np
+import soundfile as sf
 from app.models.interview import MultimodalAnalysis
 from app.services.xfyun_services import stt
 from app.utils.pcm_wav import wav2pcm
@@ -332,52 +334,24 @@ def extract_and_evaluate_audio(video_path):
                 "recommendations": "Audio conversion failed."
             }
 
-        filler_words_count = 0
-        stt_completed = False
+        # 分割音频并处理
+        segment_files = split_audio(audio_path)
+        total_filler_words_count = 0
 
-        def on_stt_close(ws, close_status_code, close_msg):
-            """WebSocket 关闭处理"""
-            logger.info(
-                f"STT WebSocket closed with code: {close_status_code}, message: {close_msg}"
-            )
-            nonlocal stt_completed
-            stt_completed = True
-
-        def on_stt_result(stt_result: str):
-            logger.info(f"STT 识别结果: {stt_result}")
-            nonlocal filler_words_count
+        for i, segment_path in enumerate(segment_files):
             try:
-                if stt_result and isinstance(stt_result, str):
-                    filler_words = ["嗯", "啊", "那个", "就是",
-                                    "这个", "然后", "其实", "所以", "你知道"]
-                    for word in filler_words:
-                        filler_words_count += stt_result.count(word)
-                    logger.info(
-                        f"识别到填充词数量: {filler_words_count} ({stt_result})"
-                    )
-            except Exception as e:
-                logger.warning(f"STT failed: {str(e)}")
+                filler_count = process_audio_segment(segment_path, i * 60)
+                total_filler_words_count += filler_count
+            finally:
+                # 清理临时文件
+                if not current_app.config.get("DEBUG"):
+                    try:
+                        os.remove(segment_path)
+                    except Exception as e:
+                        logger.warning(
+                            f"无法删除临时音频片段文件 {segment_path}: {str(e)}")
 
-        # Use the converted .pcm file for stt
-        stt(
-            pcm_audio_path,
-            callback=on_stt_result,
-            on_close=on_stt_close
-        ).recognize_audio()
-
-        # 等待STT完成
-        while not stt_completed:
-            # 等待一段时间，避免过于频繁的检查
-            time.sleep(0.1)
-
-        # Clean up temporary .pcm file
-        if not current_app.config.get("DEBUG"):
-            try:
-                os.remove(pcm_audio_path)
-            except Exception as e:
-                logger.warning(
-                    f"Failed to delete temporary .pcm file {pcm_audio_path}: {str(e)}"
-                )
+        filler_words_count = total_filler_words_count
 
         # ===== 评分计算 =====
         # 清晰度评分 (1-10)
@@ -442,3 +416,88 @@ def extract_and_evaluate_audio(video_path):
             "fillerWordsCount": 0,
             "recommendations": f"音频分析过程发生错误: {str(e)[:100]}"
         }
+
+
+def process_audio_segment(audio_segment_path: str, start_time: float = 0):
+    """处理单个音频片段的STT识别"""
+    filler_words_count = 0
+    stt_completed = False
+
+    def on_stt_close(ws, close_status_code, close_msg):
+        logger.info(
+            f"STT WebSocket closed with code: {close_status_code}, message: {close_msg}"
+        )
+        nonlocal stt_completed
+        stt_completed = True
+
+    def on_stt_result(stt_result: str):
+        logger.info(f"STT 识别结果 (开始时间 {start_time}s): {stt_result}")
+        nonlocal filler_words_count
+        try:
+            if stt_result and isinstance(stt_result, str):
+                filler_words = ["嗯", "啊", "那个", "就是",
+                                "这个", "然后", "其实", "所以", "你知道"]
+                for word in filler_words:
+                    filler_words_count += stt_result.count(word)
+                logger.info(
+                    f"识别到填充词数量: {filler_words_count} ({stt_result})"
+                )
+        except Exception as e:
+            logger.warning(f"STT failed: {str(e)}")
+
+    # 执行STT识别
+    stt(
+        audio_segment_path,
+        callback=on_stt_result,
+        on_close=on_stt_close
+    ).recognize_audio()
+
+    # 等待STT完成
+    while not stt_completed:
+        time.sleep(0.1)
+
+    return filler_words_count
+
+
+def split_audio(audio_path: str, segment_duration: int = 60):
+    """将音频文件分割成指定时长的片段"""
+    audio_path = Path(audio_path)
+    temp_dir = Path(os.getcwd(), 'temp', 'audios', 'segments')
+    os.makedirs(temp_dir, exist_ok=True)
+
+    y, sr = librosa.load(audio_path, sr=None)
+    duration = len(y) / sr
+
+    if duration <= segment_duration:
+        return [audio_path]
+
+    segment_files = []
+    num_segments = int(np.ceil(duration / segment_duration))
+
+    for i in range(num_segments):
+        start_sample = i * segment_duration * sr
+        end_sample = min((i + 1) * segment_duration * sr, len(y))
+        segment = y[int(start_sample):int(end_sample)]
+
+        if len(segment) == 0:
+            continue
+
+        segment_path = Path(
+            temp_dir, f"{audio_path.stem}_segment_{i}.wav"
+        )
+        sf.write(str(segment_path), segment, sr)
+
+        # 转换为pcm格式
+        pcm_segment_path = str(segment_path).replace('.wav', '.pcm')
+        wav2pcm(segment_path, pcm_segment_path)
+
+        segment_files.append(pcm_segment_path)
+
+        # 删除临时wav文件
+        if not current_app.config.get("DEBUG"):
+            try:
+                os.remove(segment_path)
+            except Exception as e:
+                logger.warning(f"无法删除临时音频片段文件 {segment_path}: {str(e)}")
+
+    return segment_files
