@@ -87,10 +87,11 @@ export default function InterviewPage() {
         sessionId,
       );
       console.info("分析结果:", response.data);
+      messageApi.success("多模态数据分析完成");
     } catch (error) {
       console.warn("后台分析失败:", error);
     }
-  }, [recordedChunks, sessionId]);
+  }, [messageApi, recordedChunks, sessionId]);
 
   const handleDataAvailable = useCallback(({ data }: { data: Blob }) => {
     if (data.size > 0) {
@@ -275,7 +276,7 @@ export default function InterviewPage() {
         setIsComplete(true);
         setLoadingFinalEvaluation(true);
 
-        await silentAnalysis();
+        silentAnalysis();
 
         // 面试结束，停止录制
         stopRecording();
