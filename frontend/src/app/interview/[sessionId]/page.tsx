@@ -86,12 +86,14 @@ export default function InterviewPage() {
         videoBlob,
         sessionId,
       );
-      console.info("分析结果:", response.data);
-      messageApi.success("多模态数据分析完成");
+
+      const { video, audio } = response.data;
+      console.debug("视频分析结果:", video);
+      console.debug("音频分析结果:", audio);
     } catch (error) {
       console.warn("后台分析失败:", error);
     }
-  }, [messageApi, recordedChunks, sessionId]);
+  }, [recordedChunks, sessionId]);
 
   const handleDataAvailable = useCallback(({ data }: { data: Blob }) => {
     if (data.size > 0) {
@@ -276,10 +278,9 @@ export default function InterviewPage() {
         setIsComplete(true);
         setLoadingFinalEvaluation(true);
 
-        silentAnalysis();
-
-        // 面试结束，停止录制
+        await silentAnalysis();
         stopRecording();
+        messageApi.info("多模态分析完成，正在生成评估结果...");
 
         // 获取面试结果详情
         try {
