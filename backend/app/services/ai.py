@@ -36,7 +36,8 @@ XUNFEI_WS_URL = "wss://spark-api.xf-yun.com/v3.5/chat"  # 讯飞星火API WebSoc
 
 # 是否使用模拟模式（用于开发环境，当没有真实API凭证时）
 USE_MOCK_MODE = os.getenv(
-    'USE_MOCK_MODE', 'True').lower() in ('true', '1', 't')
+    'USE_MOCK_MODE', 'True'
+).lower() in ('true', '1', 't')
 
 
 class WebSocketParam:
