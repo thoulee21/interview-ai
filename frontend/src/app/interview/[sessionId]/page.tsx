@@ -71,17 +71,6 @@ export default function InterviewPage() {
     }
   }, []);
 
-  // 重新开始录制
-  const restartRecording = useCallback(() => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setRecordedChunks([]);
-      mediaRecorderRef.current.start();
-
-      console.debug("重新开始录制...");
-    }
-  }, []);
-
   const silentAnalysis = useCallback(async () => {
     if (recordedChunks.length === 0) {
       console.warn("没有录制的视频数据，无法进行分析");
@@ -98,11 +87,10 @@ export default function InterviewPage() {
         sessionId,
       );
       console.info("分析结果:", response.data);
-      restartRecording();
     } catch (error) {
       console.warn("后台分析失败:", error);
     }
-  }, [recordedChunks, restartRecording, sessionId]);
+  }, [recordedChunks, sessionId]);
 
   const handleDataAvailable = useCallback(({ data }: { data: Blob }) => {
     if (data.size > 0) {
@@ -279,18 +267,18 @@ export default function InterviewPage() {
     try {
       setLoading(true);
 
-      await silentAnalysis();
-
       const response = await interviewAPI.answerQuestion(sessionId, answer);
 
       // 处理回答评估
       if (response.data.is_complete) {
-        // 面试结束，停止录制
-        stopRecording();
-
         // 设置面试完成状态
         setIsComplete(true);
         setLoadingFinalEvaluation(true);
+
+        await silentAnalysis();
+
+        // 面试结束，停止录制
+        stopRecording();
 
         // 获取面试结果详情
         try {
@@ -318,9 +306,6 @@ export default function InterviewPage() {
         setCurrentQuestion(response.data.next_question);
         setQuestionIndex(questionIndex + 1);
         setAnswer("");
-
-        restartRecording();
-
         messageApi.success("回答已提交，请继续回答下一个问题");
       }
     } catch (error) {
