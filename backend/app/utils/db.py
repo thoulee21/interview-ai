@@ -59,12 +59,10 @@ def init_db():
     CREATE TABLE IF NOT EXISTS multimodal_analysis (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_id TEXT,
-        question_id INTEGER,
         video_analysis TEXT,
         audio_analysis TEXT,
         created_at TIMESTAMP,
-        FOREIGN KEY (session_id) REFERENCES interview_sessions (session_id),
-        FOREIGN KEY (question_id) REFERENCES interview_questions (id)
+        FOREIGN KEY (session_id) REFERENCES interview_sessions (session_id)
     )
     ''')
 

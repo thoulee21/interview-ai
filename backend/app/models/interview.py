@@ -326,13 +326,12 @@ class MultimodalAnalysis:
     """多模态分析模型"""
 
     @staticmethod
-    def create_or_update(session_id, question_id, video_analysis=None, audio_analysis=None):
+    def create_or_update(session_id, video_analysis=None, audio_analysis=None):
         """
         创建或更新多模态分析数据
 
         Args:
             session_id (str): 会话ID
-            question_id (int): 问题ID
             video_analysis (dict, optional): 视频分析数据
             audio_analysis (dict, optional): 音频分析数据
 
@@ -354,8 +353,8 @@ class MultimodalAnalysis:
 
         # 检查是否已有记录
         cursor.execute(
-            "SELECT id FROM multimodal_analysis WHERE question_id = ?",
-            (question_id,)
+            "SELECT id FROM multimodal_analysis WHERE session_id = ?",
+            (session_id,)
         )
         existing = cursor.fetchone()
 
@@ -382,8 +381,8 @@ class MultimodalAnalysis:
         else:
             # 创建新记录
             cursor.execute(
-                "INSERT INTO multimodal_analysis (session_id, question_id, video_analysis, audio_analysis, created_at) VALUES (?, ?, ?, ?, ?)",
-                (session_id, question_id, video_json, audio_json, datetime.now())
+                "INSERT INTO multimodal_analysis (session_id, video_analysis, audio_analysis, created_at) VALUES (?, ?, ?, ?)",
+                (session_id, video_json, audio_json, datetime.now())
             )
             db.commit()
             return cursor.lastrowid
@@ -411,7 +410,6 @@ class MultimodalAnalysis:
         for a in cursor.fetchall():
             analyses.append({
                 'id': a['id'],
-                'questionId': a['question_id'],
                 'videoAnalysis': json.loads(a['video_analysis']) if a['video_analysis'] else None,
                 'audioAnalysis': json.loads(a['audio_analysis']) if a['audio_analysis'] else None,
                 'createdAt': a['created_at']

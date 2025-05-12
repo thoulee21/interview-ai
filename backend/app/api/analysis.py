@@ -12,7 +12,7 @@ import cv2
 import ffmpeg
 import librosa
 import numpy as np
-from app.models.interview import InterviewQuestion, MultimodalAnalysis
+from app.models.interview import MultimodalAnalysis
 from app.services.xfyun_services import stt
 from app.utils.pcm_wav import wav2pcm
 from flask import current_app, jsonify, request
@@ -189,16 +189,10 @@ def multimodal_analysis():
             except:
                 logger.warning(f"无法删除临时视频文件: {video_path}")
 
-        # 如果提供了会话ID，保存分析结果到数据库
-        if session_id:
-            # 获取最后一个问题记录
-            current_question = InterviewQuestion.get_latest_for_session(
-                session_id)
-
-            if current_question:
-                # 保存分析结果
-                MultimodalAnalysis.create_or_update(
-                    session_id, current_question["id"], analysis, audio_analysis)
+        # 保存分析结果
+        MultimodalAnalysis.create_or_update(
+            session_id, analysis, audio_analysis
+        )
 
         combined_result = {
             "video": analysis,

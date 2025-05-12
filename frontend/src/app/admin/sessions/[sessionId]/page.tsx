@@ -62,7 +62,6 @@ type AudioAnalysisType = {
 
 type AnalysisType = {
   id: string;
-  questionId: string;
   videoAnalysis?: VideoAnalysisType;
   audioAnalysis?: AudioAnalysisType;
   createdAt: string;
@@ -199,7 +198,7 @@ export default function AdminSessionDetailPage() {
       key: "type",
       width: 100,
       render: (_: string, record: AnalysisType) => (
-        <Space>
+        <Space wrap>
           {record.videoAnalysis && (
             <Tag icon={<VideoCameraOutlined />} color="blue">
               视频
@@ -214,15 +213,11 @@ export default function AdminSessionDetailPage() {
       ),
     },
     {
-      title: "相关问题",
-      key: "questionId",
-      width: 100,
-      render: (_: string, record: AnalysisType) => {
-        const question = sessionDetails.questions.find(
-          (q) => q.id === record.questionId,
-        );
-        return question ? `问题 ${question.questionIndex + 1}` : "未知问题";
-      },
+      title: "创建时间",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 180,
+      render: (text: string) => formatDateTime(text),
     },
     {
       title: "分析结果",
@@ -389,14 +384,7 @@ export default function AdminSessionDetailPage() {
           )}
         </div>
       ),
-    },
-    {
-      title: "创建时间",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      width: 180,
-      render: (text: string) => formatDateTime(text),
-    },
+    }
   ];
 
   return (
