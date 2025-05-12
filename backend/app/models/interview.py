@@ -56,6 +56,25 @@ class InterviewSession:
         )
         return cursor.fetchone()
 
+    def get_user_id(session_id):
+        """
+        获取面试会话的用户ID
+
+        Args:
+            session_id (str): 会话ID
+
+        Returns:
+            int|None: 用户ID
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        cursor.execute(
+            "SELECT user_id FROM user_sessions WHERE session_id = ?",
+            (session_id,)
+        )
+        return cursor.fetchone()
+
     @staticmethod
     def get_all(limit=100, offset=0, user_filter=None):
         """
@@ -346,7 +365,7 @@ class MultimodalAnalysis:
 
         # 准备多模态数据
         video_json = json.dumps(video_analysis) if video_analysis else None
-        
+
         audio_json = json.dumps(
             audio_analysis, cls=Float32JSONEncoder
         ) if audio_analysis else None

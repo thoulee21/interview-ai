@@ -3,6 +3,7 @@
 export const runtime = "edge";
 
 import interviewAPI from "@/services/api";
+import type { UserProfile } from "@/types";
 import formatEvaluationToMarkdown from "@/utils/formatEvaluationToMarkdown";
 import {
   ArrowLeftOutlined,
@@ -11,6 +12,7 @@ import {
   FileTextOutlined,
   QuestionCircleOutlined,
   SoundOutlined,
+  TeamOutlined,
   VideoCameraOutlined,
 } from "@ant-design/icons";
 import {
@@ -76,6 +78,7 @@ type SessionDetailsType = {
   endTime: string | null;
   questions: Array<QuestionType>;
   analyses?: Array<AnalysisType> | null;
+  userInfo: UserProfile;
 };
 
 const { Title, Paragraph, Text } = Typography;
@@ -384,7 +387,7 @@ export default function AdminSessionDetailPage() {
           )}
         </div>
       ),
-    }
+    },
   ];
 
   return (
@@ -441,14 +444,33 @@ export default function AdminSessionDetailPage() {
           bordered
           column={{ xxl: 4, xl: 3, lg: 3, md: 3, sm: 2, xs: 1 }}
         >
-          <Descriptions.Item label="会话ID">
+          <Descriptions.Item label="会话ID" span={1}>
             {sessionDetails.sessionId}
+          </Descriptions.Item>
+          <Descriptions.Item label="用户">
+            <Tag icon={<TeamOutlined />} color="purple">
+              <Link href={`/admin/users/${sessionDetails.userInfo.id}`}>
+                {sessionDetails.userInfo.username}
+              </Link>
+            </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="职位类型">
             {sessionDetails.positionType}
           </Descriptions.Item>
           <Descriptions.Item label="难度">
             {sessionDetails.difficulty}
+          </Descriptions.Item>
+          <Descriptions.Item label="开始时间">
+            {formatDateTime(sessionDetails.startTime)}
+          </Descriptions.Item>
+          <Descriptions.Item label="结束时间">
+            {formatDateTime(sessionDetails.endTime)}
+          </Descriptions.Item>
+          <Descriptions.Item label="持续时间">
+            {calculateDuration()}
+          </Descriptions.Item>
+          <Descriptions.Item label="问题数量">
+            {sessionDetails.questions?.length || 0}
           </Descriptions.Item>
           <Descriptions.Item label="状态">
             <Tag
@@ -466,18 +488,6 @@ export default function AdminSessionDetailPage() {
                   ? "进行中"
                   : sessionDetails.status}
             </Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="开始时间">
-            {formatDateTime(sessionDetails.startTime)}
-          </Descriptions.Item>
-          <Descriptions.Item label="结束时间">
-            {formatDateTime(sessionDetails.endTime)}
-          </Descriptions.Item>
-          <Descriptions.Item label="持续时间">
-            {calculateDuration()}
-          </Descriptions.Item>
-          <Descriptions.Item label="问题数量">
-            {sessionDetails.questions?.length || 0}
           </Descriptions.Item>
         </Descriptions>
       </Card>

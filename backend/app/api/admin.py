@@ -48,6 +48,9 @@ def get_session_details(session_id):
         if not session:
             return jsonify({"error": "会话不存在"}), 404
 
+        user_id = InterviewSession.get_user_id(session_id)['user_id']
+        user_info = User.get_by_id(user_id)
+
         # 获取会话的所有问题
         questions = InterviewQuestion.get_all_for_session(session_id)
 
@@ -67,7 +70,8 @@ def get_session_details(session_id):
             "startTime": start_time,
             "endTime": end_time,
             "questions": questions,
-            "analyses": analyses
+            "analyses": analyses,
+            "userInfo": user_info
         })
     except Exception as e:
         logger.exception(f"获取会话详情失败: {str(e)}")
