@@ -10,7 +10,7 @@ console.log("API_BASE_URL:", API_BASE_URL);
 // 创建axios实例
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60 * 1000, // 请求超时设置为60秒
+  timeout: 2 * 60 * 1000, // 请求超时设置为120秒
   headers: {
     "Content-Type": "application/json",
   },
@@ -139,10 +139,7 @@ const interviewAPI = {
   },
 
   // 提交问题回答
-  answerQuestion: (
-    sessionId: string,
-    answer: string,
-  ) => {
+  answerQuestion: (sessionId: string, answer: string) => {
     return apiClient.post("/answer_question", {
       session_id: sessionId,
       answer: answer,
