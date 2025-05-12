@@ -61,7 +61,7 @@ docker-compose up -d --build
 4. 访问应用
 
    - 前端界面: http://localhost:3000
-   - 后端 API: http://localhost:5000/api/health (健康检查接口)
+   - 后端 API: http://localhost:5000/health (健康检查接口)
 
 5. 查看日志（如果需要）
 
@@ -76,77 +76,6 @@ docker-compose logs -f backend
 
 ```bash
 docker-compose down
-```
-
-### 手动部署
-
-#### 后端设置
-
-1. 创建并激活 Python 虚拟环境（可选但建议）
-
-```bash
-# 创建虚拟环境
-python -m venv venv
-# Windows激活
-venv\Scripts\activate
-# Linux/Mac激活
-source venv/bin/activate
-```
-
-2. 安装依赖
-
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-3. 创建`.env`文件，配置讯飞星火 API 凭证
-
-```
-XUNFEI_APP_ID=your_app_id_here
-XUNFEI_API_KEY=your_api_key_here
-XUNFEI_API_SECRET=your_api_secret_here
-```
-
-4. 启动后端服务
-
-```bash
-python app.py
-```
-
-#### 前端设置
-
-1. 安装依赖
-
-```bash
-cd frontend
-npm install
-```
-
-2. 启动前端开发服务器
-
-```bash
-npm start
-```
-
-3. 访问应用
-   打开浏览器，访问 http://localhost:3000 即可使用系统
-
-## 项目结构
-
-```
-interview-ai/
-├── frontend/           # 前端React应用
-│   ├── public/         # 静态文件
-│   └── src/            # 源代码
-│       ├── components/ # 组件
-│       ├── pages/      # 页面
-│       └── services/   # API服务
-├── backend/            # 后端Python应用
-│   ├── app.py          # 主应用入口
-│   └── xunfei_api.py   # 讯飞星火API封装
-├── docs/               # 项目文档
-└── assets/             # 资源文件
 ```
 
 ## 在竞赛中的应用
@@ -165,15 +94,7 @@ interview-ai/
 - [x] 后端 API 开发
 - [x] 讯飞星火大模型集成
 - [x] 基本面试流程实现
-- [ ] 视频分析算法优化
-- [ ] 音频分析算法优化
+- [-] 视频分析算法优化
+- [x] 音频分析算法优化
 - [ ] 用户体验完善
 - [ ] 综合测试与修复
-
-## 团队成员
-
-- [团队成员信息]
-
-## 许可证
-
-本项目遵循[许可证名称]开源许可。
