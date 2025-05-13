@@ -1,5 +1,7 @@
 "use client";
 
+export const runtime = "edge";
+
 import interviewAPI from "@/services/api";
 import type { UserProfile } from "@/types";
 import formatEvaluationToMarkdown from "@/utils/formatEvaluationToMarkdown";
