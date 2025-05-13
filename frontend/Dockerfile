@@ -1,5 +1,7 @@
 FROM node:slim
 
+LABEL org.opencontainers.image.source="https://github.com/thoulee21/interview-ai"
+
 WORKDIR /app
 
 # 安装依赖

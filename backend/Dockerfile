@@ -1,5 +1,7 @@
 FROM python:3.13-slim
 
+LABEL org.opencontainers.image.source="https://github.com/thoulee21/interview-ai"
+
 WORKDIR /app
 
 COPY debian.sources /etc/apt/sources.list.d/debian.sources
