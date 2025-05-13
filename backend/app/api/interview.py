@@ -12,9 +12,7 @@ from app.models.interview import (FinalEvaluation, InterviewQuestion,
 from app.models.user import User
 from app.schemas.validation import (extract_evaluation_from_text,
                                     fix_evaluation_data,
-                                    validate_audio_analysis,
-                                    validate_evaluation_result,
-                                    validate_video_analysis)
+                                    validate_evaluation_result)
 from app.services.ai import ai_service
 from flask import current_app, jsonify, request
 
@@ -143,7 +141,7 @@ def answer_question():
             )
 
             if not is_valid:
-                logger.warning(f"评估结果验证失败: {errors}")
+                logger.warning(f"评估结果验证失败: {errors}, 尝试修复数据")
                 # 尝试修复数据
                 data = fix_evaluation_data(data)
 
