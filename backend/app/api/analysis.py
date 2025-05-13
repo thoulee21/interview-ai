@@ -489,8 +489,8 @@ def extract_and_evaluate_audio(video_path):
         clarity = min(10, max(1, clarity_score * 5))
 
         # 语速评分 (1-10)
-        # 理想语速大约是 4-5 音节/秒
-        ideal_speech_rate = 4.5
+        # 理想语速大约是 2-3 音节/秒
+        ideal_speech_rate = 2.5
         pace = min(10, max(1, 10 - abs(speech_rate - ideal_speech_rate) * 2))
 
         # 音调评分 (基于音高变化)
