@@ -1,6 +1,5 @@
 "use client";
 
-import AuthGuard from "@/components/AuthGuard";
 import { interviewAPI } from "@/services/api";
 import { ArrowLeftOutlined, UserAddOutlined } from "@ant-design/icons";
 import {
@@ -94,7 +93,7 @@ export default function CreateUserPage() {
   };
 
   return (
-    <AuthGuard requireAdmin={true}>
+    <>
       {contextHolder}
       <Breadcrumb
         style={{ marginBottom: 16 }}
@@ -194,6 +193,6 @@ export default function CreateUserPage() {
           </Form>
         </Spin>
       </Card>
-    </AuthGuard>
+    </>
   );
 }

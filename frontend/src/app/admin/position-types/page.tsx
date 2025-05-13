@@ -1,6 +1,5 @@
 "use client";
 
-import AuthGuard from "@/components/AuthGuard";
 import interviewAPI from "@/services/api";
 import {
   ApartmentOutlined,
@@ -217,76 +216,70 @@ export default function PositionTypesPage() {
   ];
 
   return (
-    <AuthGuard requireAdmin={true}>
-      <div>
-        <Breadcrumb
-          style={{ marginBottom: 16 }}
-          items={[
-            {
-              title: <Link href="/">首页</Link>,
-            },
-            {
-              title: <Link href="/admin">管理后台</Link>,
-            },
-            {
-              title: "职位类型管理",
-            },
-          ]}
-        />
+    <div>
+      <Breadcrumb
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            title: <Link href="/">首页</Link>,
+          },
+          {
+            title: <Link href="/admin">管理后台</Link>,
+          },
+          {
+            title: "职位类型管理",
+          },
+        ]}
+      />
 
-        <Title level={2}>
-          <ApartmentOutlined style={{ marginRight: 8 }} />
-          职位类型管理
-        </Title>
-        <Card style={{ marginBottom: "20px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "16px",
-            }}
-          >
-            <Search
-              placeholder="搜索职位类型"
-              allowClear
-              style={{ width: 300 }}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleCreate}
-            >
-              添加职位类型
-            </Button>
-          </div>
-          <Table
-            rowKey="id"
-            columns={columns}
-            dataSource={filteredPositionTypes}
-            loading={loading}
-            pagination={{
-              defaultPageSize: 10,
-              showSizeChanger: true,
-              showTotal: (total) => `共 ${total} 条`,
-              pageSizeOptions: ["10", "20", "50"],
-              hideOnSinglePage: true,
-            }}
-            onChange={(_pagination, _filters, sorter) => {
-              const typedSorter = sorter as {
-                field: string;
-                order?: "ascend" | "descend";
-              };
-
-              if (typedSorter) {
-                setSortField(typedSorter.field);
-                setSortOrder(typedSorter.order);
-              }
-            }}
+      <Title level={2}>
+        <ApartmentOutlined style={{ marginRight: 8 }} />
+        职位类型管理
+      </Title>
+      <Card style={{ marginBottom: "20px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "16px",
+          }}
+        >
+          <Search
+            placeholder="搜索职位类型"
+            allowClear
+            style={{ width: 300 }}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
-        </Card>
-      </div>
-    </AuthGuard>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+            添加职位类型
+          </Button>
+        </div>
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={filteredPositionTypes}
+          loading={loading}
+          pagination={{
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `共 ${total} 条`,
+            pageSizeOptions: ["10", "20", "50"],
+            hideOnSinglePage: true,
+          }}
+          onChange={(_pagination, _filters, sorter) => {
+            const typedSorter = sorter as {
+              field: string;
+              order?: "ascend" | "descend";
+            };
+
+            if (typedSorter) {
+              setSortField(typedSorter.field);
+              setSortOrder(typedSorter.order);
+            }
+          }}
+        />
+      </Card>
+    </div>
   );
 }

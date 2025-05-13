@@ -1,6 +1,5 @@
 "use client";
 
-import AuthGuard from "@/components/AuthGuard";
 import { interviewAPI } from "@/services/api";
 import type { UserProfile } from "@/types";
 import {
@@ -131,7 +130,7 @@ export default function UserDetailPage() {
   };
 
   return (
-    <AuthGuard requireAdmin={true}>
+    <>
       {contextHolder}
       <Breadcrumb
         style={{ marginBottom: 16 }}
@@ -233,6 +232,6 @@ export default function UserDetailPage() {
           </Form>
         </Spin>
       </Card>
-    </AuthGuard>
+    </>
   );
 }

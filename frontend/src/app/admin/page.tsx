@@ -1,6 +1,5 @@
 "use client";
 
-import AuthGuard from "@/components/AuthGuard";
 import { interviewAPI } from "@/services/api";
 import type { SessionType, UserProfile } from "@/types";
 import {
@@ -317,119 +316,116 @@ export default function AdminPage() {
     },
   ];
 
-  // 使用AuthGuard包裹整个管理页面
   return (
-    <AuthGuard requireAdmin={true}>
-      <div className="admin-page">
-        <Breadcrumb
-          style={{ marginBottom: 16 }}
-          items={[
-            {
-              title: <Link href="/">首页</Link>,
-            },
-            {
-              title: "管理后台",
-            },
-          ]}
-        />
+    <div className="admin-page">
+      <Breadcrumb
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            title: <Link href="/">首页</Link>,
+          },
+          {
+            title: "管理后台",
+          },
+        ]}
+      />
 
-        <Title level={2}>
-          <UserOutlined style={{ marginRight: 8 }} />
-          面试会话管理
-        </Title>
+      <Title level={2}>
+        <UserOutlined style={{ marginRight: 8 }} />
+        面试会话管理
+      </Title>
 
-        <Card style={{ marginBottom: 20 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: 12,
-            }}
-          >
-            <Space wrap>
-              <Input
-                placeholder="搜索会话ID、职位或用户"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                prefix={<SearchOutlined />}
-                style={{ width: 200 }}
-              />
-              <Select
-                value={statusFilter}
-                onChange={(value) => setStatusFilter(value)}
-                style={{ width: 120 }}
-                placeholder="状态筛选"
-              >
-                <Option value="all">所有状态</Option>
-                <Option value="active">进行中</Option>
-                <Option value="completed">已完成</Option>
-                <Option value="abandoned">已放弃</Option>
-              </Select>
-              <Select
-                value={positionFilter}
-                onChange={(value) => setPositionFilter(value)}
-                style={{ width: 150 }}
-                placeholder="职位筛选"
-              >
-                <Option value="all">所有职位</Option>
-                {positionTypes.map((type) => (
-                  <Option key={type} value={type}>
-                    {type}
-                  </Option>
-                ))}
-              </Select>
-              <Select
-                value={userFilter}
-                onChange={(value) => setUserFilter(value)}
-                style={{ width: 150 }}
-                placeholder="用户筛选"
-                allowClear
-              >
-                {users.map((user) => (
-                  <Option key={user.id} value={user.id}>
-                    {user.username}
-                  </Option>
-                ))}
-              </Select>
-            </Space>
-
-            <Button type="primary" onClick={fetchSessions}>
-              刷新数据
-            </Button>
-          </div>
-        </Card>
-
-        <Card>
-          <Spin spinning={loading}>
-            <Table
-              columns={columns}
-              dataSource={filteredSessions.map((session) => ({
-                ...session,
-                key: session.sessionId,
-              }))}
-              pagination={{
-                defaultPageSize: 10,
-                showSizeChanger: true,
-                pageSizeOptions: ["10", "20", "50"],
-                showTotal: (total) => `共 ${total} 条记录`,
-              }}
-              bordered
-              onChange={(_pagination, _filters, sorter) => {
-                const typedSorter = sorter as {
-                  field: string;
-                  order?: "ascend" | "descend";
-                };
-
-                if (typedSorter) {
-                  setSortField(typedSorter.field);
-                  setSortOrder(typedSorter.order);
-                }
-              }}
+      <Card style={{ marginBottom: 20 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <Space wrap>
+            <Input
+              placeholder="搜索会话ID、职位或用户"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              prefix={<SearchOutlined />}
+              style={{ width: 200 }}
             />
-          </Spin>
-        </Card>
-      </div>
-    </AuthGuard>
+            <Select
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value)}
+              style={{ width: 120 }}
+              placeholder="状态筛选"
+            >
+              <Option value="all">所有状态</Option>
+              <Option value="active">进行中</Option>
+              <Option value="completed">已完成</Option>
+              <Option value="abandoned">已放弃</Option>
+            </Select>
+            <Select
+              value={positionFilter}
+              onChange={(value) => setPositionFilter(value)}
+              style={{ width: 150 }}
+              placeholder="职位筛选"
+            >
+              <Option value="all">所有职位</Option>
+              {positionTypes.map((type) => (
+                <Option key={type} value={type}>
+                  {type}
+                </Option>
+              ))}
+            </Select>
+            <Select
+              value={userFilter}
+              onChange={(value) => setUserFilter(value)}
+              style={{ width: 150 }}
+              placeholder="用户筛选"
+              allowClear
+            >
+              {users.map((user) => (
+                <Option key={user.id} value={user.id}>
+                  {user.username}
+                </Option>
+              ))}
+            </Select>
+          </Space>
+
+          <Button type="primary" onClick={fetchSessions}>
+            刷新数据
+          </Button>
+        </div>
+      </Card>
+
+      <Card>
+        <Spin spinning={loading}>
+          <Table
+            columns={columns}
+            dataSource={filteredSessions.map((session) => ({
+              ...session,
+              key: session.sessionId,
+            }))}
+            pagination={{
+              defaultPageSize: 10,
+              showSizeChanger: true,
+              pageSizeOptions: ["10", "20", "50"],
+              showTotal: (total) => `共 ${total} 条记录`,
+            }}
+            bordered
+            onChange={(_pagination, _filters, sorter) => {
+              const typedSorter = sorter as {
+                field: string;
+                order?: "ascend" | "descend";
+              };
+
+              if (typedSorter) {
+                setSortField(typedSorter.field);
+                setSortOrder(typedSorter.order);
+              }
+            }}
+          />
+        </Spin>
+      </Card>
+    </div>
   );
 }

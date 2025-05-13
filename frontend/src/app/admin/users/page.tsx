@@ -1,6 +1,5 @@
 "use client";
 
-import AuthGuard from "@/components/AuthGuard";
 import { interviewAPI } from "@/services/api";
 import {
   CheckCircleOutlined,
@@ -355,7 +354,7 @@ export default function UsersPage() {
   ];
 
   return (
-    <AuthGuard requireAdmin={true}>
+    <>
       {contextHolder}
       <div className="admin-users-page">
         <Breadcrumb
@@ -462,6 +461,6 @@ export default function UsersPage() {
           />
         </Card>
       </div>
-    </AuthGuard>
+    </>
   );
 }
