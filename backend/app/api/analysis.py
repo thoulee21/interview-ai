@@ -14,6 +14,7 @@ import ffmpeg
 import librosa
 import numpy as np
 import soundfile as sf
+from app.api.auth import token_required
 from app.models.interview import MultimodalAnalysis
 from app.services.xfyun_services import stt
 from app.utils.pcm_wav import wav2pcm
@@ -23,6 +24,7 @@ from flask import current_app, jsonify, request
 logger = logging.getLogger(__name__)
 
 
+@token_required
 def multimodal_analysis():
     """
     多模态分析接口

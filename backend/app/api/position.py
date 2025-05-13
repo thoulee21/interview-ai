@@ -2,10 +2,12 @@
 职位类型API模块
 """
 
+from app.api.auth import token_required
 from app.models.position import PositionType
 from flask import jsonify
 
 
+@token_required
 def get_position_types():
     """获取所有职位类型"""
     try:
