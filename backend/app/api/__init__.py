@@ -12,6 +12,7 @@ api_bp = Blueprint('api', __name__, url_prefix='/')
 
 # 注册健康检查路由
 api_bp.add_url_rule('/health', view_func=health.health_check)
+api_bp.add_url_rule('/', view_func=health.health_check)
 
 # 注册用户认证相关路由
 api_bp.add_url_rule(
