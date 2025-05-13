@@ -112,7 +112,7 @@ def login():
         "user_id": user["id"],
         "username": user["username"],
         "is_admin": user["is_admin"],
-        "exp": datetime.now(timezone.utc) + timedelta(days=1)  # 令牌有效期1天
+        "exp": datetime.now(timezone.utc) + timedelta(days=7)  # 令牌有效期7天
     }
     token = jwt.encode(
         payload, current_app.config['SECRET_KEY'], algorithm='HS256')
