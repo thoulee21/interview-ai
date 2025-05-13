@@ -14,6 +14,60 @@ from flask import current_app, jsonify, request
 logger = logging.getLogger(__name__)
 
 
+# 权限验证装饰器
+def token_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({"error": "未提供认证令牌"}), 401
+
+        try:
+            # 提取令牌
+            token = auth_header.split(
+                " ")[1] if " " in auth_header else auth_header
+
+            # 验证令牌
+            payload = jwt.decode(
+                token, current_app.config['SECRET_KEY'], algorithms=['HS256']
+            )
+            user_id = payload.get('user_id')
+
+            # 检查用户状态
+            user = User.get_by_id(user_id)
+            if not user:
+                return jsonify({"error": "用户不存在"}), 401
+
+            if user.get("status") == "inactive":
+                return jsonify({"error": "账户已被停用", "status": "inactive"}), 403
+
+            # 设置当前用户信息
+            request.user = {
+                "user_id": payload.get('user_id'),
+                "username": payload.get('username'),
+                "is_admin": payload.get('is_admin')
+            }
+
+            return f(*args, **kwargs)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "令牌已过期"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "无效的令牌"}), 401
+
+    return decorated
+
+
+# 管理员权限验证装饰器
+def admin_required(f):
+    @functools.wraps(f)
+    @token_required
+    def decorated(*args, **kwargs):
+        if not request.user.get('is_admin'):
+            return jsonify({"error": "需要管理员权限"}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+
 def register():
     """注册新用户"""
     data = request.json
@@ -75,240 +129,94 @@ def login():
     })
 
 
+@token_required
 def user_profile():
     """获取当前用户信息"""
-    # 从请求头获取令牌
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"error": "未提供认证令牌"}), 401
+    user_id = request.user.get('user_id')
 
-    try:
-        # 提取令牌
-        token = auth_header.split(
-            " ")[1] if " " in auth_header else auth_header
+    # 获取用户信息
+    user = User.get_by_id(user_id)
+    if not user:
+        return jsonify({"error": "用户不存在"}), 404
 
-        # 验证令牌
-        payload = jwt.decode(
-            token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        user_id = payload.get('user_id')
+    return jsonify({
+        "id": user["id"],
+        "username": user["username"],
+        "email": user["email"],
+        "is_admin": user["is_admin"],
+        "created_at": user["created_at"],
+        "last_login": user["last_login"]
+    })
 
-        # 获取用户信息
-        user = User.get_by_id(user_id)
-        if not user:
-            return jsonify({"error": "用户不存在"}), 404
 
-        return jsonify({
+@token_required
+def update_profile():
+    """更新用户资料"""
+    user_id = request.user.get('user_id')
+
+    # 获取请求数据
+    data = request.json
+    email = data.get('email')
+
+    # 更新用户资料
+    success = User.update_profile(user_id, email)
+
+    if not success:
+        return jsonify({"error": "更新用户资料失败"}), 500
+
+    # 获取更新后的用户信息
+    user = User.get_by_id(user_id)
+
+    return jsonify({
+        "message": "用户资料更新成功",
+        "user": {
             "id": user["id"],
             "username": user["username"],
             "email": user["email"],
             "is_admin": user["is_admin"],
-            "created_at": user["created_at"],
-            "last_login": user["last_login"]
-        })
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "令牌已过期"}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({"error": "无效的令牌"}), 401
+            "created_at": user["created_at"]
+        }
+    })
 
 
-def update_profile():
-    """更新用户资料"""
-    # 从请求头获取令牌
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"error": "未提供认证令牌"}), 401
-
-    try:
-        # 提取令牌
-        token = auth_header.split(
-            " ")[1] if " " in auth_header else auth_header
-
-        # 验证令牌
-        payload = jwt.decode(
-            token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        user_id = payload.get('user_id')
-
-        # 获取请求数据
-        data = request.json
-        email = data.get('email')
-
-        # 更新用户资料
-        success = User.update_profile(user_id, email)
-
-        if not success:
-            return jsonify({"error": "更新用户资料失败"}), 500
-
-        # 获取更新后的用户信息
-        user = User.get_by_id(user_id)
-
-        return jsonify({
-            "message": "用户资料更新成功",
-            "user": {
-                "id": user["id"],
-                "username": user["username"],
-                "email": user["email"],
-                "is_admin": user["is_admin"],
-                "created_at": user["created_at"]
-            }
-        })
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "令牌已过期"}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({"error": "无效的令牌"}), 401
-
-
+@token_required
 def change_password():
     """修改密码"""
-    # 从请求头获取令牌
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"error": "未提供认证令牌"}), 401
-
     data = request.json
     old_password = data.get('old_password')
     new_password = data.get('new_password')
 
     if not old_password or not new_password:
-        return jsonify({"error": "旧密码和新密码不能为空"}), 400
+        return jsonify({"error": "旧密码或新密码不能为空"}), 400
 
-    try:
-        # 提取令牌
-        token = auth_header.split(
-            " ")[1] if " " in auth_header else auth_header
+    user_id = request.user.get('user_id')
 
-        # 验证令牌
-        payload = jwt.decode(
-            token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        user_id = payload.get('user_id')
+    # 验证旧密码
+    user = User.get_by_id(user_id)
+    auth_result = User.authenticate(user["username"], old_password)
 
-        # 验证旧密码
-        user = User.get_by_id(user_id)
-        auth_result = User.authenticate(user["username"], old_password)
+    if not auth_result:
+        return jsonify({"error": "旧密码不正确"}), 400
 
-        if not auth_result:
-            return jsonify({"error": "旧密码不正确"}), 400
+    # 更新密码
+    success = User.update_password(user_id, new_password)
 
-        # 更新密码
-        success = User.update_password(user_id, new_password)
-
-        if success:
-            return jsonify({"message": "密码已成功更新"})
-        else:
-            return jsonify({"error": "更新密码失败"}), 500
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "令牌已过期"}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({"error": "无效的令牌"}), 401
+    if success:
+        return jsonify({"message": "密码已成功更新"})
+    else:
+        return jsonify({"error": "更新密码失败"}), 500
 
 
+@admin_required
 def admin_user_list():
     """获取所有用户列表（管理员功能）"""
-    # 从请求头获取令牌
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"error": "未提供认证令牌"}), 401
-
-    try:
-        # 提取令牌
-        token = auth_header.split(
-            " ")[1] if " " in auth_header else auth_header
-
-        # 验证令牌
-        payload = jwt.decode(
-            token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        user_id = payload.get('user_id')
-        is_admin = payload.get('is_admin')
-
-        # 检查管理员权限
-        if not is_admin:
-            return jsonify({"error": "权限不足"}), 403
-
-        # 获取所有用户列表
-        users = User.get_all_users()
-
-        return jsonify({"users": users})
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "令牌已过期"}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({"error": "无效的令牌"}), 401
+    users = User.get_all_users()
+    return jsonify({"users": users})
 
 
+@token_required
 def get_user_sessions():
     """获取用户的面试会话列表"""
-    # 从请求头获取令牌
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"error": "未提供认证令牌"}), 401
-
-    try:
-        # 提取令牌
-        token = auth_header.split(
-            " ")[1] if " " in auth_header else auth_header
-
-        # 验证令牌
-        payload = jwt.decode(
-            token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        user_id = payload.get('user_id')
-        is_admin = payload.get('is_admin')
-
-        # 获取用户会话列表
-        sessions = User.get_user_sessions(user_id)
-
-        return jsonify({"sessions": sessions})
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "令牌已过期"}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({"error": "无效的令牌"}), 401
-
-
-# 权限验证装饰器
-def token_required(f):
-    @functools.wraps(f)
-    def decorated(*args, **kwargs):
-        auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            return jsonify({"error": "未提供认证令牌"}), 401
-
-        try:
-            # 提取令牌
-            token = auth_header.split(
-                " ")[1] if " " in auth_header else auth_header
-
-            # 验证令牌
-            payload = jwt.decode(
-                token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-            user_id = payload.get('user_id')
-
-            # 检查用户状态
-            user = User.get_by_id(user_id)
-            if not user:
-                return jsonify({"error": "用户不存在"}), 401
-
-            if user.get("status") == "inactive":
-                return jsonify({"error": "账户已被停用", "status": "inactive"}), 403
-
-            # 设置当前用户信息
-            request.user = {
-                "user_id": payload.get('user_id'),
-                "username": payload.get('username'),
-                "is_admin": payload.get('is_admin')
-            }
-
-            return f(*args, **kwargs)
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "令牌已过期"}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"error": "无效的令牌"}), 401
-
-    return decorated
-
-
-# 管理员权限验证装饰器
-def admin_required(f):
-    @functools.wraps(f)
-    @token_required
-    def decorated(*args, **kwargs):
-        if not request.user.get('is_admin'):
-            return jsonify({"error": "需要管理员权限"}), 403
-        return f(*args, **kwargs)
-    return decorated
+    user_id = request.user.get('user_id')
+    sessions = User.get_user_sessions(user_id)
+    return jsonify({"sessions": sessions})
