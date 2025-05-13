@@ -24,6 +24,7 @@ import {
   Tag,
   Typography,
 } from "antd";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import "./app.css";
@@ -706,7 +707,16 @@ export default function HomePage() {
             <Paragraph
               style={{ fontSize: "16px", lineHeight: "1.8", color: "#5c3c00" }}
             >
-              本项目基于第十四届中国软件杯大赛&#34;面向高校学生的多模态智能模拟面试评测智能体开发&#34;赛题进行设计与实现。
+              本项目基于第十四届中国软件杯大赛&#34;
+              <Link
+                href="https://www.cnsoftbei.com/content-3-1094-1.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#5c3c00", fontWeight: "bold" }}
+              >
+                面向高校学生的多模态智能模拟面试评测智能体开发
+              </Link>
+              &#34;赛题进行设计与实现。
               旨在帮助高校学生提升面试能力，通过多模态技术实现对面试过程的全方位评测，从而增强就业竞争力。
             </Paragraph>
             <Paragraph
