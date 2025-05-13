@@ -7,26 +7,10 @@
     "email": "thou_lee@outlook.com",
     "url": "https://thoulee21.github.io/"
   },
-  "cloudflare": {
-    "label": "Interview Go",
-    "products": [
-      "Workers"
-    ],
-    "categories": [],
-    "icon_urls": [
-      "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/5ca0ca32-e897-4699-d4c1-6b680512f000/public"
-    ],
-    "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/e42eec61-db86-49c8-7b29-c3ed4783e400/public",
-    "dash": true
-  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv env.d.ts",
-    "check": "opennextjs-cloudflare build && tsc && wrangler deploy --dry-run",
-    "deploy": "opennextjs-cloudflare build && wrangler deploy",
-    "preview": "opennextjs-cloudflare build && wrangler dev",
     "lint": "next lint"
   },
   "dependencies": {
@@ -34,7 +18,6 @@
     "@ant-design/nextjs-registry": "^1.0.2",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@microsoft/clarity": "^1.0.0",
-    "@opennextjs/cloudflare": "^1.0.0-beta.4",
     "ajv": "^8.17.1",
     "antd": "^5.24.9",
     "axios": "^1.9.0",
@@ -43,8 +26,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
-    "react-webcam": "^7.2.0",
-    "wrangler": "^4.14.1"
+    "react-webcam": "^7.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
