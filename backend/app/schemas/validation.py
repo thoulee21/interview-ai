@@ -5,6 +5,7 @@ JSON Schema 验证模块
 
 import json
 import logging
+import re
 
 from jsonschema import ValidationError, validate
 
@@ -115,7 +116,6 @@ def extract_evaluation_from_text(text):
             pass
 
         # 尝试提取 ```json ... ``` 格式的代码块
-        import re
         json_match = re.search(r'```json\s*([\s\S]*?)\s*```', text)
         if json_match:
             json_str = json_match.group(1)
@@ -128,8 +128,8 @@ def extract_evaluation_from_text(text):
             return json.loads(json_str)
 
         return None
-    except Exception as e:
-        logger.exception(f"从文本提取JSON失败: {str(e)}")
+    except json.decoder.JSONDecodeError as e:
+        logger.debug(f"从文本提取JSON失败: {str(e)}, 原始文本: {text}")
         return None
 
 
@@ -181,7 +181,7 @@ def fix_evaluation_data(data):
     # 确保必须的字段存在
     required_number_fields = ["overallScore",
                               "contentScore", "deliveryScore", "nonVerbalScore"]
-    
+
     # 使用较为智能的分数提取方法
     for field in required_number_fields:
         if field not in fixed_data or not isinstance(fixed_data[field], (int, float)):
