@@ -79,6 +79,13 @@ def multimodal_analysis():
         eye_contact_frames = 0
         facial_expression_variance = []
 
+        # 肢体语言分析指标
+        face_positions = []  # 记录人脸位置
+        head_poses = []      # 记录头部姿势
+        frame_diffs = []     # 记录帧间差异
+        prev_frame = None    # 上一帧
+        upper_body_regions = []  # 上半身区域
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
@@ -87,14 +94,38 @@ def multimodal_analysis():
             # 转换为灰度图像
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+            # 帧间差异计算（用于评估动作频率）
+            if prev_frame is not None:
+                frame_diff = cv2.absdiff(prev_frame, gray)
+                frame_diffs.append(np.mean(frame_diff))
+            prev_frame = gray.copy()
+
             # 人脸检测
             faces = face_cascade.detectMultiScale(gray, 1.3, 5)
             if len(faces) > 0:
                 face_detected_frames += 1
 
                 for (x, y, w, h) in faces:
+                    # 记录人脸位置（中心点）
+                    face_center = (x + w//2, y + h//2)
+                    face_positions.append(face_center)
+
                     # 截取脸部区域
                     roi_gray = gray[y:y+h, x:x+w]
+
+                    # 计算头部姿势（简化版，通过脸部矩形的宽高比来估计）
+                    head_pose = w / h if h > 0 else 1.0
+                    head_poses.append(head_pose)
+
+                    # 估计上半身区域（面部下方区域）
+                    upper_body_y = y + h
+                    upper_body_h = int(h * 1.5)  # 假设上半身高度是脸部高度的1.5倍
+                    # 确保不超出图像边界
+                    if upper_body_y + upper_body_h < frame.shape[0]:
+                        upper_body = gray[upper_body_y:upper_body_y +
+                                          upper_body_h, x-w//2:x+w+w//2]
+                        upper_body_regions.append(
+                            np.std(upper_body))  # 上半身区域的标准差作为稳定性指标
 
                     # 眼睛检测
                     eyes = eye_cascade.detectMultiScale(roi_gray)
@@ -105,9 +136,8 @@ def multimodal_analysis():
                     face_variance = np.std(roi_gray)
                     facial_expression_variance.append(face_variance)
 
-            frame_count += 1
-
             # 每100帧检查一次，避免处理过大的视频
+            frame_count += 1
             if frame_count > 300:
                 break
 
@@ -116,10 +146,18 @@ def multimodal_analysis():
         # 如果没有成功处理任何帧，返回默认值
         if frame_count == 0:
             logger.warning(f"无法从视频中提取任何有效帧: {video_path}")
+            # 默认的身体语言详细评分
+            default_body_language_details = {
+                "stability": 7.0,
+                "headPose": 7.0,
+                "upperBody": 7.0,
+                "motion": 7.0
+            }
             analysis = {
                 "eyeContact": 7.0,
                 "facialExpressions": 7.0,
                 "bodyLanguage": 7.0,
+                "bodyLanguageDetails": default_body_language_details,
                 "confidence": 7.0,
                 "recommendations": "视频分析失败，请确保摄像头正常工作并尝试重新录制。"
             }
@@ -145,17 +183,93 @@ def multimodal_analysis():
             face_detected_frames if face_detected_frames > 0 else 0
         expression_variability = np.mean(
             facial_expression_variance
-        ) if facial_expression_variance else 0
-
-        # 计算评分（简化版）
+        ) if facial_expression_variance else 0        # 计算评分（简化版）
         eye_contact_score = min(10, eye_contact_rate * 10)
         facial_expressions_score = min(
             10, (expression_variability / 50) * 10
         )  # 假设50是较好的变化值
 
-        # 姿态和自信度评估需要更复杂的模型，这里使用简化评分
-        body_language_score = 7.0  # 默认值
-        confidence_score = 7.0 + (eye_contact_score - 5) * 0.2  # 眼神接触对自信度有影响
+        # 计算肢体语言得分
+        body_language_score = 7.0  # 默认初始值
+        body_language_details = {}
+
+        # 1. 姿态稳定性评分（通过人脸位置的稳定性来评估）
+        if len(face_positions) > 1:
+            # 计算人脸位置的标准差（x和y方向）
+            face_pos_x = [pos[0] for pos in face_positions]
+            face_pos_y = [pos[1] for pos in face_positions]
+            face_stability_x = np.std(face_pos_x)
+            face_stability_y = np.std(face_pos_y)
+
+            # 归一化稳定性得分（标准差越小越稳定，得分越高）
+            # 理想的轻微移动范围在10-30像素之间
+            stability_score_x = 10 - \
+                min(10, max(0, (face_stability_x - 10) / 5))
+            stability_score_y = 10 - \
+                min(10, max(0, (face_stability_y - 10) / 5))
+            stability_score = (stability_score_x + stability_score_y) / 2
+            body_language_details['stability'] = round(stability_score, 1)
+        else:
+            body_language_details['stability'] = 5.0  # 默认中等值
+
+        # 2. 头部姿势评分
+        if head_poses:
+            # 头部姿势的平均值和变异性
+            head_pose_mean = np.mean(head_poses)
+            head_pose_std = np.std(head_poses)
+
+            # 头部姿势分数（理想的宽高比接近1.0，表示正面朝向）
+            head_pose_score = 10 - min(10, abs(head_pose_mean - 1.0) * 10)
+
+            # 头部姿势变化（适度变化是好的，但过度变化不好）
+            head_movement_score = 10 - \
+                min(10, max(0, (head_pose_std - 0.05) * 20))
+
+            head_score = (head_pose_score + head_movement_score) / 2
+            body_language_details['headPose'] = round(head_score, 1)
+        else:
+            body_language_details['headPose'] = 5.0  # 默认中等值
+
+        # 3. 上半身稳定性
+        if upper_body_regions:
+            # 上半身区域的变异性（适度的变化是好的，表示自然的手势）
+            upper_body_std = np.mean(upper_body_regions)
+
+            # 理想的上半身变化在10-30之间
+            upper_body_score = 10 if 10 <= upper_body_std <= 30 else 10 - \
+                min(10, abs(upper_body_std - 20) / 3)
+            body_language_details['upperBody'] = round(upper_body_score, 1)
+        else:
+            body_language_details['upperBody'] = 5.0  # 默认中等值
+
+        # 4. 动作频率评分
+        if frame_diffs:
+            # 计算动作频率的均值
+            motion_mean = np.mean(frame_diffs)
+
+            # 理想的动作变化在5-15之间（太少表示僵硬，太多表示不稳定）
+            motion_score = 10 if 5 <= motion_mean <= 15 else 10 - \
+                min(10, abs(motion_mean - 10) / 2)
+            body_language_details['motion'] = round(motion_score, 1)
+        else:
+            body_language_details['motion'] = 5.0  # 默认中等值
+
+        # 综合肢体语言得分（各部分权重可以调整）
+        if face_detected_frames > 0:
+            body_language_score = (
+                body_language_details['stability'] * 0.3 +
+                body_language_details['headPose'] * 0.3 +
+                body_language_details['upperBody'] * 0.2 +
+                body_language_details['motion'] * 0.2
+            )
+        # 否则保持默认值
+
+        # 记录详细评分到日志
+        logger.info(f"肢体语言详细评分: {body_language_details}")
+
+        # 自信度评分综合考虑眼神接触和肢体语言
+        confidence_score = 0.5 * eye_contact_score + 0.3 * \
+            body_language_score + 0.2 * facial_expressions_score
 
         # 生成建议
         recommendations = []
@@ -163,16 +277,32 @@ def multimodal_analysis():
             recommendations.append("增加与面试官的眼神接触")
         if facial_expressions_score < 6:
             recommendations.append("尝试展示更多自然的面部表情")
-        if body_language_score < 7:
-            recommendations.append("注意保持良好的坐姿")
 
-        # 最终分析结果
+        # 根据肢体语言的各个方面提供具体建议
+        if 'stability' in body_language_details:
+            if body_language_details['stability'] < 6:
+                recommendations.append("面试时保持身体稳定，减少不必要的晃动")
+
+        if 'headPose' in body_language_details:
+            if body_language_details['headPose'] < 6:
+                recommendations.append("保持头部正面朝向面试官，适当点头示意")
+
+        if 'upperBody' in body_language_details:
+            if body_language_details['upperBody'] < 6:
+                recommendations.append("注意上半身姿态，保持挺胸自然的坐姿")
+
+        if 'motion' in body_language_details:
+            if body_language_details['motion'] < 5:
+                recommendations.append("适当增加手势动作，避免过于僵硬")
+            elif body_language_details['motion'] > 8:
+                recommendations.append("减少过度频繁的动作，保持沉稳大方")        # 最终分析结果
+
         analysis = {
             "eyeContact": round(eye_contact_score, 1),  # 眼神接触评分(1-10)
             "facialExpressions": round(facial_expressions_score, 1),  # 面部表情评分
-            "bodyLanguage": body_language_score,  # 肢体语言评分
+            "bodyLanguage": round(body_language_score, 1),  # 肢体语言评分
             "confidence": round(confidence_score, 1),  # 自信程度
-            "recommendations": " ".join(recommendations) if recommendations else "保持良好的眼神接触和面部表情。"
+            "recommendations": "、".join(recommendations) if recommendations else "保持良好的眼神接触和面部表情。"
         }
 
         # 处理同一视频的音频分析
@@ -385,7 +515,8 @@ def extract_and_evaluate_audio(video_path):
             recommendations.append(f"减少填充词的使用（如'嗯'、'啊'、'那个'等），提高表达准确性")
 
         recommendation_text = "语音表现良好。" if not recommendations else "、".join(
-            recommendations)+"。"
+            recommendations
+        )+"。"
 
         # 清理临时文件
         if not current_app.config.get("DEBUG"):
