@@ -2,11 +2,14 @@
 配置文件
 """
 
+import logging
 import os
+
 from dotenv import load_dotenv
 
 # 加载环境变量
 load_dotenv()
+
 
 class Config:
     """基本配置"""
@@ -18,11 +21,13 @@ class Config:
 class DevelopmentConfig(Config):
     """开发环境配置"""
     DEBUG = True
+    LOGGING_LEVEL = logging.DEBUG
 
 
 class ProductionConfig(Config):
     """生产环境配置"""
     DEBUG = False
+    LOGGING_LEVEL = logging.INFO
 
 
 # 配置映射

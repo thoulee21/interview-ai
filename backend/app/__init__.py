@@ -34,7 +34,7 @@ def create_app(config_name="default"):
 
     # 配置日志
     logging.basicConfig(
-        level=logging.INFO,
+        level=app.config['LOGGING_LEVEL'],
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
