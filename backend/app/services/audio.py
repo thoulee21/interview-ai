@@ -245,8 +245,9 @@ def extract_and_evaluate_audio(video_path):
         if not current_app.config.get("DEBUG"):
             try:
                 os.remove(audio_path)
+                os.remove(pcm_audio_path)
             except Exception as e:
-                logger.warning(f"无法删除临时音频文件 {audio_path}: {str(e)}")
+                logger.warning(f"无法删除临时音频文件: {str(e)}")
 
         # 返回分析结果
         return {
