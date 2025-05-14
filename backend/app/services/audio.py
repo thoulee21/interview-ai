@@ -3,6 +3,7 @@ import os
 import subprocess
 import time
 import uuid
+from pathlib import Path
 
 import ffmpeg
 import librosa
@@ -173,12 +174,17 @@ def extract_and_evaluate_audio(video_path):
         # 6. 识别填充词
         # Convert .wav to .pcm for stt compatibility
         pcm_audio_path = audio_path.replace('.wav', '.pcm')
+
         try:
             wav2pcm(audio_path, pcm_audio_path)
-            logger.info(f"成功将音频文件转换为 .pcm 格式: {pcm_audio_path}")
+            logger.info(
+                f"音频文件转换成功: {Path(audio_path).name} -> {Path(pcm_audio_path).name}"
+            )
         except Exception as e:
             logger.error(
-                f"Failed to convert .wav to .pcm: {str(e)}")
+                f"Failed to convert .wav to .pcm: {str(e)}"
+            )
+
             return {
                 "clarity": 7.0,
                 "pace": 7.0,
