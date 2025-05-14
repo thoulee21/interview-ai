@@ -13,7 +13,8 @@ services:
       - XUNFEI_API_SECRET=${XUNFEI_API_SECRET}
       - INTERVIEW_QUESTION_COUNT=5
     volumes:
-      - ./backend:/app
+      # 挂载 interview_ai.db 文件
+      - ./backend/interview_ai.db:/app/interview_ai.db
 
   frontend:
     build:
