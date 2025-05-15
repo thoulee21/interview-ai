@@ -3,9 +3,9 @@ import type { Metadata } from "next/types";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "面试会话管理",
-  description: "管理员界面，用于查看和管理所有用户的面试会话",
-  keywords: ["管理员", "面试管理", "会话管理", "系统管理", "智能面试系统"],
+  title: "管理后台",
+  description: "管理员后台管理界面，用于系统配置和用户管理",
+  keywords: ["管理员", "后台管理", "系统配置", "用户管理", "智能面试系统"],
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
