@@ -153,16 +153,28 @@ export default function HomePage() {
                       style={{ background: "#1890ff" }}
                     />
                     <div>
-                      <Text
-                        style={{
-                          color: "white",
-                          fontSize: "20px",
-                          fontWeight: "bold",
-                          display: "block",
-                        }}
+                      <Link
+                        href="https://xinghuo.xfyun.cn/sparkapi"
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
-                        讯飞星火大模型
-                      </Text>
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: "20px",
+                            fontWeight: "bold",
+                            display: "block",
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.textDecoration = "underline";
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.textDecoration = "none";
+                          }}
+                        >
+                          讯飞星火大模型
+                        </Text>
+                      </Link>
                       <Text style={{ color: "rgba(255, 255, 255, 0.85)" }}>
                         业界领先的AI技术支持
                       </Text>
