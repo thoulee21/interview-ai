@@ -1,10 +1,12 @@
 "use client";
 
+import pkg from "@/../package.json";
 import AppHeader from "@/components/layout/AppHeader";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import "@ant-design/v5-patch-for-react-19";
 import { Layout } from "antd";
-import React from "react";
+import Link from "next/link";
+import React, { useMemo } from "react";
 
 export default function RootLayout({
   children,
@@ -12,6 +14,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const { Footer } = Layout;
+
+  const year = useMemo(() => new Date().getFullYear(), []);
+
+  const [version, author] = useMemo(() => {
+    return [pkg.version, pkg.author];
+  }, []);
 
   return (
     <AntdRegistry>
@@ -34,9 +42,13 @@ export default function RootLayout({
           style={{
             textAlign: "center",
             marginTop: "6px",
+            backgroundColor: "#f0f2f5",
           }}
         >
-          智能模拟面试系统 ©{new Date().getFullYear()} 中国软件杯参赛作品
+          智能模拟面试系统 v{version} ©{year}{" "}
+          <Link href={author.url} target="_blank" rel="noopener noreferrer">
+            {author.name}
+          </Link>
         </Footer>
       </Layout>
     </AntdRegistry>
