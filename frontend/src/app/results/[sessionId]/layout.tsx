@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "个人资料",
-  description: "查看和管理你的个人资料及面试历史",
-  keywords: ["个人资料", "面试历史", "用户信息", "智能面试系统"],
+  title: "面试详细结果",
+  description: "查看面试的详细结果分析、反馈和改进建议",
+  keywords: ["面试结果", "面试评分", "面试分析", "面试反馈", "面试建议", "智能面试系统"],
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
