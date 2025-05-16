@@ -44,16 +44,9 @@ export default function InterviewSetupPage() {
         setPositionTypes(response.data || []);
       } catch (error) {
         console.error("获取职位类型列表失败:", error);
-        messageApi.error("获取职位类型列表失败，使用默认列表");
-        // 加载失败时使用默认列表
-        setPositionTypes([
-          { value: "软件工程师", label: "软件工程师" },
-          { value: "产品经理", label: "产品经理" },
-          { value: "数据分析师", label: "数据分析师" },
-          { value: "人力资源专员", label: "人力资源专员" },
-          { value: "市场营销专员", label: "市场营销专员" },
-          { value: "运营专员", label: "运营专员" },
-        ]);
+        messageApi.error("获取职位类型列表失败，请稍后重试");
+
+        setPositionTypes([]);
       } finally {
         setLoading(false);
       }
