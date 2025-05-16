@@ -56,6 +56,7 @@ class InterviewSession:
         )
         return cursor.fetchone()
 
+    @staticmethod
     def get_user_id(session_id):
         """
         获取面试会话的用户ID
