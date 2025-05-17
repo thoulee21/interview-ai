@@ -18,7 +18,6 @@ import {
   message,
   Modal,
   Popconfirm,
-  Radio,
   Select,
   Space,
   Spin,
@@ -426,25 +425,6 @@ export default function AdminPresetsPage() {
               placeholder="描述这个预设场景的特点和适用情况"
               autoSize={{ minRows: 3, maxRows: 6 }}
             />
-          </Form.Item>
-
-          <Form.Item label="面试难度" name={["interviewParams", "difficulty"]}>
-            <Radio.Group>
-              <Radio.Button value="初级">初级</Radio.Button>
-              <Radio.Button value="中级">中级</Radio.Button>
-              <Radio.Button value="高级">高级</Radio.Button>
-            </Radio.Group>
-          </Form.Item>
-
-          <Form.Item
-            label="面试官风格"
-            name={["interviewParams", "interviewer_style"]}
-          >
-            <Radio.Group>
-              <Radio.Button value="专业型">专业型</Radio.Button>
-              <Radio.Button value="友好型">友好型</Radio.Button>
-              <Radio.Button value="挑战型">挑战型</Radio.Button>
-            </Radio.Group>
           </Form.Item>
 
           <Form.Item
