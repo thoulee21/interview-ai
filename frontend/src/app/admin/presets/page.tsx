@@ -2,7 +2,6 @@
 
 import { interviewAPI } from "@/services/api";
 import {
-  CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
@@ -40,8 +39,8 @@ interface InterviewPreset {
   name: string;
   description: string;
   interviewParams: any;
-  isDefault: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export default function AdminPresetsPage() {
@@ -104,7 +103,6 @@ export default function AdminPresetsPage() {
     setEditingPreset(null);
     form.resetFields();
     form.setFieldsValue({
-      isDefault: false,
       interviewParams: {
         difficulty: "中级",
         interviewer_style: "专业型",
@@ -125,7 +123,6 @@ export default function AdminPresetsPage() {
     form.setFieldsValue({
       name: preset.name,
       description: preset.description,
-      isDefault: preset.isDefault,
       interviewParams: preset.interviewParams,
     });
 
@@ -156,7 +153,6 @@ export default function AdminPresetsPage() {
       const payload = {
         name: values.name,
         description: values.description,
-        isDefault: values.isDefault,
         interviewParams: values.interviewParams,
       };
 
@@ -277,7 +273,13 @@ export default function AdminPresetsPage() {
       width: 150,
       sorter: true,
       render: (text: string, record: InterviewPreset) => (
-        <a onClick={() => showDetailModal(record)}>{text}</a>
+        <Tag
+          color="blue"
+          style={{ cursor: "pointer" }}
+          onClick={() => showDetailModal(record)}
+        >
+          {text}
+        </Tag>
       ),
     },
     {
@@ -289,31 +291,6 @@ export default function AdminPresetsPage() {
       sorter: true,
     },
     {
-      title: "面试难度",
-      key: "difficulty",
-      width: 80,
-      dataIndex: ["interviewParams", "difficulty"],
-      sorter: true,
-      render: (text: string, record: InterviewPreset) => (
-        <span>{record.interviewParams.difficulty || "中级"}</span>
-      ),
-    },
-    {
-      title: "状态",
-      key: "default",
-      dataIndex: "isDefault",
-      width: 80,
-      sorter: true,
-      render: (text: string, record: InterviewPreset) =>
-        record.isDefault ? (
-          <Tag icon={<CheckCircleOutlined />} color="success">
-            默认
-          </Tag>
-        ) : (
-          <Tag color="default">普通</Tag>
-        ),
-    },
-    {
       title: "创建时间",
       dataIndex: "createdAt",
       key: "createdAt",
@@ -321,10 +298,17 @@ export default function AdminPresetsPage() {
       render: (date: string) => new Date(date).toLocaleString(),
     },
     {
+      title: "更新时间",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
+      sorter: true,
+      render: (date: string) => new Date(date).toLocaleString(),
+    },
+    {
       title: "操作",
       key: "action",
       width: 120,
-      render: (text: string, record: InterviewPreset) => (
+      render: (_text: string, record: InterviewPreset) => (
         <Space size="small">
           <Button
             type="text"
@@ -368,23 +352,24 @@ export default function AdminPresetsPage() {
           }}
         >
           <Space>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={showAddDrawer}
-            >
-              添加预设场景
-            </Button>
+            <Input.Search
+              placeholder="搜索预设场景"
+              allowClear
+              onSearch={handleSearch}
+              style={{ width: 250 }}
+            />
             <Button icon={<ReloadOutlined />} onClick={fetchPresets}>
               刷新
             </Button>
           </Space>
-          <Input.Search
-            placeholder="搜索预设场景"
-            allowClear
-            onSearch={handleSearch}
-            style={{ width: 250 }}
-          />
+
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={showAddDrawer}
+          >
+            添加预设场景
+          </Button>
         </div>
 
         <Spin spinning={loading}>
@@ -435,7 +420,7 @@ export default function AdminPresetsPage() {
           <Form.Item
             name="description"
             label="描述"
-            rules={[{ required: true, message: "请输入预设场景描述" }]}
+            rules={[{ message: "请输入预设场景描述" }]}
           >
             <TextArea
               placeholder="描述这个预设场景的特点和适用情况"
@@ -443,99 +428,86 @@ export default function AdminPresetsPage() {
             />
           </Form.Item>
 
-          <Form.Item name="isDefault" label="设为默认" valuePropName="checked">
+          <Form.Item label="面试难度" name={["interviewParams", "difficulty"]}>
+            <Radio.Group>
+              <Radio.Button value="初级">初级</Radio.Button>
+              <Radio.Button value="中级">中级</Radio.Button>
+              <Radio.Button value="高级">高级</Radio.Button>
+            </Radio.Group>
+          </Form.Item>
+
+          <Form.Item
+            label="面试官风格"
+            name={["interviewParams", "interviewer_style"]}
+          >
+            <Radio.Group>
+              <Radio.Button value="专业型">专业型</Radio.Button>
+              <Radio.Button value="友好型">友好型</Radio.Button>
+              <Radio.Button value="挑战型">挑战型</Radio.Button>
+            </Radio.Group>
+          </Form.Item>
+
+          <Form.Item
+            label="面试模式"
+            name={["interviewParams", "interview_mode"]}
+          >
+            <Select>
+              <Option value="标准">标准面试</Option>
+              <Option value="结对编程">结对编程</Option>
+              <Option value="系统设计">系统设计</Option>
+              <Option value="算法挑战">算法挑战</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="行业焦点"
+            name={["interviewParams", "industry_focus"]}
+          >
+            <Select placeholder="选择行业焦点">
+              <Option value="互联网">互联网</Option>
+              <Option value="金融">金融</Option>
+              <Option value="医疗">医疗</Option>
+              <Option value="教育">教育</Option>
+              <Option value="零售">零售</Option>
+              <Option value="制造业">制造业</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="公司规模"
+            name={["interviewParams", "company_size"]}
+          >
+            <Select placeholder="选择公司规模">
+              <Option value="创业公司">创业公司</Option>
+              <Option value="中型企业">中型企业</Option>
+              <Option value="大型企业">大型企业</Option>
+              <Option value="跨国公司">跨国公司</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            valuePropName="checked"
+            label="包含代码练习"
+            name={["interviewParams", "include_code_exercise"]}
+          >
             <Switch />
           </Form.Item>
 
-          <Card
-            title="面试参数"
-            variant="outlined"
-            style={{ marginBottom: 16 }}
+          <Form.Item
+            valuePropName="checked"
+            label="包含行为问题"
+            name={["interviewParams", "include_behavioral_questions"]}
           >
-            <Form.Item
-              label="面试难度"
-              name={["interviewParams", "difficulty"]}
-            >
-              <Radio.Group>
-                <Radio.Button value="初级">初级</Radio.Button>
-                <Radio.Button value="中级">中级</Radio.Button>
-                <Radio.Button value="高级">高级</Radio.Button>
-              </Radio.Group>
-            </Form.Item>
+            <Switch />
+          </Form.Item>
 
-            <Form.Item
-              label="面试官风格"
-              name={["interviewParams", "interviewer_style"]}
-            >
-              <Radio.Group>
-                <Radio.Button value="专业型">专业型</Radio.Button>
-                <Radio.Button value="友好型">友好型</Radio.Button>
-                <Radio.Button value="挑战型">挑战型</Radio.Button>
-              </Radio.Group>
-            </Form.Item>
-
-            <Form.Item
-              label="面试模式"
-              name={["interviewParams", "interview_mode"]}
-            >
-              <Select>
-                <Option value="标准">标准面试</Option>
-                <Option value="结对编程">结对编程</Option>
-                <Option value="系统设计">系统设计</Option>
-                <Option value="算法挑战">算法挑战</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label="行业焦点"
-              name={["interviewParams", "industry_focus"]}
-            >
-              <Select placeholder="选择行业焦点">
-                <Option value="互联网">互联网</Option>
-                <Option value="金融">金融</Option>
-                <Option value="医疗">医疗</Option>
-                <Option value="教育">教育</Option>
-                <Option value="零售">零售</Option>
-                <Option value="制造业">制造业</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label="公司规模"
-              name={["interviewParams", "company_size"]}
-            >
-              <Select placeholder="选择公司规模">
-                <Option value="创业公司">创业公司</Option>
-                <Option value="中型企业">中型企业</Option>
-                <Option value="大型企业">大型企业</Option>
-                <Option value="跨国公司">跨国公司</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              valuePropName="checked"
-              label="包含代码练习"
-              name={["interviewParams", "include_code_exercise"]}
-            >
-              <Switch />
-            </Form.Item>
-
-            <Form.Item
-              valuePropName="checked"
-              label="包含行为问题"
-              name={["interviewParams", "include_behavioral_questions"]}
-            >
-              <Switch />
-            </Form.Item>
-
-            <Form.Item
-              valuePropName="checked"
-              label="包含压力测试"
-              name={["interviewParams", "include_stress_test"]}
-            >
-              <Switch />
-            </Form.Item>
-          </Card>
+          <Form.Item
+            valuePropName="checked"
+            label="包含压力测试"
+            name={["interviewParams", "include_stress_test"]}
+          >
+            <Switch />
+          </Form.Item>
         </Form>
       </Drawer>
 
@@ -560,53 +532,70 @@ export default function AdminPresetsPage() {
             <Descriptions.Item label="描述">
               {editingPreset.description}
             </Descriptions.Item>
-            <Descriptions.Item label="是否默认">
-              {editingPreset.isDefault ? (
-                <Tag color="success">是</Tag>
-              ) : (
-                <Tag>否</Tag>
-              )}
-            </Descriptions.Item>
             <Descriptions.Item label="创建时间">
               {new Date(editingPreset.createdAt).toLocaleString()}
             </Descriptions.Item>
+            <Descriptions.Item label="更新时间">
+              {new Date(editingPreset.updatedAt).toLocaleString()}
+            </Descriptions.Item>
+
             <Descriptions.Item label="面试参数">
-              <Card size="small" variant="borderless">
-                <p>
-                  <strong>难度：</strong>
-                  {editingPreset.interviewParams.difficulty || "中级"}
-                </p>
-                <p>
-                  <strong>面试官风格：</strong>
-                  {editingPreset.interviewParams.interviewer_style || "专业型"}
-                </p>
-                <p>
-                  <strong>面试模式：</strong>
-                  {editingPreset.interviewParams.interview_mode || "标准"}
-                </p>
-                <p>
-                  <strong>公司规模：</strong>
-                  {editingPreset.interviewParams.company_size || "-"}
-                </p>
-                <p>
-                  <strong>包含代码练习：</strong>
-                  {editingPreset.interviewParams.include_code_exercise
-                    ? "是"
-                    : "否"}
-                </p>
-                <p>
-                  <strong>包含行为问题：</strong>
-                  {editingPreset.interviewParams.include_behavioral_questions
-                    ? "是"
-                    : "否"}
-                </p>
-                <p>
-                  <strong>包含压力测试：</strong>
-                  {editingPreset.interviewParams.include_stress_test
-                    ? "是"
-                    : "否"}
-                </p>
-              </Card>
+              <Table
+                size="middle"
+                bordered={false}
+                pagination={false}
+                showHeader={false}
+                dataSource={[
+                  {
+                    key: "interview_mode",
+                    label: "面试模式",
+                    value: editingPreset.interviewParams.interview_mode,
+                  },
+                  {
+                    key: "industry_focus",
+                    label: "行业焦点",
+                    value: editingPreset.interviewParams.industry_focus,
+                  },
+                  {
+                    key: "company_size",
+                    label: "公司规模",
+                    value: editingPreset.interviewParams.company_size,
+                  },
+                  {
+                    key: "include_code_exercise",
+                    label: "包含代码练习",
+                    value: editingPreset.interviewParams.include_code_exercise
+                      ? "是"
+                      : "否",
+                  },
+                  {
+                    key: "include_behavioral_questions",
+                    label: "包含行为问题",
+                    value: editingPreset.interviewParams
+                      .include_behavioral_questions
+                      ? "是"
+                      : "否",
+                  },
+                  {
+                    key: "include_stress_test",
+                    label: "包含压力测试",
+                    value: editingPreset.interviewParams.include_stress_test
+                      ? "是"
+                      : "否",
+                  },
+                ]}
+                columns={[
+                  {
+                    dataIndex: "label",
+                    width: 120,
+                  },
+                  {
+                    dataIndex: "value",
+                  },
+                ]}
+                rowKey="key"
+                style={{ marginBottom: 0 }}
+              />
             </Descriptions.Item>
           </Descriptions>
         )}

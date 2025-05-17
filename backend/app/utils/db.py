@@ -130,7 +130,6 @@ def init_db():
         name TEXT NOT NULL,
         description TEXT,
         interview_params TEXT NOT NULL,
-        is_default INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
@@ -195,7 +194,6 @@ def init_db():
                     "industry_focus": "互联网",
                     "company_size": "中型企业"
                 },
-                "is_default": 1
             },
             {
                 "name": "技术深度型面试",
@@ -208,7 +206,6 @@ def init_db():
                     "industry_focus": "金融",
                     "company_size": "大型企业"
                 },
-                "is_default": 1
             },
             {
                 "name": "压力测试型面试",
@@ -221,7 +218,6 @@ def init_db():
                     "industry_focus": "制造业",
                     "company_size": "大型企业"
                 },
-                "is_default": 1
             },
             {
                 "name": "全面评估型面试",
@@ -234,7 +230,6 @@ def init_db():
                     "industry_focus": "互联网",
                     "company_size": "中型企业"
                 },
-                "is_default": 1
             },
             {
                 "name": "行为面试专场",
@@ -247,15 +242,17 @@ def init_db():
                     "industry_focus": "教育",
                     "company_size": "中型企业"
                 },
-                "is_default": 1
             }
         ]
 
         for preset in default_presets:
             cursor.execute(
-                "INSERT INTO interview_presets (name, description, interview_params, is_default) VALUES (?, ?, ?, ?)",
-                (preset["name"], preset["description"], json.dumps(
-                    preset["params"]), preset["is_default"])
+                "INSERT INTO interview_presets (name, description, interview_params) VALUES (?, ?, ?)",
+                (
+                    preset["name"],
+                    preset["description"],
+                    json.dumps(preset["params"])
+                )
             )
 
     conn.commit()

@@ -375,14 +375,13 @@ def create_preset():
     name = data.get('name')
     description = data.get('description')
     interview_params = data.get('interviewParams')
-    is_default = data.get('isDefault', False)
 
     if not name or not interview_params:
         return jsonify({"error": "名称和面试参数是必填项"}), 400
 
     try:
         preset_id = InterviewPreset.create(
-            name, description, interview_params, is_default
+            name, description, interview_params
         )
         preset = InterviewPreset.get_by_id(preset_id)
         return jsonify({
@@ -401,11 +400,10 @@ def update_preset(preset_id):
     name = data.get('name')
     description = data.get('description')
     interview_params = data.get('interviewParams')
-    is_default = data.get('isDefault')
 
     try:
         success = InterviewPreset.update(
-            preset_id, name, description, interview_params, is_default
+            preset_id, name, description, interview_params
         )
         if not success:
             return jsonify({"error": "预设场景不存在或更新失败"}), 404

@@ -635,8 +635,8 @@ class InterviewPreset:
                 'name': p['name'],
                 'description': p['description'],
                 'interviewParams': json.loads(p['interview_params']) if p['interview_params'] else {},
-                'isDefault': bool(p['is_default']),
-                'createdAt': p['created_at']
+                'createdAt': p['created_at'],
+                'updatedAt': p['updated_at']
             })
 
         return presets
@@ -667,13 +667,13 @@ class InterviewPreset:
                 'name': preset['name'],
                 'description': preset['description'],
                 'interviewParams': json.loads(preset['interview_params']) if preset['interview_params'] else {},
-                'isDefault': bool(preset['is_default']),
-                'createdAt': preset['created_at']
+                'createdAt': preset['created_at'],
+                'updatedAt': preset['updated_at']
             }
         return None
 
     @staticmethod
-    def create(name, description, interview_params, is_default=False):
+    def create(name, description, interview_params):
         """
         创建面试预设场景
 
@@ -681,7 +681,6 @@ class InterviewPreset:
             name (str): 预设场景名称
             description (str): 预设场景描述
             interview_params (dict): 面试参数
-            is_default (bool, optional): 是否为默认预设
 
         Returns:
             int: 预设场景ID
@@ -691,15 +690,18 @@ class InterviewPreset:
 
         interview_params_json = json.dumps(interview_params)
 
+        created_at = datetime.now()
+        updated_at = created_at
+
         cursor.execute(
-            "INSERT INTO interview_presets (name, description, interview_params, is_default) VALUES (?, ?, ?, ?)",
-            (name, description, interview_params_json, 1 if is_default else 0)
+            "INSERT INTO interview_presets (name, description, interview_params, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+            (name, description, interview_params_json, created_at, updated_at)
         )
         db.commit()
         return cursor.lastrowid
 
     @staticmethod
-    def update(preset_id, name=None, description=None, interview_params=None, is_default=None):
+    def update(preset_id, name=None, description=None, interview_params=None):
         """
         更新面试预设场景
 
@@ -708,7 +710,6 @@ class InterviewPreset:
             name (str, optional): 预设场景名称
             description (str, optional): 预设场景描述
             interview_params (dict, optional): 面试参数
-            is_default (bool, optional): 是否为默认预设
 
         Returns:
             bool: 是否更新成功
@@ -730,10 +731,6 @@ class InterviewPreset:
         if interview_params is not None:
             update_fields.append("interview_params = ?")
             update_values.append(json.dumps(interview_params))
-
-        if is_default is not None:
-            update_fields.append("is_default = ?")
-            update_values.append(1 if is_default else 0)
 
         if update_fields:
             update_fields.append("updated_at = ?")

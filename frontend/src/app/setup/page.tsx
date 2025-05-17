@@ -31,7 +31,6 @@ interface InterviewPreset {
   name: string;
   description: string;
   interviewParams: any;
-  isDefault: boolean;
   createdAt: string;
   updatedAt: string;
 }

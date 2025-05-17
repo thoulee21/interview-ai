@@ -281,7 +281,6 @@ const interviewAPI = {
     payload: {
       name: string;
       description: string;
-      isDefault: boolean;
       interviewParams: any;
     },
   ) => {
@@ -292,7 +291,6 @@ const interviewAPI = {
   createPreset: (payload: {
     name: string;
     description: string;
-    isDefault: boolean;
     interviewParams: any;
   }) => {
     return apiClient.post("/admin/presets", payload);
