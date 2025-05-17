@@ -14,8 +14,8 @@ keepalive = 2
 graceful_timeout = 120
 
 # 访问日志和错误日志路径
-accesslog = '/var/log/gunicorn/access.log'
-errorlog = '/var/log/gunicorn/error.log'
+accesslog = './logs/access.log'
+errorlog = './logs/error.log'
 
 # 日志级别
 loglevel = 'info'

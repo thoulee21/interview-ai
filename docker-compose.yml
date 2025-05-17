@@ -16,6 +16,7 @@ services:
     volumes:
       # 挂载 interview_ai.db 文件
       - ./backend/interview_ai.db:/app/interview_ai.db
+      - ./backend/logs:/app/logs
 
   frontend:
     build:
