@@ -434,6 +434,17 @@ export default function InterviewPage() {
                   width: "100%",
                 }}
               >
+                <Button
+                  type="primary"
+                  icon={<SendOutlined />}
+                  onClick={handleSubmitAnswer}
+                  loading={loading}
+                  block
+                  disabled={loading || !answer.trim() || !isRecording}
+                >
+                  提交回答
+                </Button>
+
                 {isRecognitionAvailable && (
                   <Button
                     type="default"
@@ -446,16 +457,6 @@ export default function InterviewPage() {
                     使用语音回答
                   </Button>
                 )}
-                <Button
-                  type="primary"
-                  icon={<SendOutlined />}
-                  onClick={handleSubmitAnswer}
-                  loading={loading}
-                  block
-                  disabled={loading || !answer.trim() || !isRecording}
-                >
-                  提交回答
-                </Button>
               </Space>
             </Card>
 
