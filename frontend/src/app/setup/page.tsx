@@ -10,13 +10,13 @@ import {
   Radio,
   Select,
   Spin,
+  Steps,
   Switch,
-  Tabs,
   Typography,
   message,
 } from "antd";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
@@ -43,7 +43,6 @@ interface InterviewFormValues {
   duration: number;
   specificTopics?: string[];
   includeCodeExercise?: boolean;
-  scenarioId?: string;
   interviewerStyle?: string;
   interviewMode?: string;
   industryFocus?: string;
@@ -66,7 +65,7 @@ export default function InterviewSetupPage() {
   const [selectedPreset, setSelectedPreset] = useState<InterviewPreset | null>(
     null,
   ); // 当前选中的预设
-  const [activeTab, setActiveTab] = useState<string>("presets"); // 改为默认显示预设选项卡
+  const [currentStep, setCurrentStep] = useState<number>(0); // 当前步骤
 
   useEffect(() => {
     // 组件加载时从后端获取职位类型列表和预设场景
@@ -131,11 +130,6 @@ export default function InterviewSetupPage() {
 
       // 更新表单
       form.setFieldsValue(formValues);
-
-      // 切换到基本设置选项卡
-      setActiveTab("basic");
-
-      messageApi.success(`已选择预设场景: ${preset.name}`);
     } catch (error) {
       console.error("选择预设场景失败:", error);
       messageApi.error("选择预设场景失败");
@@ -143,11 +137,16 @@ export default function InterviewSetupPage() {
   };
 
   const handleSubmit = async (values: InterviewFormValues) => {
+    // 确保只有在最后一步才能提交表单
+    if (currentStep !== 2) {
+      messageApi.warning("请完成所有必要设置后再开始面试");
+      return;
+    }
+
     try {
       setLoading(true);
 
       const finalValues = values;
-      // 调用后端API开始面试会话，使用interviewAPI服务
       const response = await interviewAPI.startInterview(finalValues);
 
       // 获取会话ID和初始问题，并跳转到面试页面
@@ -174,6 +173,16 @@ export default function InterviewSetupPage() {
     }
   };
 
+  const handleNextStep = useCallback(async (e?: React.MouseEvent) => {
+    // 如果是事件对象，防止事件冒泡和默认行为，避免触发表单提交
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    setCurrentStep((prev) => prev + 1);
+  }, []);
+
   return (
     <div>
       {contextHolder}
@@ -196,237 +205,242 @@ export default function InterviewSetupPage() {
               questionCount: 5,
               interviewerStyle: "专业型",
             }}
+            onKeyDown={(e) => {
+              // 防止回车键在非最后步骤时提交表单
+              if (e.key === "Enter" && currentStep !== 2) {
+                e.preventDefault();
+              }
+            }}
           >
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
+            <Steps
+              current={currentStep}
               items={[
                 {
-                  label: "预设场景",
-                  key: "presets",
-                  children: (
-                    <div>
-                      <Paragraph>
-                        选择一个预设的面试场景，快速开始面试
-                      </Paragraph>
-                      {presets.length === 0 ? (
-                        <div style={{ textAlign: "center", padding: "40px 0" }}>
-                          <Spin spinning={loading} />
-                          {!loading && <p>暂无可用预设场景</p>}
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(auto-fill, minmax(240px, 1fr))",
-                            gap: "16px",
-                          }}
-                        >
-                          {presets.map((preset) => (
-                            <Card
-                              key={preset.id}
-                              hoverable
-                              style={{
-                                marginBottom: "16px",
-                                cursor: "pointer",
-                                border:
-                                  selectedPreset?.id === preset.id
-                                    ? "2px solid #1890ff"
-                                    : undefined,
-                                boxShadow:
-                                  selectedPreset?.id === preset.id
-                                    ? "0 0 10px rgba(24, 144, 255, 0.3)"
-                                    : undefined,
-                              }}
-                              onClick={() => handleSelectPreset(preset)}
-                            >
-                              <div
-                                style={{
-                                  fontWeight: "bold",
-                                  marginBottom: "8px",
-                                }}
-                              >
-                                {preset.name}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "14px",
-                                  color: "#666",
-                                  marginBottom: "8px",
-                                }}
-                              >
-                                {preset.description}
-                              </div>
-
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#888",
-                                  marginTop: "12px",
-                                }}
-                              >
-                                <div>
-                                  难度：
-                                  {preset.interviewParams.difficulty || "中级"}
-                                </div>
-                                <div>
-                                  风格：
-                                  {preset.interviewParams.interviewer_style ||
-                                    "专业型"}
-                                </div>
-                              </div>
-
-                              {selectedPreset?.id === preset.id && (
-                                <div
-                                  style={{
-                                    color: "#1890ff",
-                                    marginTop: "8px",
-                                    textAlign: "center",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  ✓ 当前已选择
-                                </div>
-                              )}
-                            </Card>
-                          ))}
-                        </div>
-                      )}
-                      {/* 隐藏的表单项，用于保存选中的预设ID */}
-                      <Form.Item name="presetId" hidden>
-                        <InputNumber />
-                      </Form.Item>
-                    </div>
-                  ),
+                  title: "选择预设场景",
+                  description: "快速开始面试",
                 },
                 {
-                  label: "基本设置",
-                  key: "basic",
-                  children: (
-                    <>
-                      <Form.Item
-                        label="选择职位类型"
-                        name="positionType"
-                        rules={[{ required: true, message: "请选择职位类型" }]}
-                      >
-                        <Select placeholder="选择你要模拟的职位">
-                          {positionTypes.map((pos) => (
-                            <Option
-                              key={pos.value}
-                              // 传递给后端大模型的值应该用可读的标签值
-                              value={pos.label}
-                            >
-                              {pos.label}
-                            </Option>
-                          ))}
-                        </Select>
-                      </Form.Item>
-
-                      <Form.Item
-                        label="选择面试难度"
-                        name="difficulty"
-                        rules={[{ required: true, message: "请选择面试难度" }]}
-                      >
-                        <Radio.Group>
-                          <Radio.Button value="初级">初级</Radio.Button>
-                          <Radio.Button value="中级">中级</Radio.Button>
-                          <Radio.Button value="高级">高级</Radio.Button>
-                        </Radio.Group>
-                      </Form.Item>
-
-                      <Form.Item
-                        label="面试官风格"
-                        name="interviewerStyle"
-                        rules={[
-                          { required: true, message: "请选择面试官风格" },
-                        ]}
-                      >
-                        <Radio.Group>
-                          <Radio.Button value="专业型">专业型</Radio.Button>
-                          <Radio.Button value="友好型">友好型</Radio.Button>
-                          <Radio.Button value="挑战型">挑战型</Radio.Button>
-                        </Radio.Group>
-                      </Form.Item>
-
-                      <Form.Item
-                        label="问题数量"
-                        name="questionCount"
-                        rules={[{ required: true, message: "请设置问题数量" }]}
-                      >
-                        <InputNumber min={3} max={10} />
-                      </Form.Item>
-                    </>
-                  ),
+                  title: "可选设置",
+                  description: "细致化面试体验",
                 },
                 {
-                  label: "高级设置",
-                  key: "advanced",
-                  children: (
-                    <>
-                      <Form.Item label="面试模式" name="interviewMode">
-                        <Select placeholder="选择面试模式">
-                          <Option value="标准">标准面试</Option>
-                          <Option value="结对编程">结对编程</Option>
-                          <Option value="系统设计">系统设计</Option>
-                          <Option value="算法挑战">算法挑战</Option>
-                        </Select>
-                      </Form.Item>
-
-                      <Form.Item label="行业焦点" name="industryFocus">
-                        <Select placeholder="选择行业焦点">
-                          <Option value="互联网">互联网</Option>
-                          <Option value="金融">金融</Option>
-                          <Option value="医疗">医疗</Option>
-                          <Option value="教育">教育</Option>
-                          <Option value="零售">零售</Option>
-                          <Option value="制造业">制造业</Option>
-                        </Select>
-                      </Form.Item>
-
-                      <Form.Item label="公司规模" name="companySize">
-                        <Select placeholder="选择公司规模">
-                          <Option value="创业公司">创业公司</Option>
-                          <Option value="中型公司">中型公司</Option>
-                          <Option value="大型企业">大型企业</Option>
-                          <Option value="跨国公司">跨国公司</Option>
-                        </Select>
-                      </Form.Item>
-
-                      <Form.Item
-                        label="包含代码练习"
-                        name="includeCodeExercise"
-                        valuePropName="checked"
-                      >
-                        <Switch />
-                      </Form.Item>
-
-                      <Form.Item
-                        label="包含行为问题"
-                        name="includeBehavioralQuestions"
-                        valuePropName="checked"
-                      >
-                        <Switch />
-                      </Form.Item>
-
-                      <Form.Item
-                        label="包含压力测试"
-                        name="includeStressTest"
-                        valuePropName="checked"
-                      >
-                        <Switch />
-                      </Form.Item>
-                    </>
-                  ),
+                  title: "必要设置",
+                  description: "职位和难度",
                 },
               ]}
             />
+            <div
+              style={{
+                marginTop: "32px",
+                marginBottom: "32px",
+                minHeight: "300px",
+                padding: "20px",
+                border: "1px solid #f0f0f0",
+                borderRadius: "4px",
+                backgroundColor: "#fafafa",
+              }}
+            >
+              <div style={{ display: currentStep === 0 ? "block" : "none" }}>
+                <Paragraph>选择一个预设的面试场景，快速开始面试</Paragraph>
+                {presets.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "40px 0" }}>
+                    <Spin spinning={loading} />
+                    {!loading && <p>暂无可用预设场景</p>}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(240px, 1fr))",
+                      gap: "16px",
+                    }}
+                  >
+                    {presets.map((preset) => (
+                      <Card
+                        key={preset.id}
+                        hoverable
+                        style={{
+                          marginBottom: "16px",
+                          cursor: "pointer",
+                          border:
+                            selectedPreset?.id === preset.id
+                              ? "2px solid #1890ff"
+                              : undefined,
+                          boxShadow:
+                            selectedPreset?.id === preset.id
+                              ? "0 0 10px rgba(24, 144, 255, 0.3)"
+                              : undefined,
+                        }}
+                        onClick={() => handleSelectPreset(preset)}
+                      >
+                        <div
+                          style={{
+                            fontWeight: "bold",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          {preset.name}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "14px",
+                            color: "#666",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          {preset.description}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            <Form.Item>
-              <Button type="primary" htmlType="submit" block>
-                开始面试
-              </Button>
-            </Form.Item>
+              <div style={{ display: currentStep === 1 ? "block" : "none" }}>
+                <Form.Item label="面试模式" name="interviewMode">
+                  <Select placeholder="选择面试模式">
+                    <Option value="标准">标准面试</Option>
+                    <Option value="结对编程">结对编程</Option>
+                    <Option value="系统设计">系统设计</Option>
+                    <Option value="算法挑战">算法挑战</Option>
+                  </Select>
+                </Form.Item>
+
+                <Form.Item label="行业焦点" name="industryFocus">
+                  <Select placeholder="选择行业焦点">
+                    <Option value="互联网">互联网</Option>
+                    <Option value="金融">金融</Option>
+                    <Option value="医疗">医疗</Option>
+                    <Option value="教育">教育</Option>
+                    <Option value="零售">零售</Option>
+                    <Option value="制造业">制造业</Option>
+                  </Select>
+                </Form.Item>
+
+                <Form.Item label="公司规模" name="companySize">
+                  <Select placeholder="选择公司规模">
+                    <Option value="创业公司">创业公司</Option>
+                    <Option value="中型公司">中型公司</Option>
+                    <Option value="大型企业">大型企业</Option>
+                    <Option value="跨国公司">跨国公司</Option>
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  label="包含代码练习"
+                  name="includeCodeExercise"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+
+                <Form.Item
+                  label="包含行为问题"
+                  name="includeBehavioralQuestions"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+
+                <Form.Item
+                  label="包含压力测试"
+                  name="includeStressTest"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+              </div>
+
+              <div style={{ display: currentStep === 2 ? "block" : "none" }}>
+                <Form.Item
+                  label="选择职位类型"
+                  name="positionType"
+                  rules={[{ required: true, message: "请选择职位类型" }]}
+                >
+                  <Select placeholder="选择你要模拟的职位">
+                    {positionTypes.map((pos) => (
+                      <Option
+                        key={pos.value}
+                        // 传递给后端大模型的值应该用可读的标签值
+                        value={pos.label}
+                      >
+                        {pos.label}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  label="选择面试难度"
+                  name="difficulty"
+                  rules={[{ required: true, message: "请选择面试难度" }]}
+                >
+                  <Radio.Group>
+                    <Radio.Button value="初级">初级</Radio.Button>
+                    <Radio.Button value="中级">中级</Radio.Button>
+                    <Radio.Button value="高级">高级</Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+
+                <Form.Item
+                  label="面试官风格"
+                  name="interviewerStyle"
+                  rules={[{ required: true, message: "请选择面试官风格" }]}
+                >
+                  <Radio.Group>
+                    <Radio.Button value="专业型">专业型</Radio.Button>
+                    <Radio.Button value="友好型">友好型</Radio.Button>
+                    <Radio.Button value="挑战型">挑战型</Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
+
+                <Form.Item
+                  label="问题数量"
+                  name="questionCount"
+                  rules={[{ required: true, message: "请设置问题数量" }]}
+                >
+                  <InputNumber min={3} max={10} />
+                </Form.Item>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "24px",
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              {currentStep > 0 && (
+                <Button
+                  htmlType="button"
+                  style={{ marginRight: "8px" }}
+                  onClick={() => setCurrentStep(currentStep - 1)}
+                >
+                  上一步
+                </Button>
+              )}
+
+              {currentStep < 2 ? (
+                <Button
+                  type="primary"
+                  htmlType="button" // 明确指定为普通按钮，避免触发表单提交
+                  style={{ marginLeft: "auto" }}
+                  onClick={(e) => handleNextStep(e)}
+                  disabled={
+                    // 如果在第一个步骤且未选择预设，则禁用
+                    currentStep === 0 && !selectedPreset
+                  }
+                >
+                  下一步
+                </Button>
+              ) : (
+                <Button type="primary" htmlType="submit">
+                  开始面试
+                </Button>
+              )}
+            </div>
           </Form>
         </Spin>
       </Card>

@@ -141,8 +141,8 @@ const interviewAPI = {
     industryFocus?: string;
     companySize?: string;
     customPrompt?: string;
-    presetId?: number;
   }) => {
+    console.debug("Starting interview with data:", data);
     return apiClient.post("/start_interview", data);
   },
 
