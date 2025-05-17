@@ -409,61 +409,61 @@ export default function InterviewPage() {
           </div>
         </Card>
 
-        {!isComplete ? (
-          <>
-            <Card title="你的回答">
-              <TextArea
-                rows={6}
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="在此输入你的回答..."
-                style={{ marginBottom: "20px" }}
-                disabled={loading}
-              />
+        {isComplete || (
+          <Card title="你的回答">
+            <TextArea
+              rows={6}
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              placeholder="在此输入你的回答..."
+              style={{ marginBottom: "20px" }}
+              disabled={loading}
+            />
 
-              <Space
-                size="small"
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  width: "100%",
-                }}
+            <Space
+              size="small"
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                width: "100%",
+              }}
+            >
+              <Button
+                type="primary"
+                icon={<SendOutlined />}
+                onClick={handleSubmitAnswer}
+                loading={loading}
+                block
+                disabled={loading || !answer.trim() || !isRecording}
               >
+                提交回答
+              </Button>
+
+              {isRecognitionAvailable && (
                 <Button
-                  type="primary"
-                  icon={<SendOutlined />}
-                  onClick={handleSubmitAnswer}
-                  loading={loading}
+                  type="default"
+                  icon={<AudioOutlined />}
+                  onClick={handleVoiceInput}
+                  loading={recognizing}
                   block
-                  disabled={loading || !answer.trim() || !isRecording}
+                  disabled={loading || !isRecognitionAvailable || recognizing}
                 >
-                  提交回答
+                  使用语音回答
                 </Button>
+              )}
+            </Space>
+          </Card>
+        )}
 
-                {isRecognitionAvailable && (
-                  <Button
-                    type="default"
-                    icon={<AudioOutlined />}
-                    onClick={handleVoiceInput}
-                    loading={recognizing}
-                    block
-                    disabled={loading || !isRecognitionAvailable || recognizing}
-                  >
-                    使用语音回答
-                  </Button>
-                )}
-              </Space>
-            </Card>
+        {evaluation && (
+          <Card title="上一问题的评估" style={{ marginTop: "20px" }}>
+            <div className="markdown-content">
+              <ReactMarkdown>{evaluation}</ReactMarkdown>
+            </div>
+          </Card>
+        )}
 
-            {evaluation && (
-              <Card title="上一问题的评估" style={{ marginTop: "20px" }}>
-                <div className="markdown-content">
-                  <ReactMarkdown>{evaluation}</ReactMarkdown>
-                </div>
-              </Card>
-            )}
-          </>
-        ) : (
+        {isComplete && (
           <Card title="面试评估结果" style={{ marginTop: "20px" }}>
             {loadingFinalEvaluation ? (
               <div style={{ textAlign: "center", padding: "30px 0" }}>
