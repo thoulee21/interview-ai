@@ -142,7 +142,6 @@ const interviewAPI = {
     companySize?: string;
     customPrompt?: string;
   }) => {
-    console.debug("Starting interview with data:", data);
     return apiClient.post("/start_interview", data);
   },
 
