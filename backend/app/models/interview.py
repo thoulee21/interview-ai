@@ -627,3 +627,164 @@ class FinalEvaluation:
             (session_id,)
         )
         return cursor.fetchone()
+
+
+class InterviewPreset:
+    """面试预设场景模型"""
+
+    @staticmethod
+    def get_all():
+        """
+        获取所有面试预设场景
+
+        Returns:
+            list: 预设场景列表
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        cursor.execute(
+            "SELECT * FROM interview_presets ORDER BY id"
+        )
+
+        presets = []
+        for p in cursor.fetchall():
+            presets.append({
+                'id': p['id'],
+                'name': p['name'],
+                'description': p['description'],
+                'interviewParams': json.loads(p['interview_params']) if p['interview_params'] else {},
+                'isDefault': bool(p['is_default']),
+                'createdAt': p['created_at']
+            })
+
+        return presets
+
+    @staticmethod
+    def get_by_id(preset_id):
+        """
+        根据ID获取面试预设场景
+
+        Args:
+            preset_id (int): 预设场景ID
+
+        Returns:
+            dict|None: 预设场景信息
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        cursor.execute(
+            "SELECT * FROM interview_presets WHERE id = ?",
+            (preset_id,)
+        )
+
+        preset = cursor.fetchone()
+        if preset:
+            return {
+                'id': preset['id'],
+                'name': preset['name'],
+                'description': preset['description'],
+                'interviewParams': json.loads(preset['interview_params']) if preset['interview_params'] else {},
+                'isDefault': bool(preset['is_default']),
+                'createdAt': preset['created_at']
+            }
+        return None
+
+    @staticmethod
+    def create(name, description, interview_params, is_default=False):
+        """
+        创建面试预设场景
+
+        Args:
+            name (str): 预设场景名称
+            description (str): 预设场景描述
+            interview_params (dict): 面试参数
+            is_default (bool, optional): 是否为默认预设
+
+        Returns:
+            int: 预设场景ID
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        interview_params_json = json.dumps(interview_params)
+
+        cursor.execute(
+            "INSERT INTO interview_presets (name, description, interview_params, is_default) VALUES (?, ?, ?, ?)",
+            (name, description, interview_params_json, 1 if is_default else 0)
+        )
+        db.commit()
+        return cursor.lastrowid
+
+    @staticmethod
+    def update(preset_id, name=None, description=None, interview_params=None, is_default=None):
+        """
+        更新面试预设场景
+
+        Args:
+            preset_id (int): 预设场景ID
+            name (str, optional): 预设场景名称
+            description (str, optional): 预设场景描述
+            interview_params (dict, optional): 面试参数
+            is_default (bool, optional): 是否为默认预设
+
+        Returns:
+            bool: 是否更新成功
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        update_fields = []
+        update_values = []
+
+        if name is not None:
+            update_fields.append("name = ?")
+            update_values.append(name)
+
+        if description is not None:
+            update_fields.append("description = ?")
+            update_values.append(description)
+
+        if interview_params is not None:
+            update_fields.append("interview_params = ?")
+            update_values.append(json.dumps(interview_params))
+
+        if is_default is not None:
+            update_fields.append("is_default = ?")
+            update_values.append(1 if is_default else 0)
+
+        if update_fields:
+            update_fields.append("updated_at = ?")
+            update_values.append(datetime.now())
+
+            update_values.append(preset_id)
+
+            cursor.execute(
+                f"UPDATE interview_presets SET {', '.join(update_fields)} WHERE id = ?",
+                tuple(update_values)
+            )
+            db.commit()
+            return cursor.rowcount > 0
+        return False
+
+    @staticmethod
+    def delete(preset_id):
+        """
+        删除面试预设场景
+
+        Args:
+            preset_id (int): 预设场景ID
+
+        Returns:
+            bool: 是否删除成功
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        cursor.execute(
+            "DELETE FROM interview_presets WHERE id = ?",
+            (preset_id,)
+        )
+        db.commit()
+        return cursor.rowcount > 0

@@ -7,8 +7,9 @@ import logging
 from datetime import datetime
 
 from app.api.auth import token_required
-from app.models.interview import (FinalEvaluation, InterviewQuestion,
-                                  InterviewSession, MultimodalAnalysis)
+from app.models.interview import (FinalEvaluation, InterviewPreset,
+                                  InterviewQuestion, InterviewSession,
+                                  MultimodalAnalysis)
 from app.models.user import User
 from app.schemas.validation import (extract_evaluation_from_text,
                                     fix_evaluation_data,
@@ -26,6 +27,9 @@ def start_interview():
     data = request.json
     position_type = data.get('positionType', '软件工程师')  # 职位类型
     difficulty = data.get('difficulty', '中级')  # 难度
+
+    # 获取预设场景ID
+    preset_id = data.get('presetId')  # 预设场景ID
 
     # 获取其他参数
     question_count = data.get('questionCount', 5)  # 问题数量
@@ -48,7 +52,7 @@ def start_interview():
     if not user_id:
         return jsonify({"error": "需要登录才能开始面试"}), 401
 
-    try:        # 创建会话，添加额外参数
+    try:
         # 构建提示词参数
         interview_params = {
             'include_code_exercise': include_code_exercise,
@@ -61,6 +65,17 @@ def start_interview():
             'custom_prompt': custom_prompt
         }
 
+        # 如果指定了预设场景ID，则从预设中加载参数
+        if preset_id:
+            preset = InterviewPreset.get_by_id(preset_id)
+            if preset:
+                preset_params = preset.get('interviewParams', {})
+
+                # 更新参数
+                for key, value in preset_params.items():
+                    interview_params[key] = value
+
+        # 创建会话，添加额外参数
         session_id = InterviewSession.create(
             position_type,
             difficulty,
@@ -386,3 +401,29 @@ def get_interview_results(session_id):
     except Exception as e:
         logger.exception(f"获取面试结果失败: {str(e)}")
         return jsonify({"error": f"获取面试结果失败: {str(e)}"}), 500
+
+
+@token_required
+def get_interview_presets():
+    """获取所有面试预设场景"""
+    try:
+        # 获取所有预设场景
+        presets = InterviewPreset.get_all()
+        return jsonify({"presets": presets})
+    except Exception as e:
+        logger.exception(f"获取面试预设场景失败: {str(e)}")
+        return jsonify({"error": f"获取面试预设场景失败: {str(e)}"}), 500
+
+
+@token_required
+def get_interview_preset_detail(preset_id):
+    """获取面试预设场景详情"""
+    try:
+        # 获取指定预设场景
+        preset = InterviewPreset.get_by_id(preset_id)
+        if not preset:
+            return jsonify({"error": "预设场景不存在"}), 404
+        return jsonify({"preset": preset})
+    except Exception as e:
+        logger.exception(f"获取面试预设场景详情失败: {str(e)}")
+        return jsonify({"error": f"获取面试预设场景详情失败: {str(e)}"}), 500

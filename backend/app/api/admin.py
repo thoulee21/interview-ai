@@ -7,8 +7,8 @@ import logging
 import secrets
 
 from app.api.auth import admin_required
-from app.models.interview import (InterviewQuestion, InterviewSession,
-                                  MultimodalAnalysis)
+from app.models.interview import (InterviewPreset, InterviewQuestion,
+                                  InterviewSession, MultimodalAnalysis)
 from app.models.position import PositionType
 from app.models.user import User
 from flask import jsonify, request
@@ -365,3 +365,69 @@ def create_user():
     except Exception as e:
         logger.exception(f"创建用户失败: {str(e)}")
         return jsonify({"error": f"创建用户失败: {str(e)}"}), 500
+
+
+# 面试预设场景管理API
+@admin_required
+def create_preset():
+    """创建面试预设场景"""
+    data = request.json
+    name = data.get('name')
+    description = data.get('description')
+    interview_params = data.get('interviewParams')
+    is_default = data.get('isDefault', False)
+
+    if not name or not interview_params:
+        return jsonify({"error": "名称和面试参数是必填项"}), 400
+
+    try:
+        preset_id = InterviewPreset.create(
+            name, description, interview_params, is_default
+        )
+        preset = InterviewPreset.get_by_id(preset_id)
+        return jsonify({
+            "message": "预设场景创建成功",
+            "preset": preset
+        }), 201
+    except Exception as e:
+        logger.exception(f"创建预设场景失败: {str(e)}")
+        return jsonify({"error": f"创建预设场景失败: {str(e)}"}), 500
+
+
+@admin_required
+def update_preset(preset_id):
+    """更新面试预设场景"""
+    data = request.json
+    name = data.get('name')
+    description = data.get('description')
+    interview_params = data.get('interviewParams')
+    is_default = data.get('isDefault')
+
+    try:
+        success = InterviewPreset.update(
+            preset_id, name, description, interview_params, is_default
+        )
+        if not success:
+            return jsonify({"error": "预设场景不存在或更新失败"}), 404
+
+        preset = InterviewPreset.get_by_id(preset_id)
+        return jsonify({
+            "message": "预设场景更新成功",
+            "preset": preset
+        })
+    except Exception as e:
+        logger.exception(f"更新预设场景失败: {str(e)}")
+        return jsonify({"error": f"更新预设场景失败: {str(e)}"}), 500
+
+
+@admin_required
+def delete_preset(preset_id):
+    """删除面试预设场景"""
+    try:
+        success = InterviewPreset.delete(preset_id)
+        if not success:
+            return jsonify({"error": "预设场景不存在或删除失败"}), 404
+        return jsonify({"message": "预设场景删除成功"})
+    except Exception as e:
+        logger.exception(f"删除预设场景失败: {str(e)}")
+        return jsonify({"error": f"删除预设场景失败: {str(e)}"}), 500

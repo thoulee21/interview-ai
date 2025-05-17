@@ -33,6 +33,10 @@ api_bp.add_url_rule('/answer_question',
                     view_func=interview.answer_question, methods=['POST'])
 api_bp.add_url_rule('/interview_results/<session_id>',
                     view_func=interview.get_interview_results)
+api_bp.add_url_rule('/interview_presets',
+                    view_func=interview.get_interview_presets)
+api_bp.add_url_rule('/interview_presets/<int:preset_id>',
+                    view_func=interview.get_interview_preset_detail)
 
 # 注册分析相关路由
 api_bp.add_url_rule('/multimodal_analysis',
@@ -72,3 +76,8 @@ api_bp.add_url_rule('/admin/users/<int:user_id>',
                     view_func=admin.delete_user, methods=['DELETE'])
 api_bp.add_url_rule('/admin/users/<int:user_id>/reset-password',
                     view_func=admin.reset_user_password, methods=['POST'])
+
+# 注册管理员相关路由 - 预设场景管理
+api_bp.add_url_rule('/admin/presets', view_func=admin.create_preset, methods=['POST'])
+api_bp.add_url_rule('/admin/presets/<int:preset_id>', view_func=admin.update_preset, methods=['PUT'])
+api_bp.add_url_rule('/admin/presets/<int:preset_id>', view_func=admin.delete_preset, methods=['DELETE'])

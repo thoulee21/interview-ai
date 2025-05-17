@@ -3,6 +3,7 @@
 提供数据库连接和操作的工具函数
 """
 
+import json
 import sqlite3
 
 from flask import current_app, g
@@ -123,6 +124,19 @@ def init_db():
     )
     ''')
 
+    # 创建面试预设场景表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS interview_presets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        interview_params TEXT NOT NULL,
+        is_default INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
     # 检查用户表是否为空，如果为空则添加默认管理员用户
     cursor.execute("SELECT COUNT(*) FROM users")
     count = cursor.fetchone()[0]
@@ -163,6 +177,87 @@ def init_db():
             "INSERT INTO position_types (value, label, description) VALUES (?, ?, ?)",
             default_position_types
         )
+
+    # 检查面试预设场景表是否为空，如果为空则添加默认数据
+    cursor.execute("SELECT COUNT(*) FROM interview_presets")
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        # 默认面试预设场景数据
+        default_presets = [
+            {
+                "name": "轻松友好型面试",
+                "description": "适合初级岗位或实习生的友好面试模式，压力小，注重基础知识考察",
+                "params": {
+                    "include_code_exercise": False,
+                    "include_behavioral_questions": True,
+                    "include_stress_test": False,
+                    "interview_mode": "结对编程",
+                    "industry_focus": "互联网",
+                    "company_size": "中型企业"
+                },
+                "is_default": 1
+            },
+            {
+                "name": "技术深度型面试",
+                "description": "适合中高级技术岗位的深度技术面试，重点考察技术深度和解决问题能力",
+                "params": {
+                    "include_code_exercise": True,
+                    "include_behavioral_questions": False,
+                    "include_stress_test": False,
+                    "interview_mode": "系统设计",
+                    "industry_focus": "金融",
+                    "company_size": "大型企业"
+                },
+                "is_default": 1
+            },
+            {
+                "name": "压力测试型面试",
+                "description": "模拟高压力面试场景，测试应对压力和解决问题的能力",
+                "params": {
+                    "include_code_exercise": True,
+                    "include_behavioral_questions": True,
+                    "include_stress_test": True,
+                    "interview_mode": "算法挑战",
+                    "industry_focus": "制造业",
+                    "company_size": "大型企业"
+                },
+                "is_default": 1
+            },
+            {
+                "name": "全面评估型面试",
+                "description": "综合评估技术能力、软技能和文化匹配度的全面面试",
+                "params": {
+                    "include_code_exercise": True,
+                    "include_behavioral_questions": True,
+                    "include_stress_test": False,
+                    "interview_mode": "标准",
+                    "industry_focus": "互联网",
+                    "company_size": "中型企业"
+                },
+                "is_default": 1
+            },
+            {
+                "name": "行为面试专场",
+                "description": "侧重考察过往经历和行为模式的面试，适合管理岗位或需要团队协作的职位",
+                "params": {
+                    "include_code_exercise": False,
+                    "include_behavioral_questions": True,
+                    "include_stress_test": False,
+                    "interview_mode": "系统设计",
+                    "industry_focus": "教育",
+                    "company_size": "中型企业"
+                },
+                "is_default": 1
+            }
+        ]
+
+        for preset in default_presets:
+            cursor.execute(
+                "INSERT INTO interview_presets (name, description, interview_params, is_default) VALUES (?, ?, ?, ?)",
+                (preset["name"], preset["description"], json.dumps(
+                    preset["params"]), preset["is_default"])
+            )
 
     conn.commit()
     conn.close()
