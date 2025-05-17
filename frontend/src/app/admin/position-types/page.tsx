@@ -35,6 +35,7 @@ type PositionType = {
   label: string;
   description: string;
   createdAt: string;
+  updatedAt: string;
 };
 
 export default function PositionTypesPage() {
@@ -153,10 +154,11 @@ export default function PositionTypesPage() {
       sortOrder: sortField === "id" ? sortOrder : undefined,
     },
     {
-      title: "职位编码",
+      title: "职位代码",
       dataIndex: "value",
       key: "value",
       render: (text: string) => <Tag color="blue">{text}</Tag>,
+      width: 130,
       sorter: true,
       sortOrder: sortField === "value" ? sortOrder : undefined,
     },
@@ -164,6 +166,7 @@ export default function PositionTypesPage() {
       title: "职位名称",
       dataIndex: "label",
       key: "label",
+      width: 150,
       sorter: true,
       sortOrder: sortField === "label" ? sortOrder : undefined,
     },
@@ -174,6 +177,8 @@ export default function PositionTypesPage() {
       render: (text: string) => (
         <Text ellipsis={{ tooltip: text }}>{text || "-"}</Text>
       ),
+      width: 250,
+      ellipsis: true,
       sorter: true,
       sortOrder: sortField === "description" ? sortOrder : undefined,
     },
@@ -182,12 +187,23 @@ export default function PositionTypesPage() {
       dataIndex: "createdAt",
       key: "createdAt",
       render: (date: string) => new Date(date).toLocaleString("zh-CN"),
+      width: 150,
       sorter: true,
       sortOrder: sortField === "createdAt" ? sortOrder : undefined,
     },
     {
+      title: "更新时间",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
+      render: (date: string) => new Date(date).toLocaleString("zh-CN"),
+      width: 150,
+      sorter: true,
+      sortOrder: sortField === "updatedAt" ? sortOrder : undefined,
+    },
+    {
       title: "操作",
       key: "action",
+      width: 150,
       render: (_: string, record: PositionType) => (
         <Space size="small">
           <Button
@@ -236,6 +252,7 @@ export default function PositionTypesPage() {
         <ApartmentOutlined style={{ marginRight: 8 }} />
         职位类型管理
       </Title>
+
       <Card style={{ marginBottom: "20px" }}>
         <div
           style={{
@@ -251,10 +268,12 @@ export default function PositionTypesPage() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
+
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
             添加职位类型
           </Button>
         </div>
+
         <Table
           rowKey="id"
           columns={columns}

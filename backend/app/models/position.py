@@ -46,7 +46,8 @@ class PositionType:
         cursor = db.cursor()
 
         cursor.execute(
-            "SELECT id, value, label, description, created_at, updated_at FROM position_types ORDER BY label")
+            "SELECT id, value, label, description, created_at, updated_at FROM position_types ORDER BY label"
+        )
 
         position_types = []
         for row in cursor.fetchall():
@@ -76,7 +77,7 @@ class PositionType:
         cursor = db.cursor()
 
         cursor.execute(
-            "SELECT id, value, label, description, created_at, updated_at FROM position_types WHERE id = ?", 
+            "SELECT id, value, label, description, created_at, updated_at FROM position_types WHERE id = ?",
             (position_id,)
         )
         position = cursor.fetchone()
@@ -146,7 +147,7 @@ class PositionType:
 
         # 检查是否与其他职位类型的value冲突
         cursor.execute(
-            "SELECT id FROM position_types WHERE value = ? AND id != ?", 
+            "SELECT id FROM position_types WHERE value = ? AND id != ?",
             (value, position_id)
         )
         if cursor.fetchone():
