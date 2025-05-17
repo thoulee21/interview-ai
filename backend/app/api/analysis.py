@@ -142,21 +142,6 @@ def multimodal_analysis():
         # 如果没有成功处理任何帧，返回默认值
         if frame_count == 0:
             logger.warning(f"无法从视频中提取任何有效帧: {video_path}")
-            # 默认的身体语言详细评分
-            default_body_language_details = {
-                "stability": 7.0,
-                "headPose": 7.0,
-                "upperBody": 7.0,
-                "motion": 7.0
-            }
-            analysis = {
-                "eyeContact": 7.0,
-                "facialExpressions": 7.0,
-                "bodyLanguage": 7.0,
-                "bodyLanguageDetails": default_body_language_details,
-                "confidence": 7.0,
-                "recommendations": "视频分析失败，请确保摄像头正常工作并尝试重新录制。"
-            }
 
             # 清理临时文件
             if not current_app.config.get("DEBUG"):
@@ -165,7 +150,7 @@ def multimodal_analysis():
                 except:
                     logger.warning(f"无法删除临时视频文件: {video_path}")
 
-            return jsonify(analysis)
+            return jsonify({"error": "视频中没有检测到有效的面部或眼睛"}), 400
 
         logger.info(
             "视频分析完成: "
@@ -303,12 +288,13 @@ def multimodal_analysis():
 
         # 处理同一视频的音频分析
         audio_analysis = None
+
         try:
             # 从视频文件提取音频
             audio_analysis = extract_and_evaluate_audio(video_path)
         except Exception as audio_error:
-            logger.warning(f"从视频提取并分析音频失败: {str(audio_error)}")
             # 音频分析失败不影响视频分析结果的返回
+            logger.warning(f"从视频提取并分析音频失败: {str(audio_error)}")
 
         # 清理临时文件
         if not current_app.config.get("DEBUG"):
@@ -322,11 +308,7 @@ def multimodal_analysis():
             session_id, analysis, audio_analysis
         )
 
-        combined_result = {
-            "video": analysis,
-            "audio": audio_analysis
-        }
-        return jsonify(combined_result)
+        return jsonify({"msg": "分析完成"})
 
     except Exception as e:
         logger.exception(f"视频分析失败: {str(e)}")
