@@ -22,7 +22,6 @@ from dotenv import load_dotenv
 from websocket import WebSocketApp, enableTrace
 
 # 配置日志
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # 加载环境变量
@@ -272,20 +271,74 @@ class XunFeiSparkAPI:
                 "message": f"API调用异常: {str(e)}"
             }
 
-    def generate_interview_question(self, position_type, difficulty, previous_questions=None, previous_answers=None):
+    def generate_interview_question(self, position_type, difficulty, previous_questions=None, previous_answers=None, interview_params=None):
         """生成面试问题"""
         try:
+            # 从interview_params获取额外参数，如果提供
+            interviewer_style = "专业型"
+            include_code_exercise = False
+            include_behavioral_questions = False
+            include_stress_test = False
+            interview_mode = "标准"
+            industry_focus = None
+            company_size = None
+            custom_prompt = None
+
+            if interview_params:
+                interviewer_style = interview_params.get(
+                    'interviewer_style', interviewer_style
+                )
+                include_code_exercise = interview_params.get(
+                    'include_code_exercise', include_code_exercise
+                )
+                include_behavioral_questions = interview_params.get(
+                    'include_behavioral_questions', include_behavioral_questions
+                )
+                include_stress_test = interview_params.get(
+                    'include_stress_test', include_stress_test
+                )
+                interview_mode = interview_params.get(
+                    'interview_mode', interview_mode
+                )
+                industry_focus = interview_params.get(
+                    'industry_focus', industry_focus
+                )
+                company_size = interview_params.get('company_size')
+                custom_prompt = interview_params.get('custom_prompt')
+
             # 构建提示词
-            prompt = f"你是一位专业的面试官，现在正在面试一位申请{position_type}职位的候选人。"
+            prompt = f"你是一位{interviewer_style}的面试官，现在正在面试一位申请{position_type}职位的候选人。"
+
+            if industry_focus:
+                prompt += f"\n请针对{industry_focus}行业的特点提问。"
+
+            if company_size:
+                prompt += f"\n面试的公司类型是：{company_size}。"
+
+            if interview_mode != "标准":
+                prompt += f"\n本次面试的模式是：{interview_mode}。"
 
             if previous_questions and previous_answers:
                 prompt += f"\n已经问过的问题: {'; '.join(previous_questions)}"
                 prompt += f"\n候选人的回答: {'; '.join(previous_answers)}"
-                prompt += f"\n请根据候选人之前的回答，提供一个{difficulty}难度的后续面试问题。问题应该针对性强，能够深入考察候选人的专业能力和综合素质。"
+                prompt += f"\n请根据候选人之前的回答，提供一个{difficulty}难度的后续面试问题。"
             else:
                 prompt += f"\n请提供一个{difficulty}难度的第一个面试问题，问题应该专业且有针对性。"
 
+            if include_behavioral_questions:
+                prompt += "\n这个问题应该是行为面试问题，考察候选人过去的经历和处理问题的方式。"
+
+            if include_stress_test:
+                prompt += "\n这个问题应该有一定压力，考察候选人在压力下的表现和思维能力。"
+
+            if include_code_exercise:
+                prompt += "\n这个问题应该包含代码练习，让候选人展示编程能力。"
+
+            if custom_prompt:
+                prompt += f"\n额外要求：{custom_prompt}"
+
             prompt += f"\n\n请给出问题的具体内容，不需要其他任何解释。"
+            logger.debug(f"生成面试问题的提示词: {prompt}")
 
             # 调用API
             response = self.chat(prompt)
@@ -462,7 +515,7 @@ class AIService:
         """初始化AI服务"""
         self.api = XunFeiSparkAPI()
 
-    def generate_interview_question(self, position_type, difficulty, previous_questions=None, previous_answers=None):
+    def generate_interview_question(self, position_type, difficulty, previous_questions=None, previous_answers=None, interview_params=None):
         """
         生成面试问题
 
@@ -471,6 +524,15 @@ class AIService:
             difficulty (str): 难度级别
             previous_questions (list, optional): 之前的问题列表
             previous_answers (list, optional): 之前的回答列表
+            interview_params (dict, optional): 额外的面试参数
+                - interviewer_style: 面试官风格
+                - include_code_exercise: 是否包含代码练习
+                - include_behavioral_questions: 是否包含行为问题
+                - include_stress_test: 是否包含压力测试
+                - interview_mode: 面试模式
+                - industry_focus: 行业焦点
+                - company_size: 公司规模
+                - custom_prompt: 自定义提示词
 
         Returns:
             dict: 包含生成的问题的响应
@@ -481,7 +543,8 @@ class AIService:
                 position_type,
                 difficulty,
                 previous_questions,
-                previous_answers
+                previous_answers,
+                interview_params
             )
 
             if response.get("status") == "success":

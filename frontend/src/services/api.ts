@@ -129,7 +129,19 @@ const authAPI = {
 // 面试相关API
 const interviewAPI = {
   // 开始新的面试会话
-  startInterview: (data: { positionType: string; difficulty: string }) => {
+  startInterview: (data: {
+    positionType: string;
+    difficulty: string;
+    questionCount?: number;
+    includeCodeExercise?: boolean;
+    includeBehavioralQuestions?: boolean;
+    includeStressTest?: boolean;
+    interviewerStyle?: string;
+    interviewMode?: string;
+    industryFocus?: string;
+    companySize?: string;
+    customPrompt?: string;
+  }) => {
     return apiClient.post("/start_interview", data);
   },
 

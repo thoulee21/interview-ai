@@ -14,13 +14,19 @@ class InterviewSession:
     """面试会话模型"""
 
     @staticmethod
-    def create(position_type, difficulty):
+    def create(position_type, difficulty, **kwargs):
         """
         创建新的面试会话
 
         Args:
             position_type (str): 职位类型
             difficulty (str): 难度级别
+            **kwargs: 其他面试参数
+                interviewer_style (str, optional): 面试官风格
+                interview_mode (str, optional): 面试模式
+                industry_focus (str, optional): 行业焦点
+                company_size (str, optional): 公司规模
+                interview_params (dict, optional): 完整的面试参数
 
         Returns:
             str: 会话ID
@@ -29,10 +35,50 @@ class InterviewSession:
         cursor = db.cursor()
 
         session_id = str(uuid.uuid4())
+
+        # 基本参数
+        params = (
+            session_id,
+            position_type,
+            difficulty,
+            datetime.now(),
+            "active"
+        )
+
         cursor.execute(
             "INSERT INTO interview_sessions (session_id, position_type, difficulty, start_time, status) VALUES (?, ?, ?, ?, ?)",
-            (session_id, position_type, difficulty, datetime.now(), "active")
+            params
         )
+
+        # 存储额外参数为JSON
+        if kwargs:
+            # 基本额外参数
+            extra_params = {
+                'interviewer_style': kwargs.get('interviewer_style'),
+                'interview_mode': kwargs.get('interview_mode'),
+                'industry_focus': kwargs.get('industry_focus'),
+                'company_size': kwargs.get('company_size'),
+            }
+            # 过滤掉None值
+            extra_params = {k: v for k,
+                            v in extra_params.items() if v is not None}
+
+            if extra_params:
+                extra_params_json = json.dumps(extra_params)
+                cursor.execute(
+                    "UPDATE interview_sessions SET extra_params = ? WHERE session_id = ?",
+                    (extra_params_json, session_id)
+                )
+
+            # 存储完整的面试参数
+            interview_params = kwargs.get('interview_params')
+            if interview_params:
+                interview_params_json = json.dumps(interview_params)
+                cursor.execute(
+                    "UPDATE interview_sessions SET interview_params = ? WHERE session_id = ?",
+                    (interview_params_json, session_id)
+                )
+
         db.commit()
         return session_id
 
@@ -218,6 +264,33 @@ class InterviewSession:
 
         db.commit()
         return True
+
+    @staticmethod
+    def get_interview_params(session_id):
+        """
+        获取面试会话的完整面试参数
+
+        Args:
+            session_id (str): 会话ID
+
+        Returns:
+            dict|None: 面试参数
+        """
+        db = get_db()
+        cursor = db.cursor()
+
+        cursor.execute(
+            "SELECT interview_params FROM interview_sessions WHERE session_id = ?",
+            (session_id,)
+        )
+        result = cursor.fetchone()
+
+        if result and result['interview_params']:
+            try:
+                return json.loads(result['interview_params'])
+            except json.JSONDecodeError:
+                return None
+        return None
 
 
 class InterviewQuestion:

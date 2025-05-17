@@ -27,21 +27,54 @@ def start_interview():
     position_type = data.get('positionType', '软件工程师')  # 职位类型
     difficulty = data.get('difficulty', '中级')  # 难度
 
+    # 获取其他参数
+    question_count = data.get('questionCount', 5)  # 问题数量
+    include_code_exercise = data.get('includeCodeExercise', False)  # 是否包含代码练习
+    interviewer_style = data.get('interviewerStyle', '专业型')  # 面试官风格
+    interview_mode = data.get('interviewMode', '标准')  # 面试模式
+    industry_focus = data.get('industryFocus')  # 行业焦点
+    company_size = data.get('companySize')  # 公司规模
+    include_behavioral_questions = data.get(
+        'includeBehavioralQuestions', False
+    )  # 是否包含行为问题
+    include_stress_test = data.get('includeStressTest', False)  # 是否包含压力测试
+    custom_prompt = data.get('customPrompt')  # 自定义提示词
+
+    # 更新配置
+    current_app.config['INTERVIEW_QUESTION_COUNT'] = question_count
+
     # 获取当前用户ID
     user_id = request.user.get('user_id')
     if not user_id:
         return jsonify({"error": "需要登录才能开始面试"}), 401
 
-    try:
-        # 创建会话
-        session_id = InterviewSession.create(position_type, difficulty)
+    try:        # 创建会话，添加额外参数
+        # 构建提示词参数
+        interview_params = {
+            'include_code_exercise': include_code_exercise,
+            'interviewer_style': interviewer_style,
+            'interview_mode': interview_mode,
+            'industry_focus': industry_focus,
+            'company_size': company_size,
+            'include_behavioral_questions': include_behavioral_questions,
+            'include_stress_test': include_stress_test,
+            'custom_prompt': custom_prompt
+        }
+
+        session_id = InterviewSession.create(
+            position_type,
+            difficulty,
+            interviewer_style=interviewer_style,
+            interview_params=interview_params  # 将完整的面试参数传递给create方法
+        )
 
         # 关联用户和会话
         User.associate_session(user_id, session_id)
 
         # 生成第一个面试问题
         question_response = ai_service.generate_interview_question(
-            position_type, difficulty)
+            position_type, difficulty, interview_params=interview_params
+        )
 
         if question_response.get("status") != "success":
             return jsonify({"error": "生成面试问题失败"}), 500
@@ -178,11 +211,15 @@ def answer_question():
             })
 
         # 生成下一个问题
+        # 获取保存的interview_params
+        interview_params = InterviewSession.get_interview_params(session_id)
+
         next_question_response = ai_service.generate_interview_question(
             position_type,
             session["difficulty"],
             questions,
-            answers
+            answers,
+            interview_params=interview_params  # 传递保存的面试参数
         )
 
         if next_question_response.get("status") != "success":

@@ -36,7 +36,9 @@ def init_db():
         difficulty TEXT,
         start_time TIMESTAMP,
         end_time TIMESTAMP,
-        status TEXT
+        status TEXT,
+        extra_params TEXT,
+        interview_params TEXT
     )
     ''')
 
