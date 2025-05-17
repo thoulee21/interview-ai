@@ -50,26 +50,7 @@ class InterviewSession:
             params
         )
 
-        # 存储额外参数为JSON
         if kwargs:
-            # 基本额外参数
-            extra_params = {
-                'interviewer_style': kwargs.get('interviewer_style'),
-                'interview_mode': kwargs.get('interview_mode'),
-                'industry_focus': kwargs.get('industry_focus'),
-                'company_size': kwargs.get('company_size'),
-            }
-            # 过滤掉None值
-            extra_params = {k: v for k,
-                            v in extra_params.items() if v is not None}
-
-            if extra_params:
-                extra_params_json = json.dumps(extra_params)
-                cursor.execute(
-                    "UPDATE interview_sessions SET extra_params = ? WHERE session_id = ?",
-                    (extra_params_json, session_id)
-                )
-
             # 存储完整的面试参数
             interview_params = kwargs.get('interview_params')
             if interview_params:

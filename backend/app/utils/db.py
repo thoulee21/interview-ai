@@ -38,7 +38,6 @@ def init_db():
         start_time TIMESTAMP,
         end_time TIMESTAMP,
         status TEXT,
-        extra_params TEXT,
         interview_params TEXT
     )
     ''')

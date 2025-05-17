@@ -28,9 +28,6 @@ def start_interview():
     position_type = data.get('positionType', '软件工程师')  # 职位类型
     difficulty = data.get('difficulty', '中级')  # 难度
 
-    # 获取预设场景ID
-    preset_id = data.get('presetId')  # 预设场景ID
-
     # 获取其他参数
     question_count = data.get('questionCount', 5)  # 问题数量
     include_code_exercise = data.get('includeCodeExercise', False)  # 是否包含代码练习
@@ -49,8 +46,6 @@ def start_interview():
 
     # 获取当前用户ID
     user_id = request.user.get('user_id')
-    if not user_id:
-        return jsonify({"error": "需要登录才能开始面试"}), 401
 
     try:
         # 构建提示词参数
@@ -64,16 +59,6 @@ def start_interview():
             'include_stress_test': include_stress_test,
             'custom_prompt': custom_prompt
         }
-
-        # 如果指定了预设场景ID，则从预设中加载参数
-        if preset_id:
-            preset = InterviewPreset.get_by_id(preset_id)
-            if preset:
-                preset_params = preset.get('interviewParams', {})
-
-                # 更新参数
-                for key, value in preset_params.items():
-                    interview_params[key] = value
 
         # 创建会话，添加额外参数
         session_id = InterviewSession.create(
