@@ -55,19 +55,45 @@ export default function AdminPresetsPage() {
   );
   const [messageApi, contextHolder] = message.useMessage();
 
+  // 搜索和筛选状态
+  const [searchText, setSearchText] = useState("");
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+
   // 获取所有预设场景
   const fetchPresets = useCallback(async () => {
     try {
       setLoading(true);
       const response = await interviewAPI.getInterviewPresets();
-      setPresets(response.data.presets || []);
+      const allPresets = response.data.presets || [];
+
+      // 根据搜索文本筛选预设场景
+      let filteredPresets = allPresets;
+      if (searchText) {
+        filteredPresets = allPresets.filter(
+          (preset: InterviewPreset) =>
+            preset.name.toLowerCase().includes(searchText.toLowerCase()) ||
+            preset.description.toLowerCase().includes(searchText.toLowerCase()),
+        );
+      }
+
+      // 更新总数量
+      setPagination((prev) => ({
+        ...prev,
+        total: filteredPresets.length,
+      }));
+
+      setPresets(filteredPresets);
     } catch (error) {
       console.error("获取预设场景失败:", error);
       messageApi.error("获取预设场景失败，请稍后重试");
     } finally {
       setLoading(false);
     }
-  }, [messageApi]);
+  }, [messageApi, searchText]);
 
   useEffect(() => {
     fetchPresets();
@@ -178,17 +204,78 @@ export default function AdminPresetsPage() {
     }
   };
 
+  // 处理分页变化
+  const handlePaginationChange = (page: number, pageSize?: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      current: page,
+      pageSize: pageSize || prev.pageSize,
+    }));
+  };
+
+  // 处理搜索
+  const handleSearch = (value: string) => {
+    setSearchText(value);
+    setPagination((prev) => ({
+      ...prev,
+      current: 1, // 搜索后返回第一页
+    }));
+  };
+
+  // 处理排序
+  const handleTableChange = (_pagination: any, _filters: any, sorter: any) => {
+    const { field, order } = sorter;
+
+    if (field && order) {
+      const sortedPresets = [...presets].sort((a, b) => {
+        const compareA = field
+          .split(".")
+          .reduce((obj: any, key: string) => obj?.[key], a);
+        const compareB = field
+          .split(".")
+          .reduce((obj: any, key: string) => obj?.[key], b);
+
+        if (typeof compareA === "string" && typeof compareB === "string") {
+          return order === "ascend"
+            ? compareA.localeCompare(compareB)
+            : compareB.localeCompare(compareA);
+        }
+
+        return order === "ascend"
+          ? compareA > compareB
+            ? 1
+            : -1
+          : compareA > compareB
+            ? -1
+            : 1;
+      });
+
+      setPresets(sortedPresets);
+    }
+  };
+
+  // 处理页面大小变化
+  const handleShowSizeChange = (_current: number, size: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      pageSize: size,
+    }));
+  };
+
   const columns = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
-      width: 60,
+      width: 70,
+      sorter: true,
     },
     {
       title: "名称",
       dataIndex: "name",
       key: "name",
+      width: 150,
+      sorter: true,
       render: (text: string, record: InterviewPreset) => (
         <a onClick={() => showDetailModal(record)}>{text}</a>
       ),
@@ -197,11 +284,16 @@ export default function AdminPresetsPage() {
       title: "描述",
       dataIndex: "description",
       key: "description",
+      width: 420,
       ellipsis: true,
+      sorter: true,
     },
     {
       title: "面试难度",
       key: "difficulty",
+      width: 80,
+      dataIndex: ["interviewParams", "difficulty"],
+      sorter: true,
       render: (text: string, record: InterviewPreset) => (
         <span>{record.interviewParams.difficulty || "中级"}</span>
       ),
@@ -209,6 +301,9 @@ export default function AdminPresetsPage() {
     {
       title: "状态",
       key: "default",
+      dataIndex: "isDefault",
+      width: 80,
+      sorter: true,
       render: (text: string, record: InterviewPreset) =>
         record.isDefault ? (
           <Tag icon={<CheckCircleOutlined />} color="success">
@@ -222,11 +317,13 @@ export default function AdminPresetsPage() {
       title: "创建时间",
       dataIndex: "createdAt",
       key: "createdAt",
+      sorter: true,
       render: (date: string) => new Date(date).toLocaleString(),
     },
     {
       title: "操作",
       key: "action",
+      width: 120,
       render: (text: string, record: InterviewPreset) => (
         <Space size="small">
           <Button
@@ -262,25 +359,50 @@ export default function AdminPresetsPage() {
       <Paragraph>管理面试系统中的预设场景，提供给用户快速选择使用。</Paragraph>
 
       <Card style={{ marginBottom: 24 }}>
-        <Space style={{ marginBottom: 16 }}>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={showAddDrawer}
-          >
-            添加预设场景
-          </Button>
-          <Button icon={<ReloadOutlined />} onClick={fetchPresets}>
-            刷新
-          </Button>
-        </Space>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          <Space>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={showAddDrawer}
+            >
+              添加预设场景
+            </Button>
+            <Button icon={<ReloadOutlined />} onClick={fetchPresets}>
+              刷新
+            </Button>
+          </Space>
+          <Input.Search
+            placeholder="搜索预设场景"
+            allowClear
+            onSearch={handleSearch}
+            style={{ width: 250 }}
+          />
+        </div>
 
         <Spin spinning={loading}>
           <Table
             columns={columns}
             dataSource={presets}
             rowKey="id"
-            pagination={{ pageSize: 10 }}
+            onChange={handleTableChange}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: true,
+              pageSizeOptions: ["5", "10", "20", "50"],
+              onChange: handlePaginationChange,
+              onShowSizeChange: handleShowSizeChange,
+              showTotal: (total) => `共 ${total} 条记录`,
+            }}
           />
         </Spin>
       </Card>
