@@ -6,6 +6,7 @@ import {
   EditOutlined,
   PlusOutlined,
   ReloadOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import {
   Breadcrumb,
@@ -29,7 +30,7 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-const { Title, Paragraph } = Typography;
+const { Title } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
@@ -328,7 +329,7 @@ export default function AdminPresetsPage() {
   ];
 
   return (
-    <div style={{ padding: "0 24px 24px" }}>
+    <div>
       {contextHolder}
       <Breadcrumb
         style={{ margin: "16px 0" }}
@@ -338,8 +339,10 @@ export default function AdminPresetsPage() {
         ]}
       />
 
-      <Title level={3}>面试预设场景管理</Title>
-      <Paragraph>管理面试系统中的预设场景，提供给用户快速选择使用。</Paragraph>
+      <Title level={3}>
+        <SettingOutlined style={{ marginRight: 8 }} />
+        面试预设场景管理
+      </Title>
 
       <Card style={{ marginBottom: 24 }}>
         <div
