@@ -80,16 +80,11 @@ export default function InterviewPage() {
 
       // 后台分析视频（现在后台会同时处理视频和音频分析）
       console.info("开始分析数据...");
-      const response = await interviewAPI.multimodalAnalysis(
-        videoBlob,
-        sessionId,
-      );
-
-      const { video, audio } = response.data;
-      console.debug("视频分析结果:", video);
-      console.debug("音频分析结果:", audio);
+      await interviewAPI.multimodalAnalysis(videoBlob, sessionId);
     } catch (error) {
       console.warn("后台分析失败:", error);
+    } finally {
+      console.info("分析完成");
     }
   }, [recordedChunks, sessionId]);
 
