@@ -274,7 +274,7 @@ class XunFeiSparkAPI:
     def generate_interview_question(self, position_type, difficulty, previous_questions=None, previous_answers=None, interview_params=None):
         """生成面试问题"""
         try:
-            # 从interview_params获取额外参数，如果提供
+            # 从interview_params获取额外参数，如果没有提供则使用默认值
             interviewer_style = "专业型"
             include_code_exercise = False
             include_behavioral_questions = False
