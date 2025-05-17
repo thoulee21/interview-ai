@@ -12,6 +12,7 @@ import {
   Spin,
   Steps,
   Switch,
+  Tooltip,
   Typography,
   message,
 } from "antd";
@@ -256,41 +257,37 @@ export default function InterviewSetupPage() {
                     }}
                   >
                     {presets.map((preset) => (
-                      <Card
+                      <Tooltip
+                        // 依据interviewParams中的值动态设置提示信息
+                        title={
+                          Object.values(preset.interviewParams)
+                            .filter((value) => typeof value !== "boolean")
+                            .join(", ") || "无额外信息"
+                        }
                         key={preset.id}
-                        hoverable
-                        style={{
-                          marginBottom: "16px",
-                          cursor: "pointer",
-                          border:
-                            selectedPreset?.id === preset.id
-                              ? "2px solid #1890ff"
-                              : undefined,
-                          boxShadow:
-                            selectedPreset?.id === preset.id
-                              ? "0 0 10px rgba(24, 144, 255, 0.3)"
-                              : undefined,
-                        }}
-                        onClick={() => handleSelectPreset(preset)}
                       >
-                        <div
+                        <Card
+                          key={preset.id}
                           style={{
-                            fontWeight: "bold",
-                            marginBottom: "8px",
+                            marginBottom: "16px",
+                            cursor: "pointer",
+                            border:
+                              selectedPreset?.id === preset.id
+                                ? "2px solid #1890ff"
+                                : undefined,
+                            boxShadow:
+                              selectedPreset?.id === preset.id
+                                ? "0 0 10px rgba(24, 144, 255, 0.3)"
+                                : undefined,
                           }}
+                          onClick={() => handleSelectPreset(preset)}
+                          title={preset.name}
                         >
-                          {preset.name}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "14px",
-                            color: "#666",
-                            marginBottom: "8px",
-                          }}
-                        >
-                          {preset.description}
-                        </div>
-                      </Card>
+                          <Card.Meta
+                            description={preset.description}
+                          />
+                        </Card>
+                      </Tooltip>
                     ))}
                   </div>
                 )}
