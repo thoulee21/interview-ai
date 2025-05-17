@@ -180,29 +180,32 @@ def answer_question():
 
             if data:
                 # 从验证后的数据中获取评估信息
-                overall_score = data.get('overallScore', 75)
-                content_score = data.get('contentScore', 75)
-                delivery_score = data.get('deliveryScore', 75)
-                nonverbal_score = data.get('nonVerbalScore', 75)
-                strengths = data.get('strengths', ["回答条理清晰", "专业知识扎实", "表达流畅"])
-                improvements = data.get(
-                    'improvements', ["可以更加简洁", "需要更多具体案例", "注意减少填充词"]
-                )
-                recommendations = data.get(
-                    'recommendations', "整体表现良好，建议进一步提升回答的简洁性和具体性。"
-                )
+                overall_score = data.get('overallScore', 0)
+                content_score = data.get('contentScore', 0)
+                delivery_score = data.get('deliveryScore', 0)
+                nonverbal_score = data.get('nonVerbalScore', 0)
+                strengths = data.get('strengths', [])
+                improvements = data.get('improvements', [])
+                recommendations = data.get('recommendations', "")
 
                 # 保存最终评估
                 FinalEvaluation.create(
-                    session_id, overall_score, content_score, delivery_score,
-                    nonverbal_score, strengths, improvements, recommendations
+                    session_id,
+                    overall_score,
+                    content_score,
+                    delivery_score,
+                    nonverbal_score,
+                    strengths,
+                    improvements,
+                    recommendations
                 )
             else:
                 logger.error("无法从评估结果中提取有效数据")
 
             # 更新会话状态为已完成
             InterviewSession.update_status(
-                session_id, "completed", datetime.now())
+                session_id, "completed", datetime.now()
+            )
 
             return jsonify({
                 "message": "面试已完成",
@@ -268,6 +271,7 @@ def get_interview_results(session_id):
 
         # 提取问题得分
         question_scores = []
+
         for q in all_questions:
             if q['answer'] and q['evaluation']:
                 # 从评估文本中提取结构化数据
@@ -296,19 +300,25 @@ def get_interview_results(session_id):
 
         video_analysis = None
         audio_analysis = None
+
         # 如果有多模态分析数据，获取最新的一条
         if analyses:
             latest_analysis = analyses[-1]
             video_analysis = latest_analysis.get('videoAnalysis')
             audio_analysis = latest_analysis.get('audioAnalysis')
 
-        # 构建结果对象，优先使用数据库中保存的最终评估结果
+        # 构建结果对象，使用数据库中保存的最终评估结果
         if final_eval_record:
             # 从数据库记录中获取评估数据
             strengths = json.loads(
-                final_eval_record['strengths']) if final_eval_record['strengths'] else []
+                final_eval_record['strengths']
+            ) if final_eval_record['strengths'] else []
+
             improvements = json.loads(
-                final_eval_record['improvements']) if final_eval_record['improvements'] else []
+                final_eval_record['improvements']
+            ) if final_eval_record['improvements'] else []
+
+            recommendations = final_eval_record['recommendations']
 
             results = {
                 'overallScore': final_eval_record['overall_score'],
@@ -318,68 +328,12 @@ def get_interview_results(session_id):
                 'strengths': strengths,
                 'improvements': improvements,
                 'questionScores': question_scores,
-                'videoAnalysis': video_analysis or {
-                    'eyeContact': 7.5,
-                    'facialExpressions': 7.0,
-                    'bodyLanguage': 6.5,
-                    'confidence': 7.0
-                },
-                'audioAnalysis': audio_analysis or {
-                    'clarity': 7.5,
-                    'pace': 7.0,
-                    'tone': 7.5,
-                    'fillerWordsCount': 5
-                },
-                'recommendations': final_eval_record['recommendations']
-            }
-        else:
-            # 如果没有保存的最终评估结果，则计算评估数据
-            # 计算各项得分
-            content_score = sum([qs['score'] for qs in question_scores]) / \
-                len(question_scores) if question_scores else 75
-            delivery_score = audio_analysis.get(
-                'clarity', 8.0) * 10 if audio_analysis else 75
-            nonverbal_score = video_analysis.get(
-                'eyeContact', 7.5) * 10 if video_analysis else 75
-
-            # 计算总体得分(权重：内容60%，表达20%，非语言表现20%)
-            overall_score = int(content_score * 0.6 +
-                                delivery_score * 0.2 + nonverbal_score * 0.2)
-
-            # 默认的优势和改进点
-            strengths = ['清晰表达核心技能', '回答结构合理', '专业知识扎实']
-            improvements = ['需要提高回答的简洁性', '可以提供更多具体的工作实例', '减少填充词的使用']
-            recommendations = '整体表现良好，特别是在专业知识展示方面。建议在今后的面试中更加注意简洁有力地表达核心观点，并准备更多具体的工作案例来支持你的能力陈述。此外，可以适当减少填充词的使用，保持更自然的面部表情和肢体语言，这将进一步提升你的整体表现。'
-
-            # 生成面试评估结果并保存到数据库
-            FinalEvaluation.create(
-                session_id, overall_score, int(content_score), int(
-                    delivery_score), int(nonverbal_score),
-                strengths, improvements, recommendations
-            )
-
-            results = {
-                'overallScore': overall_score,
-                'contentScore': int(content_score),
-                'deliveryScore': int(delivery_score),
-                'nonVerbalScore': int(nonverbal_score),
-                'strengths': strengths,
-                'improvements': improvements,
-                'questionScores': question_scores,
-                'videoAnalysis': video_analysis or {
-                    'eyeContact': 7.5,
-                    'facialExpressions': 7.0,
-                    'bodyLanguage': 6.5,
-                    'confidence': 7.0
-                },
-                'audioAnalysis': audio_analysis or {
-                    'clarity': 7.5,
-                    'pace': 7.0,
-                    'tone': 7.5,
-                    'fillerWordsCount': 5
-                },
+                'videoAnalysis': video_analysis,
+                'audioAnalysis': audio_analysis,
                 'recommendations': recommendations
             }
+        else:
+            return jsonify({"error": "未找到面试结果"}), 404
 
         return jsonify(results)
 
