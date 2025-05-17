@@ -133,6 +133,11 @@ const ClientAppHeader = () => {
             icon: <TeamOutlined />,
             label: <Link href="/admin/users">用户管理</Link>,
           },
+          {
+            key: "/admin/presets",
+            icon: <SettingOutlined />,
+            label: <Link href="/admin/presets">预设场景管理</Link>,
+          },
         ],
       });
     }

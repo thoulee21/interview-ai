@@ -26,6 +26,16 @@ interface PositionType {
   label: string;
 }
 
+interface InterviewPreset {
+  id: number;
+  name: string;
+  description: string;
+  interviewParams: any;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface InterviewFormValues {
   positionType: string;
   difficulty: string;
@@ -41,6 +51,7 @@ interface InterviewFormValues {
   customPrompt?: string;
   includeBehavioralQuestions?: boolean;
   includeStressTest?: boolean;
+  presetId?: number;
 }
 
 export default function InterviewSetupPage() {
@@ -50,27 +61,86 @@ export default function InterviewSetupPage() {
 
   const [loading, setLoading] = useState(false);
   const [positionTypes, setPositionTypes] = useState<PositionType[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("basic");
+
+  const [presets, setPresets] = useState<InterviewPreset[]>([]); // 预设场景列表
+  const [selectedPreset, setSelectedPreset] = useState<InterviewPreset | null>(
+    null,
+  ); // 当前选中的预设
+  const [activeTab, setActiveTab] = useState<string>("presets"); // 改为默认显示预设选项卡
 
   useEffect(() => {
-    // 组件加载时从后端获取职位类型列表
-    const fetchPositionTypes = async () => {
+    // 组件加载时从后端获取职位类型列表和预设场景
+    const fetchInitialData = async () => {
       try {
         setLoading(true);
-        const response = await interviewAPI.getPositionTypes();
-        setPositionTypes(response.data || []);
+
+        // 并行请求职位类型和预设场景
+        const [positionTypesResponse, presetsResponse] = await Promise.all([
+          interviewAPI.getPositionTypes(),
+          interviewAPI.getInterviewPresets(),
+        ]);
+
+        setPositionTypes(positionTypesResponse.data || []);
+        setPresets(presetsResponse.data?.presets || []);
       } catch (error) {
-        console.error("获取职位类型列表失败:", error);
-        messageApi.error("获取职位类型列表失败，请稍后重试");
+        console.error("获取初始数据失败:", error);
+        messageApi.error("获取数据失败，请稍后重试");
 
         setPositionTypes([]);
+        setPresets([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPositionTypes();
+    fetchInitialData();
   }, [messageApi, form]);
+
+  // 处理选择预设场景
+  const handleSelectPreset = async (preset: InterviewPreset) => {
+    try {
+      setSelectedPreset(preset);
+
+      // 从预设场景中获取参数，并设置到表单中
+      const { interviewParams } = preset;
+
+      // 将参数名从后端格式转换为前端格式
+      const paramsMapping: Record<string, string> = {
+        difficulty: "difficulty",
+        include_code_exercise: "includeCodeExercise",
+        interviewer_style: "interviewerStyle",
+        interview_mode: "interviewMode",
+        industry_focus: "industryFocus",
+        company_size: "companySize",
+        include_behavioral_questions: "includeBehavioralQuestions",
+        include_stress_test: "includeStressTest",
+      };
+
+      // 准备设置到表单的值
+      const formValues: Partial<InterviewFormValues> = {
+        presetId: preset.id,
+      };
+
+      // 设置表单值
+      Object.entries(interviewParams).forEach(([key, value]) => {
+        const frontendKey = paramsMapping[key];
+        if (frontendKey) {
+          formValues[frontendKey as keyof InterviewFormValues] = value as any;
+        }
+      });
+
+      // 更新表单
+      form.setFieldsValue(formValues);
+
+      // 切换到基本设置选项卡
+      setActiveTab("basic");
+
+      messageApi.success(`已选择预设场景: ${preset.name}`);
+    } catch (error) {
+      console.error("选择预设场景失败:", error);
+      messageApi.error("选择预设场景失败");
+    }
+  };
 
   const handleSubmit = async (values: InterviewFormValues) => {
     try {
@@ -132,6 +202,105 @@ export default function InterviewSetupPage() {
               onChange={setActiveTab}
               items={[
                 {
+                  label: "预设场景",
+                  key: "presets",
+                  children: (
+                    <div>
+                      <Paragraph>
+                        选择一个预设的面试场景，快速开始面试
+                      </Paragraph>
+                      {presets.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "40px 0" }}>
+                          <Spin spinning={loading} />
+                          {!loading && <p>暂无可用预设场景</p>}
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fill, minmax(240px, 1fr))",
+                            gap: "16px",
+                          }}
+                        >
+                          {presets.map((preset) => (
+                            <Card
+                              key={preset.id}
+                              hoverable
+                              style={{
+                                marginBottom: "16px",
+                                cursor: "pointer",
+                                border:
+                                  selectedPreset?.id === preset.id
+                                    ? "2px solid #1890ff"
+                                    : undefined,
+                                boxShadow:
+                                  selectedPreset?.id === preset.id
+                                    ? "0 0 10px rgba(24, 144, 255, 0.3)"
+                                    : undefined,
+                              }}
+                              onClick={() => handleSelectPreset(preset)}
+                            >
+                              <div
+                                style={{
+                                  fontWeight: "bold",
+                                  marginBottom: "8px",
+                                }}
+                              >
+                                {preset.name}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "14px",
+                                  color: "#666",
+                                  marginBottom: "8px",
+                                }}
+                              >
+                                {preset.description}
+                              </div>
+
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#888",
+                                  marginTop: "12px",
+                                }}
+                              >
+                                <div>
+                                  难度：
+                                  {preset.interviewParams.difficulty || "中级"}
+                                </div>
+                                <div>
+                                  风格：
+                                  {preset.interviewParams.interviewer_style ||
+                                    "专业型"}
+                                </div>
+                              </div>
+
+                              {selectedPreset?.id === preset.id && (
+                                <div
+                                  style={{
+                                    color: "#1890ff",
+                                    marginTop: "8px",
+                                    textAlign: "center",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  ✓ 当前已选择
+                                </div>
+                              )}
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                      {/* 隐藏的表单项，用于保存选中的预设ID */}
+                      <Form.Item name="presetId" hidden>
+                        <InputNumber />
+                      </Form.Item>
+                    </div>
+                  ),
+                },
+                {
                   label: "基本设置",
                   key: "basic",
                   children: (
@@ -143,7 +312,11 @@ export default function InterviewSetupPage() {
                       >
                         <Select placeholder="选择你要模拟的职位">
                           {positionTypes.map((pos) => (
-                            <Option key={pos.value} value={pos.label}>
+                            <Option
+                              key={pos.value}
+                              // 传递给后端大模型的值应该用可读的标签值
+                              value={pos.label}
+                            >
                               {pos.label}
                             </Option>
                           ))}
@@ -191,30 +364,6 @@ export default function InterviewSetupPage() {
                   key: "advanced",
                   children: (
                     <>
-                      <Form.Item
-                        label="包含代码练习"
-                        name="includeCodeExercise"
-                        valuePropName="checked"
-                      >
-                        <Switch />
-                      </Form.Item>
-
-                      <Form.Item
-                        label="包含行为问题"
-                        name="includeBehavioralQuestions"
-                        valuePropName="checked"
-                      >
-                        <Switch />
-                      </Form.Item>
-
-                      <Form.Item
-                        label="包含压力测试"
-                        name="includeStressTest"
-                        valuePropName="checked"
-                      >
-                        <Switch />
-                      </Form.Item>
-
                       <Form.Item label="面试模式" name="interviewMode">
                         <Select placeholder="选择面试模式">
                           <Option value="标准">标准面试</Option>
@@ -242,6 +391,30 @@ export default function InterviewSetupPage() {
                           <Option value="大型企业">大型企业</Option>
                           <Option value="跨国公司">跨国公司</Option>
                         </Select>
+                      </Form.Item>
+
+                      <Form.Item
+                        label="包含代码练习"
+                        name="includeCodeExercise"
+                        valuePropName="checked"
+                      >
+                        <Switch />
+                      </Form.Item>
+
+                      <Form.Item
+                        label="包含行为问题"
+                        name="includeBehavioralQuestions"
+                        valuePropName="checked"
+                      >
+                        <Switch />
+                      </Form.Item>
+
+                      <Form.Item
+                        label="包含压力测试"
+                        name="includeStressTest"
+                        valuePropName="checked"
+                      >
+                        <Switch />
                       </Form.Item>
                     </>
                   ),

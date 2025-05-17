@@ -141,6 +141,7 @@ const interviewAPI = {
     industryFocus?: string;
     companySize?: string;
     customPrompt?: string;
+    presetId?: number;
   }) => {
     return apiClient.post("/start_interview", data);
   },
@@ -148,6 +149,16 @@ const interviewAPI = {
   // 获取可用职位类型列表
   getPositionTypes: () => {
     return apiClient.get("/position_types");
+  },
+
+  // 获取面试预设场景列表
+  getInterviewPresets: () => {
+    return apiClient.get("/interview_presets");
+  },
+
+  // 获取面试预设场景详情
+  getInterviewPresetDetail: (presetId: number) => {
+    return apiClient.get(`/interview_presets/${presetId}`);
   },
 
   // 提交问题回答
@@ -262,6 +273,34 @@ const interviewAPI = {
   // 重置用户密码
   resetUserPassword: (id: string) => {
     return apiClient.post(`/admin/users/${id}/reset-password`);
+  },
+
+  // 更新预设场景
+  updatePreset: (
+    id: number,
+    payload: {
+      name: string;
+      description: string;
+      isDefault: boolean;
+      interviewParams: any;
+    },
+  ) => {
+    return apiClient.put(`/admin/presets/${id}`, payload);
+  },
+
+  // 创建新的预设场景
+  createPreset: (payload: {
+    name: string;
+    description: string;
+    isDefault: boolean;
+    interviewParams: any;
+  }) => {
+    return apiClient.post("/admin/presets", payload);
+  },
+
+  // 删除预设场景
+  deletePreset: (id: number) => {
+    return apiClient.delete(`/admin/presets/${id}`);
   },
 };
 

@@ -1,0 +1,494 @@
+"use client";
+
+import { interviewAPI } from "@/services/api";
+import {
+  CheckCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import {
+  Breadcrumb,
+  Button,
+  Card,
+  Descriptions,
+  Drawer,
+  Form,
+  Input,
+  message,
+  Modal,
+  Popconfirm,
+  Radio,
+  Select,
+  Space,
+  Spin,
+  Switch,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+
+const { Title, Paragraph } = Typography;
+const { TextArea } = Input;
+const { Option } = Select;
+
+interface InterviewPreset {
+  id: number;
+  name: string;
+  description: string;
+  interviewParams: any;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+export default function AdminPresetsPage() {
+  const [form] = Form.useForm();
+  const [presets, setPresets] = useState<InterviewPreset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingPreset, setEditingPreset] = useState<InterviewPreset | null>(
+    null,
+  );
+  const [messageApi, contextHolder] = message.useMessage();
+
+  // 获取所有预设场景
+  const fetchPresets = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await interviewAPI.getInterviewPresets();
+      setPresets(response.data.presets || []);
+    } catch (error) {
+      console.error("获取预设场景失败:", error);
+      messageApi.error("获取预设场景失败，请稍后重试");
+    } finally {
+      setLoading(false);
+    }
+  }, [messageApi]);
+
+  useEffect(() => {
+    fetchPresets();
+  }, [fetchPresets]);
+
+  // 打开新增预设场景抽屉
+  const showAddDrawer = () => {
+    setEditingPreset(null);
+    form.resetFields();
+    form.setFieldsValue({
+      isDefault: false,
+      interviewParams: {
+        difficulty: "中级",
+        interviewer_style: "专业型",
+        interview_mode: "标准",
+        include_code_exercise: false,
+        include_behavioral_questions: false,
+        include_stress_test: false,
+      },
+    });
+    setDrawerVisible(true);
+  };
+
+  // 打开编辑预设场景抽屉
+  const showEditDrawer = (preset: InterviewPreset) => {
+    setEditingPreset(preset);
+
+    // 设置表单值
+    form.setFieldsValue({
+      name: preset.name,
+      description: preset.description,
+      isDefault: preset.isDefault,
+      interviewParams: preset.interviewParams,
+    });
+
+    setDrawerVisible(true);
+  };
+
+  // 关闭抽屉
+  const closeDrawer = () => {
+    setDrawerVisible(false);
+  };
+
+  // 打开预设场景详情模态框
+  const showDetailModal = (preset: InterviewPreset) => {
+    setEditingPreset(preset);
+    setModalVisible(true);
+  };
+
+  // 关闭模态框
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+
+  // 处理提交
+  const handleSubmit = async (values: any) => {
+    try {
+      setLoading(true);
+
+      const payload = {
+        name: values.name,
+        description: values.description,
+        isDefault: values.isDefault,
+        interviewParams: values.interviewParams,
+      };
+
+      let response;
+
+      if (editingPreset) {
+        // 更新预设场景
+        response = await interviewAPI.updatePreset(editingPreset.id, payload);
+        messageApi.success("预设场景更新成功");
+      } else {
+        // 创建新预设场景
+        response = await interviewAPI.createPreset(payload);
+        if (response.status === 201) {
+          messageApi.success("预设场景创建成功");
+        } else {
+          messageApi.error("预设场景创建失败，请稍后重试");
+        }
+      }
+
+      // 重新获取预设场景列表
+      fetchPresets();
+
+      // 关闭抽屉
+      closeDrawer();
+    } catch (error) {
+      console.error("操作预设场景失败:", error);
+      messageApi.error(editingPreset ? "更新预设场景失败" : "创建预设场景失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 删除预设场景
+  const handleDelete = async (presetId: number) => {
+    try {
+      setLoading(true);
+      await interviewAPI.deletePreset(presetId);
+      messageApi.success("预设场景删除成功");
+      fetchPresets();
+    } catch (error) {
+      console.error("删除预设场景失败:", error);
+      messageApi.error("删除预设场景失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const columns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+      width: 60,
+    },
+    {
+      title: "名称",
+      dataIndex: "name",
+      key: "name",
+      render: (text: string, record: InterviewPreset) => (
+        <a onClick={() => showDetailModal(record)}>{text}</a>
+      ),
+    },
+    {
+      title: "描述",
+      dataIndex: "description",
+      key: "description",
+      ellipsis: true,
+    },
+    {
+      title: "面试难度",
+      key: "difficulty",
+      render: (text: string, record: InterviewPreset) => (
+        <span>{record.interviewParams.difficulty || "中级"}</span>
+      ),
+    },
+    {
+      title: "状态",
+      key: "default",
+      render: (text: string, record: InterviewPreset) =>
+        record.isDefault ? (
+          <Tag icon={<CheckCircleOutlined />} color="success">
+            默认
+          </Tag>
+        ) : (
+          <Tag color="default">普通</Tag>
+        ),
+    },
+    {
+      title: "创建时间",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (date: string) => new Date(date).toLocaleString(),
+    },
+    {
+      title: "操作",
+      key: "action",
+      render: (text: string, record: InterviewPreset) => (
+        <Space size="small">
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => showEditDrawer(record)}
+          />
+          <Popconfirm
+            title="确定要删除这个预设场景吗？"
+            onConfirm={() => handleDelete(record.id)}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ padding: "0 24px 24px" }}>
+      {contextHolder}
+      <Breadcrumb
+        style={{ margin: "16px 0" }}
+        items={[
+          { title: <Link href="/admin">管理控制台</Link> },
+          { title: "面试预设场景" },
+        ]}
+      />
+
+      <Title level={3}>面试预设场景管理</Title>
+      <Paragraph>管理面试系统中的预设场景，提供给用户快速选择使用。</Paragraph>
+
+      <Card style={{ marginBottom: 24 }}>
+        <Space style={{ marginBottom: 16 }}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={showAddDrawer}
+          >
+            添加预设场景
+          </Button>
+          <Button icon={<ReloadOutlined />} onClick={fetchPresets}>
+            刷新
+          </Button>
+        </Space>
+
+        <Spin spinning={loading}>
+          <Table
+            columns={columns}
+            dataSource={presets}
+            rowKey="id"
+            pagination={{ pageSize: 10 }}
+          />
+        </Spin>
+      </Card>
+
+      {/* 添加/编辑预设场景抽屉 */}
+      <Drawer
+        title={editingPreset ? "编辑预设场景" : "添加预设场景"}
+        width={600}
+        onClose={closeDrawer}
+        open={drawerVisible}
+        styles={{ body: { paddingBottom: 80 } }}
+        extra={
+          <Space>
+            <Button onClick={closeDrawer}>取消</Button>
+            <Button type="primary" onClick={() => form.submit()}>
+              提交
+            </Button>
+          </Space>
+        }
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item
+            name="name"
+            label="预设场景名称"
+            rules={[{ required: true, message: "请输入预设场景名称" }]}
+          >
+            <Input placeholder="例如：技术深度型面试" />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="描述"
+            rules={[{ required: true, message: "请输入预设场景描述" }]}
+          >
+            <TextArea
+              placeholder="描述这个预设场景的特点和适用情况"
+              autoSize={{ minRows: 3, maxRows: 6 }}
+            />
+          </Form.Item>
+
+          <Form.Item name="isDefault" label="设为默认" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+
+          <Card
+            title="面试参数"
+            variant="outlined"
+            style={{ marginBottom: 16 }}
+          >
+            <Form.Item
+              label="面试难度"
+              name={["interviewParams", "difficulty"]}
+            >
+              <Radio.Group>
+                <Radio.Button value="初级">初级</Radio.Button>
+                <Radio.Button value="中级">中级</Radio.Button>
+                <Radio.Button value="高级">高级</Radio.Button>
+              </Radio.Group>
+            </Form.Item>
+
+            <Form.Item
+              label="面试官风格"
+              name={["interviewParams", "interviewer_style"]}
+            >
+              <Radio.Group>
+                <Radio.Button value="专业型">专业型</Radio.Button>
+                <Radio.Button value="友好型">友好型</Radio.Button>
+                <Radio.Button value="挑战型">挑战型</Radio.Button>
+              </Radio.Group>
+            </Form.Item>
+
+            <Form.Item
+              label="面试模式"
+              name={["interviewParams", "interview_mode"]}
+            >
+              <Select>
+                <Option value="标准">标准面试</Option>
+                <Option value="结对编程">结对编程</Option>
+                <Option value="系统设计">系统设计</Option>
+                <Option value="算法挑战">算法挑战</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              label="行业焦点"
+              name={["interviewParams", "industry_focus"]}
+            >
+              <Select placeholder="选择行业焦点">
+                <Option value="互联网">互联网</Option>
+                <Option value="金融">金融</Option>
+                <Option value="医疗">医疗</Option>
+                <Option value="教育">教育</Option>
+                <Option value="零售">零售</Option>
+                <Option value="制造业">制造业</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              label="公司规模"
+              name={["interviewParams", "company_size"]}
+            >
+              <Select placeholder="选择公司规模">
+                <Option value="创业公司">创业公司</Option>
+                <Option value="中型企业">中型企业</Option>
+                <Option value="大型企业">大型企业</Option>
+                <Option value="跨国公司">跨国公司</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              valuePropName="checked"
+              label="包含代码练习"
+              name={["interviewParams", "include_code_exercise"]}
+            >
+              <Switch />
+            </Form.Item>
+
+            <Form.Item
+              valuePropName="checked"
+              label="包含行为问题"
+              name={["interviewParams", "include_behavioral_questions"]}
+            >
+              <Switch />
+            </Form.Item>
+
+            <Form.Item
+              valuePropName="checked"
+              label="包含压力测试"
+              name={["interviewParams", "include_stress_test"]}
+            >
+              <Switch />
+            </Form.Item>
+          </Card>
+        </Form>
+      </Drawer>
+
+      {/* 预设场景详情模态框 */}
+      <Modal
+        title="预设场景详情"
+        open={modalVisible}
+        onCancel={closeModal}
+        footer={[
+          <Button key="back" onClick={closeModal}>
+            关闭
+          </Button>,
+        ]}
+        width={700}
+      >
+        {editingPreset && (
+          <Descriptions bordered column={1}>
+            <Descriptions.Item label="ID">{editingPreset.id}</Descriptions.Item>
+            <Descriptions.Item label="名称">
+              {editingPreset.name}
+            </Descriptions.Item>
+            <Descriptions.Item label="描述">
+              {editingPreset.description}
+            </Descriptions.Item>
+            <Descriptions.Item label="是否默认">
+              {editingPreset.isDefault ? (
+                <Tag color="success">是</Tag>
+              ) : (
+                <Tag>否</Tag>
+              )}
+            </Descriptions.Item>
+            <Descriptions.Item label="创建时间">
+              {new Date(editingPreset.createdAt).toLocaleString()}
+            </Descriptions.Item>
+            <Descriptions.Item label="面试参数">
+              <Card size="small" variant="borderless">
+                <p>
+                  <strong>难度：</strong>
+                  {editingPreset.interviewParams.difficulty || "中级"}
+                </p>
+                <p>
+                  <strong>面试官风格：</strong>
+                  {editingPreset.interviewParams.interviewer_style || "专业型"}
+                </p>
+                <p>
+                  <strong>面试模式：</strong>
+                  {editingPreset.interviewParams.interview_mode || "标准"}
+                </p>
+                <p>
+                  <strong>公司规模：</strong>
+                  {editingPreset.interviewParams.company_size || "-"}
+                </p>
+                <p>
+                  <strong>包含代码练习：</strong>
+                  {editingPreset.interviewParams.include_code_exercise
+                    ? "是"
+                    : "否"}
+                </p>
+                <p>
+                  <strong>包含行为问题：</strong>
+                  {editingPreset.interviewParams.include_behavioral_questions
+                    ? "是"
+                    : "否"}
+                </p>
+                <p>
+                  <strong>包含压力测试：</strong>
+                  {editingPreset.interviewParams.include_stress_test
+                    ? "是"
+                    : "否"}
+                </p>
+              </Card>
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
+    </div>
+  );
+}
